@@ -67,7 +67,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: ApplicationContext is missing from Global Contexts.\n' +
-          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/ApplicationContext.',
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/ApplicationContext.',
         'color:red'
       );
     });
@@ -89,7 +89,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: Only one ApplicationContext should be present in Global Contexts.\n' +
-          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/ApplicationContext.',
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/ApplicationContext.',
         'color:red'
       );
     });
@@ -128,7 +128,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: RootLocationContext is missing from Location Stack.\n' +
-          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
         'color:red'
       );
     });
@@ -150,7 +150,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: Only one RootLocationContext should be present in Location Stack.\n' +
-          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
         'color:red'
       );
     });
@@ -172,7 +172,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: RootLocationContext is in the wrong position of the Location Stack.\n' +
-          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
         'color:red'
       );
     });

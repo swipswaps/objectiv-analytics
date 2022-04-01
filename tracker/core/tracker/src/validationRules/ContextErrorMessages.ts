@@ -8,6 +8,11 @@
 import { TrackerPlatform } from '../Tracker';
 
 /**
+ * The URL of the docs. Prepended to all URLs in error messages.
+ */
+export const DOCS_URL = 'https://objectiv.io/docs';
+
+/**
  * All type of context error checks we support
  */
 export enum ContextErrorType {

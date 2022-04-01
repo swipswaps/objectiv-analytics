@@ -2,9 +2,8 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { makeDocsURL } from '../helpers';
 import { ContextValidationRuleConfig } from '../validationRules/ContextValidationRuleConfig';
-import { ContextErrorMessages, ContextErrorType } from './ContextErrorMessages';
+import { ContextErrorMessages, ContextErrorType, DOCS_URL } from './ContextErrorMessages';
 
 /**
  * The parameters of makeValidationRuleErrorMessage.
@@ -25,7 +24,7 @@ export const makeValidationRuleErrorMessage = ({ rule, type }: MakeValidationRul
   let errorMessage = errorMessagesForPlatformAndType[rule.contextName] ?? errorMessagesForPlatformAndType['default'];
 
   // Replace placeholders with actual values
-  errorMessage = errorMessage.replace(/{{docsURL}}/g, makeDocsURL());
+  errorMessage = errorMessage.replace(/{{docsURL}}/g, DOCS_URL);
   errorMessage = errorMessage.replace(/{{contextName}}/g, rule.contextName);
 
   // Make and return final error message string
