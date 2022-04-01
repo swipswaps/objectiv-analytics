@@ -10,6 +10,7 @@ also available as Jupyter notebooks from our `GitHub repository
 <https://github.com/objectiv/objectiv-analytics/tree/main/notebooks>`_ and can run if all `requirements
 <https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/requirements.txt>`_ are
 installed.
+
 To get started you will first have to
 instantiate the open model hub and create a Bach DataFrame with Objectiv data. The open
 model hub uses this DataFrame for its models. For a general introduction to Bach DataFrames, see the
@@ -33,9 +34,15 @@ model hub uses this DataFrame for its models. For a general introduction to Bach
 Getting started with Objectiv
 -----------------------------
 
-Here we show how to instantiate the model hub and a Bach DataFrame with Objectiv data that can be used
-to analyze data collected with Objectiv’s Tracker.
-This DataFrame points to the data and all operations are done on this object. A start date and an end date can
+Here we show how to install and instantiate the model hub.
+The open model hub is installed with
+
+    pip install objectiv-modelhub
+
+Now we can import and instantiate the model hub and create a Bach DataFrame with Objectiv data. This
+DataFrame is used to analyze data collected with Objectiv’s Tracker.
+The DataFrame points to the data in the SQL database and all operations are done on this object. A start date
+and an end date can
 optionally be passed to limit the underlying data that is queried. The `time_aggregation` parameter determines
 the default formatting of the timestamp of events. This is useful for grouping to different time aggregations,
 ie. monthly or daily.
