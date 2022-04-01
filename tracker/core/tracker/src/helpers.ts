@@ -112,10 +112,14 @@ export const makeIdFromString = (sourceString: string): string | null => {
 };
 
 /**
- * Helper function to determine if we are in development mode by checking the Node environment.
+ * Helper function to determine if we are in test mode by checking the Node environment.
  */
-export const isDevMode = () =>
-  (process.env.NODE_ENV?.startsWith('dev') || process.env.NODE_ENV?.startsWith('test')) ?? false;
+export const isTestMode = () => process.env.NODE_ENV?.startsWith('test') ?? false;
+
+/**
+ * Helper function to determine if we are in development or test mode by checking the Node environment.
+ */
+export const isDevMode = () => (process.env.NODE_ENV?.startsWith('dev') ?? false) || isTestMode();
 
 /**
  * Helper function to determine if we are in a browser - quite simplistically by checking the window object.
@@ -125,4 +129,4 @@ export const isBrowser = () => typeof window !== 'undefined';
 /**
  * Returns the URL of the docs without trailing slash. Staging or production depends on whether we are in dev mode.
  */
-export const makeDocsURL = () => `https://${isDevMode() ? 'staging.' : ''}objectiv.io/docs`;
+export const makeDocsURL = () => `https://${isTestMode() ? 'staging.' : ''}objectiv.io/docs`;

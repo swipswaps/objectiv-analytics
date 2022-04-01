@@ -100,6 +100,11 @@ describe('helpers', () => {
       process.env.NODE_ENV = 'development';
       expect(isDevMode()).toBe(true);
     });
+
+    it(`should return true (test)`, () => {
+      process.env.NODE_ENV = 'test';
+      expect(isDevMode()).toBe(true);
+    });
   });
 
   describe('isBrowser', () => {
@@ -119,18 +124,23 @@ describe('helpers', () => {
       process.env = OLD_ENV;
     });
 
-    it(`should return production (production)`, () => {
-      process.env.NODE_ENV = 'production';
-      expect(makeDocsURL()).toBe('https://objectiv.io/docs');
-    });
-
     it(`should return production (NODE_ENV not set)`, () => {
       Object.defineProperty(process, 'env', { value: {}, configurable: true });
       expect(makeDocsURL()).toBe('https://objectiv.io/docs');
     });
 
-    it(`should return staging (development)`, () => {
+    it(`should return production (production)`, () => {
+      process.env.NODE_ENV = 'production';
+      expect(makeDocsURL()).toBe('https://objectiv.io/docs');
+    });
+
+    it(`should return production (development)`, () => {
       process.env.NODE_ENV = 'development';
+      expect(makeDocsURL()).toBe('https://objectiv.io/docs');
+    });
+
+    it(`should return staging (test)`, () => {
+      process.env.NODE_ENV = 'test';
       expect(makeDocsURL()).toBe('https://staging.objectiv.io/docs');
     });
   });
