@@ -10,7 +10,7 @@ Modeling
     models
 
 .. toctree::
-    :maxdepth: 6
+    :maxdepth: 7
     :includehidden:
 
     modelhub_api_reference

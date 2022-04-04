@@ -1,6 +1,5 @@
 # modelhub:
--e ../bach
-sqlalchemy
+objectiv-bach
 
 # metabase
 requests

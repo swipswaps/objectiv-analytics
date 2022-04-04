@@ -1,8 +1,0 @@
-jupyterlab
-jupyter_dash
-psycopg2
-sqlalchemy
-plotly
-matplotlib
-numpy
-seaborn
