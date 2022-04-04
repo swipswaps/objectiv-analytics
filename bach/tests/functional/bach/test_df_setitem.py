@@ -10,14 +10,20 @@ import numpy as np
 from bach import SeriesInt64, SeriesString, SeriesFloat64, SeriesDate, SeriesTimestamp, \
     SeriesTime, SeriesTimedelta, Series, \
     SeriesJsonb, SeriesBoolean
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_db_type, \
-    assert_equals_data, CITIES_INDEX_AND_COLUMNS, get_bt_with_railway_data
+from sql_models.util import is_postgres
+from tests.conftest import get_postgres_engine_dialect
+from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_postgres_type, \
+    assert_equals_data, CITIES_INDEX_AND_COLUMNS, get_bt_with_railway_data, get_df_with_test_data
 
 
-def check_set_const(constant, db_type: str, expected_series: Type[Series]):
-    bt = get_bt_with_test_data()
+def check_set_const(engine, constant, expected_series: Type[Series], expected_pg_db_type: str):
+    bt = get_df_with_test_data(engine)
     bt['new_column'] = constant
-    assert_db_type(bt['new_column'], db_type, expected_series)
+
+    if is_postgres(engine):
+        # we don't have an easy way to get the database type in BigQuery, so only support that check for PG
+        assert_postgres_type(bt['new_column'], expected_pg_db_type, expected_series)
+
     assert_equals_data(
         bt,
         expected_columns=[
@@ -34,62 +40,74 @@ def check_set_const(constant, db_type: str, expected_series: Type[Series]):
     assert bt.new_column == bt['new_column']
 
 
-def test_set_const_int():
-    check_set_const(np.int64(4), 'bigint', SeriesInt64)
-    check_set_const(5, 'bigint', SeriesInt64)
-    check_set_const(2147483647, 'bigint', SeriesInt64)
-    check_set_const(2147483648, 'bigint', SeriesInt64)
+def test_set_const_int(engine):
+    check_set_const(engine, np.int64(4), SeriesInt64, 'bigint')
+    check_set_const(engine, 5, SeriesInt64, 'bigint')
+    check_set_const(engine, 2147483647, SeriesInt64, 'bigint')
+    check_set_const(engine, 2147483648, SeriesInt64, 'bigint')
 
 
 def test_set_const_float():
-    check_set_const(5.1, 'double precision', SeriesFloat64)
+    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
+    check_set_const(engine, 5.1, SeriesFloat64, 'double precision')
 
 
-def test_set_const_bool():
-    check_set_const(True, 'boolean', SeriesBoolean)
+def test_set_const_bool(engine):
+    check_set_const(engine, True, SeriesBoolean, 'boolean')
 
 
-def test_set_const_str():
-    check_set_const('keatsen', 'text', SeriesString)
+def test_set_const_str(engine):
+    check_set_const(engine, 'keatsen', SeriesString, 'text')
 
 
-def test_set_const_date():
-    check_set_const(datetime.date(2019, 1, 5), 'date', SeriesDate)
+def test_set_const_date(engine):
+    check_set_const(engine, datetime.date(2019, 1, 5), SeriesDate, 'date')
 
 
 def test_set_const_datetime():
-    check_set_const(datetime.datetime.now(), 'timestamp without time zone', SeriesTimestamp)
+    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
+    check_set_const(engine, datetime.datetime.now(), SeriesTimestamp, 'timestamp without time zone')
 
 
 def test_set_const_time():
-    check_set_const(datetime.time.fromisoformat('00:05:23.283'), 'time without time zone', SeriesTime)
+    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
+    check_set_const(
+        engine,
+        datetime.time.fromisoformat('00:05:23.283'),
+        SeriesTime,
+        'time without time zone'
+    )
 
 
 def test_set_const_timedelta():
+    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
     check_set_const(
+        engine,
         np.datetime64('2005-02-25T03:30') - np.datetime64('2005-01-25T03:30'),
-        'interval',
-        SeriesTimedelta
+        SeriesTimedelta,
+        'interval'
     )
     check_set_const(
+        engine,
         datetime.datetime.now() - datetime.datetime(2015, 4, 6),
-        'interval',
-        SeriesTimedelta
+        SeriesTimedelta,
+        'interval'
     )
 
 
 def test_set_const_json():
-    check_set_const(['a', 'b', 'c'], 'jsonb', SeriesJsonb)
-    check_set_const({'a': 'b', 'c': 'd'}, 'jsonb', SeriesJsonb)
+    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
+    check_set_const(engine, ['a', 'b', 'c'], SeriesJsonb, 'jsonb')
+    check_set_const(engine, {'a': 'b', 'c': 'd'}, SeriesJsonb, 'jsonb')
 
 
 def test_set_const_int_from_series():
     bt = get_bt_with_test_data()[['founding']]
-    max = bt.groupby()[['founding']].sum()
-    max_series = max['founding_sum']
+    max_df = bt.groupby()[['founding']].sum()
+    max_series = max_df['founding_sum']
     max_value = max_series.value
     bt['max_founding'] = max_value
-    assert_db_type(bt['max_founding'], 'bigint', SeriesInt64, )
+    assert_postgres_type(bt['max_founding'], 'bigint', SeriesInt64, )
 
     assert_equals_data(
         bt,
@@ -108,7 +126,7 @@ def test_set_const_int_from_series():
 def test_set_series_column():
     bt = get_bt_with_test_data()
     bt['duplicated_column'] = bt['founding']
-    assert_db_type(bt['duplicated_column'], 'bigint', SeriesInt64)
+    assert_postgres_type(bt['duplicated_column'], 'bigint', SeriesInt64)
     assert_equals_data(
         bt,
         expected_columns=[
@@ -151,6 +169,7 @@ def test_set_series_column():
     )
     assert filtered_bt.town == filtered_bt['town']
 
+
 def test_set_multiple():
     bt = get_bt_with_test_data()
     bt['duplicated_column'] = bt['founding']
@@ -173,7 +192,7 @@ def test_set_multiple():
 def test_set_existing():
     bt = get_bt_with_test_data()
     bt['city'] = bt['founding']
-    assert_db_type(bt['city'], 'bigint', SeriesInt64)
+    assert_postgres_type(bt['city'], 'bigint', SeriesInt64)
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS,
@@ -209,7 +228,7 @@ def test_set_different_base_node():
     bt = get_bt_with_test_data()
     mt = get_bt_with_railway_data()
     bt['skating_order'] = mt['station']
-    assert_db_type(bt['skating_order'], 'text', SeriesString)
+    assert_postgres_type(bt['skating_order'], 'text', SeriesString)
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS,
@@ -223,7 +242,7 @@ def test_set_different_base_node():
     # set dataframe
     bt = get_bt_with_test_data()
     mt = get_bt_with_railway_data()
-    bt[['a','city']] = mt[['town','station']]
+    bt[['a', 'city']] = mt[['town', 'station']]
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS + ['a'],
@@ -271,7 +290,7 @@ def test_set_different_group_by():
 def test_set_existing_referencing_other_column_experience():
     bt = get_bt_with_test_data()
     bt['city'] = bt['city'] + ' test'
-    assert_db_type(bt['city'], 'text', SeriesString)
+    assert_postgres_type(bt['city'], 'text', SeriesString)
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS,
@@ -300,8 +319,8 @@ def test_set_existing_referencing_other_column_experience():
     )
     bt['skating_order'] = c
     bt['city'] = a + ' - ' + b
-    assert_db_type(bt['skating_order'], 'bigint', SeriesInt64)
-    assert_db_type(bt['city'], 'text', SeriesString)
+    assert_postgres_type(bt['skating_order'], 'bigint', SeriesInt64)
+    assert_postgres_type(bt['city'], 'text', SeriesString)
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS,
@@ -318,7 +337,7 @@ def test_set_existing_referencing_other_column_experience():
 def test_set_series_expression():
     bt = get_bt_with_test_data()
     bt['time_travel'] = bt['founding'] + 1000
-    assert_db_type(bt['time_travel'], 'bigint', SeriesInt64, )
+    assert_postgres_type(bt['time_travel'], 'bigint', SeriesInt64, )
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS + ['time_travel'],
@@ -342,7 +361,6 @@ def test_set_series_single_value():
     assert bt.maxi.expression.is_single_value
     # should recycle the same subquery
     assert bt.maxi.expression.get_references() == bt.maxii.expression.get_references()
-
 
     bt['moremax'] = bt.maxi + 5
     bt['constmoremax'] = bt.maxi + bt.const
@@ -384,7 +402,7 @@ def test_set_pandas_series():
     bt = get_bt_with_test_data()
     pandas_series = bt['founding'].to_pandas()
     bt['duplicated_column'] = pandas_series
-    assert_db_type(bt['duplicated_column'], 'bigint', SeriesInt64)
+    assert_postgres_type(bt['duplicated_column'], 'bigint', SeriesInt64)
     assert_equals_data(
         bt,
         expected_columns=[
@@ -403,7 +421,7 @@ def test_set_pandas_series_different_shape():
     bt = get_bt_with_test_data()
     pandas_series = bt['founding'].to_pandas()[1:]
     bt['duplicated_column'] = pandas_series
-    assert_db_type(bt['duplicated_column'], 'bigint', SeriesInt64)
+    assert_postgres_type(bt['duplicated_column'], 'bigint', SeriesInt64)
     assert_equals_data(
         bt,
         expected_columns=[
@@ -423,7 +441,7 @@ def test_set_pandas_series_different_shape_and_name():
     bt2 = get_bt_with_railway_data()  # has more rows and different name index
     pandas_series = bt2['town'].to_pandas()
     bt['the_town'] = pandas_series
-    assert_db_type(bt['the_town'], 'text', SeriesString)
+    assert_postgres_type(bt['the_town'], 'text', SeriesString)
     assert_equals_data(
         bt,
         expected_columns=[

@@ -3,12 +3,13 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
-from bach import DataFrame, SeriesString, Series
-from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_test_data, df_to_list
+from bach import DataFrame, Series
+from tests.functional.bach.test_data_and_utils import assert_equals_data, df_to_list, \
+    get_df_with_test_data, get_bt_with_test_data
 
 
-def test_get_item_single():
-    bt = get_bt_with_test_data()
+def test_get_item_single(engine):
+    bt = get_df_with_test_data(engine)
 
     selection = bt[['city']]
     assert isinstance(selection, DataFrame)
@@ -48,8 +49,8 @@ def test_get_item_single():
     # todo: pandas supports _a lot_ of way to select columns and/or rows
 
 
-def test_get_item_multiple():
-    bt = get_bt_with_test_data()
+def test_get_item_multiple(engine):
+    bt = get_df_with_test_data(engine)
     selection = bt[['city', 'founding']]
     assert isinstance(selection, DataFrame)
     assert_equals_data(
@@ -97,8 +98,8 @@ def test_positional_slicing():
         )
 
 
-def test_get_item_materialize():
-    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants']]
+def test_get_item_materialize(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants']]
     bt = bt.groupby('municipality')[['inhabitants']].sum()
     r = bt[bt.inhabitants_sum != 700] #  'Friese Meren' be gone!
 
@@ -113,8 +114,9 @@ def test_get_item_materialize():
         ]
     )
 
-def test_get_item_mixed_groupby():
-    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants', 'founding']]
+
+def test_get_item_mixed_groupby(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants', 'founding']]
 
     grouped = bt.groupby('municipality')
     grouped_sum = grouped.inhabitants.sum()

@@ -1,0 +1,10 @@
+# install bach and modelhub in edit mode, so local changes are immediately usable
+objectiv-bach
+objectiv-modelhub
+
+# requirements for the notebooks
+jupyter
+jupyterlab
+matplotlib
+seaborn
+sklearn
