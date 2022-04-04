@@ -224,18 +224,7 @@ class SeriesInt64(SeriesAbstractNumeric):
         return super()._arithmetic_operation(other, operation, fmt_str, other_dtypes, type_mapping)
 
     def __truediv__(self, other) -> 'Series':
-        # What we do below is essentially the same as: return self.astype('float64') / other
-        # But somehow that fails some test cases and the below code works. The generated sql for the 'nice'
-        # code above doesn't seem to make sense in the broken cases. TODO: look into this
-
-        db_dialect = DBDialect.from_dialect(self.engine.dialect)
-        float_db_type = SeriesFloat64.supported_db_dtype[db_dialect]
-        return self._arithmetic_operation(
-            other=other,
-            operation='div',
-            fmt_str=f'cast({{}} as {float_db_type}) / ({{}})',
-            dtype='float64'
-        )
+        return self.astype('float64') / other
 
     def __rshift__(self, other):
         if is_postgres(self.engine):
