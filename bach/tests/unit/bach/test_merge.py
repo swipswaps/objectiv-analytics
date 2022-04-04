@@ -336,10 +336,13 @@ def test_verify_on_conflicts_conditional(dialect) -> None:
 
 def test__resolve_merge_expression_reference(dialect) -> None:
     left = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+    left = left.materialize()
     right = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
-    bool_series = (left['b'].astype(int) - 1) == right['b'].astype(int)
+
+    bool_series = left['b'].astype(int) == right['b'].astype(int)
     result = _resolve_merge_expression_references(dialect, left, right, MergeOn([], [], [bool_series]))
-    assert result[0].to_sql(dialect) == '(cast("b" as bigint) - cast(1 as bigint)) = cast("b" as bigint)'
+    assert result[0].to_sql(dialect) == 'cast("l"."b" as bigint) = cast("r"."b" as bigint)'
+
 
 def call__determine_merge_on(
         left, right,
