@@ -98,7 +98,8 @@ def test_materialize_with_non_aggregation_series(inplace: bool, engine):
 
 
 @pytest.mark.parametrize("inplace", [False, True])
-def test_materialize_non_deterministic_expressions(inplace: bool, engine):
+def test_materialize_non_deterministic_expressions(inplace: bool, pg_engine):
+    engine = pg_engine  # TODO: BigQuery
     bt = get_df_with_test_data(engine)[['city']]
     bt['uuid1'] = SeriesUuid.sql_gen_random_uuid(bt)
     # now bt['uuid1'] has not been evaluated, so copying the column should copy the unevaluated expression

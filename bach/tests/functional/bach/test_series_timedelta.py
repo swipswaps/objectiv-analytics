@@ -11,14 +11,15 @@ from tests.functional.bach.test_data_and_utils import get_bt_with_food_data, ass
 from tests.functional.bach.test_series_timestamp import types_plus_min
 
 
-def test_timedelta_arithmetic():
+def test_timedelta_arithmetic(pg_engine):
+    # TODO: BigQuery
     data = [
         ['d', datetime.date(2020, 3, 11), 'date', ('date', None)],
         ['t', datetime.time(23, 11, 5), 'time', (None, None)],
         ['td', datetime.timedelta(days=321, seconds=9877), 'timedelta', ('timedelta', 'timedelta')],
         ['dt', datetime.datetime(2021, 5, 3, 11, 28, 36, 388000), 'timestamp', ('timestamp', None)]
     ]
-    types_plus_min(data, datetime.timedelta(days=123, seconds=5621), 'timedelta')
+    types_plus_min(pg_engine, data, datetime.timedelta(days=123, seconds=5621), 'timedelta')
 
 
 def test_timedelta_arithmetic2():

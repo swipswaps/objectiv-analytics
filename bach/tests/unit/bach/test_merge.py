@@ -9,6 +9,7 @@ from bach.merge import (
     _determine_merge_on, _determine_result_columns, ResultSeries, merge, How, MergeOn,
     _verify_on_conflicts, _resolve_merge_expression_references
 )
+from sql_models.util import is_bigquery, is_postgres
 from tests.unit.bach.util import get_fake_df
 
 
@@ -341,7 +342,12 @@ def test__resolve_merge_expression_reference(dialect) -> None:
 
     bool_series = left['b'].astype(int) == right['b'].astype(int)
     result = _resolve_merge_expression_references(dialect, left, right, MergeOn([], [], [bool_series]))
-    assert result[0].to_sql(dialect) == 'cast("l"."b" as bigint) = cast("r"."b" as bigint)'
+    if is_postgres(dialect):
+        assert result[0].to_sql(dialect) == 'cast("l"."b" as bigint) = cast("r"."b" as bigint)'
+    elif is_bigquery(dialect):
+        assert result[0].to_sql(dialect) == 'cast(`l`.`b` as INT64) = cast(`r`.`b` as INT64)'
+    else:
+        raise Exception(f'Improve unittest: support {dialect}')
 
 
 def call__determine_merge_on(
