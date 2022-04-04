@@ -1,11 +1,11 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import os
 from typing import List, Any, Tuple, Dict, Optional
 
 import sqlalchemy
 from sqlalchemy.dialects.postgresql.base import PGDialect
+from sqlalchemy.engine import Engine
 
 from sql_models.graph_operations import find_node, replace_node_in_graph
 from sql_models.model import Materialization
@@ -13,10 +13,7 @@ from sql_models.sql_generator import to_sql_materialized_nodes
 from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel, RefValueModel
 
 
-DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
-
-
-def test_execute_multi_statement_sql_materialization():
+def test_execute_multi_statement_sql_materialization(pg_engine):
     # Graph, with values calculated by the query shown above each node
     #
     #                                              16
@@ -48,7 +45,7 @@ def test_execute_multi_statement_sql_materialization():
     # Verify that the model's query gives the expected output
     sql_statements = to_sql_materialized_nodes(dialect=dialect, start_node=graph, include_start_node=True)
     assert len(sql_statements) == 1
-    result = run_queries(sql_statements)
+    result = run_queries(engine=pg_engine, sql_statements=sql_statements)
     assert result['graph'] == expected
 
     # Test: modify materialization of node 'jm2' in the graph
@@ -62,7 +59,7 @@ def test_execute_multi_statement_sql_materialization():
     # Verify that the model's query gives the expected output
     sql_statements = to_sql_materialized_nodes(dialect, graph)
     assert len(sql_statements) == 2
-    result = run_queries(sql_statements)
+    result = run_queries(engine=pg_engine, sql_statements=sql_statements)
     assert result['graph'] == expected
 
     # Test: modify materialization of nodes 'jm1' and 'rvm2' in the graph
@@ -79,7 +76,7 @@ def test_execute_multi_statement_sql_materialization():
     # Verify that the model's query gives the expected output
     sql_statements = to_sql_materialized_nodes(dialect, graph)
     assert len(sql_statements) == 4
-    result = run_queries(sql_statements)
+    result = run_queries(engine=pg_engine, sql_statements=sql_statements)
     assert result['graph'] == expected
 
     # Test: modify materialization of nodes 'rvm1' in the graph, to 'QUERY' meaning it should be a separate
@@ -92,7 +89,7 @@ def test_execute_multi_statement_sql_materialization():
     # Verify that the model's query gives the expected output
     sql_statements = to_sql_materialized_nodes(dialect, graph)
     assert len(sql_statements) == 5
-    result = run_queries(sql_statements)
+    result = run_queries(engine=pg_engine, sql_statements=sql_statements)
     assert result == {
         'JoinModel___e0bab08e339f02ef255537649ef13be1': None,
         'JoinModel___e716b40925362305c0dda48e7bb5bd06': None,
@@ -108,7 +105,7 @@ def test_execute_multi_statement_sql_materialization():
     }
 
 
-def test_materialized_shared_ctes():
+def test_materialized_shared_ctes(pg_engine):
     # Graph: jm1 and jm2 are materialized, vm2 is shared between the two
     #    1
     #   vm1 <---\     3
@@ -135,7 +132,7 @@ def test_materialized_shared_ctes():
     # Verify that the model's query gives the expected output
     sql_statements = to_sql_materialized_nodes(dialect, graph)
     assert len(sql_statements) == 3
-    result = run_queries(sql_statements)
+    result = run_queries(engine=pg_engine, sql_statements=sql_statements)
     assert result == {
         'graph': (
             ['key', 'value'],
@@ -146,7 +143,10 @@ def test_materialized_shared_ctes():
     }
 
 
-def run_queries(sql_statements: Dict[str, str]) -> Dict[str, Optional[Tuple[List[str], List[List[Any]]]]]:
+def run_queries(
+    engine: Engine,
+    sql_statements: Dict[str, str]
+) -> Dict[str, Optional[Tuple[List[str], List[List[Any]]]]]:
     """
     Execute all sql statements and return a dictionary with the result of each. The statements will be
     executed inside a transaction that will be rolled back, which will any table/view create statements.
@@ -165,7 +165,6 @@ def run_queries(sql_statements: Dict[str, str]) -> Dict[str, Optional[Tuple[List
         raise ValueError('Expected non-empty dictionary')
     result = {}
 
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     with engine.connect() as conn:
         with conn.begin() as transaction:
             for name, sql in sql_statements.items():
