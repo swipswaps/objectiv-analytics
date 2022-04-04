@@ -422,10 +422,12 @@ class Series(ABC):
             index_sorting=self._index_sorting
         )
 
-    def unstack(self,
-                level: int = -1,
-                fill_value: Optional[Union[int, float, str, UUID]] = None,
-                aggregation: str = 'max') -> 'DataFrame':
+    def unstack(
+        self,
+        level: Union[int, str] = -1,
+        fill_value: Optional[Union[int, float, str, UUID]] = None,
+        aggregation: str = 'max',
+    ) -> 'DataFrame':
         """
         Pivot a level of the index labels.
 
@@ -441,6 +443,9 @@ class Series(ABC):
             methods that :py:meth:`aggregate` supports.
 
         :returns: DataFrame
+
+        .. note::
+            This function queries the database.
         """
         result = self.to_frame().unstack(level, fill_value, aggregation)
         return result.rename(columns={col: col.replace(f'__{self.name}', '') for col in result.data_columns})
