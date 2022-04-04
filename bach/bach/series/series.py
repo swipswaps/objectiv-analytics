@@ -236,7 +236,8 @@ class Series(ABC):
         :param dialect: Database dialect
         :param source_dtype: dtype of the expression parameter
         :param expression: expression to cast
-        :return: a new expression that converts the given expression to the dtype of this class
+        :return: a new expression that casts the given expression to the dialect's db type for the dtype of
+        this class
         """
         raise NotImplementedError()
 
