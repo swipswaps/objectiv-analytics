@@ -128,10 +128,10 @@ class SeriesString(Series):
         return Expression.string_value(value)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'string':
             return expression
-        return Expression.construct('cast(({}) as text)', expression)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     @property
     def str(self) -> StringOperation:

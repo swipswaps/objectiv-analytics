@@ -178,14 +178,13 @@ class SeriesTimestamp(SeriesAbstractDateTime):
         return Expression.string_value(str_value)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'timestamp':
             return expression
         else:
             if source_dtype not in ['string', 'date']:
                 raise ValueError(f'cannot convert {source_dtype} to timestamp')
-            db_dtype = 'timestamp without time zone'
-            return Expression.construct(f'cast({{}} as {db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def __add__(self, other) -> 'Series':
         return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))
@@ -227,14 +226,13 @@ class SeriesDate(SeriesAbstractDateTime):
         return Expression.string_value(value)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'date':
             return expression
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to date')
-            db_dtype = 'date'
-            return Expression.construct(f'cast({{}} as {db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def __add__(self, other) -> 'Series':
         type_mapping = {
@@ -290,14 +288,13 @@ class SeriesTime(SeriesAbstractDateTime):
         return Expression.string_value(value)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'time':
             return expression
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to time')
-            db_dtype = 'time without time zone'
-            return Expression.construct(f'cast({{}} as {db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     # python supports no arithmetic on Time
 
@@ -331,13 +328,13 @@ class SeriesTimedelta(SeriesAbstractDateTime):
         return Expression.string_value(value)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'timedelta':
             return expression
         else:
             if not source_dtype == 'string':
                 raise ValueError(f'cannot convert {source_dtype} to timedelta')
-            return Expression.construct('cast({} as interval)', expression)
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timedelta', 'string')) -> SeriesBoolean:

@@ -1,13 +1,15 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
-    get_bt_with_json_data, CITIES_INDEX_AND_COLUMNS
+from datetime import date, datetime, time
+
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_json_data,\
+    CITIES_INDEX_AND_COLUMNS, get_df_with_test_data
 
 
-def test_astype_dtypes():
+def test_astype_dtypes(engine):
     # case 1: cast all columns to a type
-    bt = get_bt_with_test_data()
+    bt = get_df_with_test_data(engine)
     bt_int = bt[['inhabitants', 'founding']]
     bt_float = bt_int.astype('float64')
     assert bt_int.dtypes == {'founding': 'int64', 'inhabitants': 'int64'}
@@ -67,8 +69,8 @@ def test_astype_dtypes():
     )
 
 
-def test_astype_to_int():
-    bt = get_bt_with_test_data()
+def test_astype_to_int(engine):
+    bt = get_df_with_test_data(engine)
     bt = bt[['inhabitants']]
     bt['inhabitants'] = bt['inhabitants'] / 1000
     bt_int = bt.astype('int64')
@@ -91,6 +93,70 @@ def test_astype_to_int():
             [1, 93],
             [2, 34],
             [3, 3]
+        ]
+    )
+
+
+def test_astype_to_bool(engine):
+    bt = get_df_with_test_data(engine)
+    bt = bt[['skating_order']]
+    bt['skating_order'] = bt['skating_order'] - 1
+    bt['t'] = 'True'
+    bt['f'] = 'False'
+    bt = bt.astype('bool')
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'skating_order', 't', 'f'],
+        expected_data=[
+            [1, False, True, False],
+            [2, True, True, False ],
+            [3, True, True, False ]
+        ]
+    )
+
+
+def test_astype_to_date(engine):
+    bt = get_df_with_test_data(engine)
+    bt = bt[[]]
+    bt['d'] = '1999-12-31'
+    bt = bt.astype('date')
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'd'],
+        expected_data=[[1, date(1999, 12, 31)], [2, date(1999, 12, 31)], [3, date(1999, 12, 31)]]
+    )
+
+
+def test_astype_to_timestamp(engine):
+    bt = get_df_with_test_data(engine)
+    bt = bt[[]]
+    bt['d'] = date(2022, 3, 31)
+    bt['s'] = '2022-02-15 13:37:00'
+    bt = bt.astype('timestamp')
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'd', 's'],
+        expected_data=[
+            [1, datetime(2022, 3, 31, 0, 0), datetime(2022, 2, 15, 13, 37)],
+            [2, datetime(2022, 3, 31, 0, 0), datetime(2022, 2, 15, 13, 37)],
+            [3, datetime(2022, 3, 31, 0, 0), datetime(2022, 2, 15, 13, 37)]
+        ]
+    )
+
+
+def test_astype_to_time(engine):
+    bt = get_df_with_test_data(engine)
+    bt = bt[[]]
+    bt['a'] = '03:04:00'
+    bt['b'] = '23:25:59'
+    bt = bt.astype('time')
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'a', 'b'],
+        expected_data=[
+            [1, time(3, 4, 0), time(23, 25, 59)],
+            [2, time(3, 4, 0), time(23, 25, 59)],
+            [3, time(3, 4, 0), time(23, 25, 59)]
         ]
     )
 
