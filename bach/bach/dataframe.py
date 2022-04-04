@@ -3057,6 +3057,7 @@ class DataFrame:
         df = df.groupby(remaining_indexes).aggregate(aggregation)
         df = df.rename(columns={col: col.replace(f'_{aggregation}', '') for col in df.data_columns})
 
+        # materialization is needed since df might be sorted by columns that no longer exist
         df = df.materialize('unstack')
         df = df[new_columns]
 
