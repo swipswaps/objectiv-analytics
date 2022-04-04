@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 import math
-from typing import Type
+from typing import Type, Any
 import pytest
 
 import numpy as np
