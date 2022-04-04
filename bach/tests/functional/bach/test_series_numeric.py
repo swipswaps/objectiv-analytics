@@ -1,16 +1,23 @@
 import math
 from decimal import Decimal
+from typing import Union
 
 import numpy as np
 import pandas as pd
 import pytest
 from psycopg2._range import NumericRange
+from sqlalchemy.engine import Engine
 
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_from_df, assert_equals_data
+from tests.functional.bach.test_data_and_utils import get_from_df, assert_equals_data,\
+    get_df_with_test_data, get_bt_with_test_data
 
 
-def _test_simple_arithmetic(a, b):
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+def helper_test_simple_arithmetic(engine: Engine, a: Union[int, float], b: Union[int, float]):
+    """
+    Helper function that tests that the outcome of a whole list of arithmetic operations between a and b
+    matches the outcome of doing the same operation in python.
+    """
+    bt = get_df_with_test_data(engine)[['inhabitants']]
     expected = []
     bt['a'] = a
     bt['b'] = b
@@ -87,9 +94,10 @@ def test_dataframe_agg_skipna_parameter():
             # methods not present at all, so needs to raise
             bt.agg(agg, skipna=False)
 
-def test_dataframe_agg_dd_parameter():
+
+def test_dataframe_agg_dd_parameter(engine):
     # test full parameter traversal
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+    bt = get_df_with_test_data(engine, full_data_set=True)[['inhabitants']]
 
     for agg in ['sem', 'std', 'var']:
         with pytest.raises(NotImplementedError):
