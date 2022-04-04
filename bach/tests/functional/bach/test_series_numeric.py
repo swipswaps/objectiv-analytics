@@ -76,35 +76,6 @@ def test_round_integer():
         pd.testing.assert_series_equal(expected2, result2, check_names=False, check_index=False)
 
 
-def test_dataframe_agg_skipna_parameter():
-    # test full parameter traversal
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
-
-    numeric_agg = ['sum', 'mean']
-    stats_agg = ['sem', 'std', 'var']
-    for agg in numeric_agg + stats_agg:
-        with pytest.raises(NotImplementedError):
-            # currently not supported anywhere, so needs to raise
-            bt.agg(agg, skipna=False)
-
-    numeric_agg = ['prod', 'product']
-    stats_agg = ['kurt', 'kurtosis', 'skew', 'mad']
-    for agg in numeric_agg + stats_agg:
-        with pytest.raises(AttributeError):
-            # methods not present at all, so needs to raise
-            bt.agg(agg, skipna=False)
-
-
-def test_dataframe_agg_dd_parameter(engine):
-    # test full parameter traversal
-    bt = get_df_with_test_data(engine, full_data_set=True)[['inhabitants']]
-
-    for agg in ['sem', 'std', 'var']:
-        with pytest.raises(NotImplementedError):
-            # currently not supported anywhere, so needs to raise
-            bt.agg(agg, ddof=123)
-
-
 def test_aggregations_simple_tests():
     values = [1, 3, 4, 6, 2, 2, np.nan, 7, 8]
     pdf = pd.DataFrame(data=values)
