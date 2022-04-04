@@ -3028,7 +3028,7 @@ class DataFrame:
             raise IndexError(f'Too many levels. DataFrame/Series has only {len(self.index)} levels.')
 
         if isinstance(level, str) and level not in self.index:
-            raise IndexError(f'"{level}" does not exist in DataFrame index')
+            raise IndexError(f'"{level}" does not exist in DataFrame/Series index')
 
         if type(aggregation) != str:
             raise TypeError('invalid aggregation method')
