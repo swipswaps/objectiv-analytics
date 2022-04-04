@@ -5,10 +5,14 @@ There is some pytest 'magic' here that automatically fills out the 'engine' and 
 test functions that have either of those.
 By default such a test function will get a Postgres dialect or engine. But if --big-query or --all is
 specified on the commandline, then it will (also) get a BigQuery dialect or engine.
+
+Additionally we define a 'pg_engine' fixture here that always return a Postgres engine.
 """
 import os
 from typing import NamedTuple, Optional
 
+import pytest
+import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, Dialect
 
@@ -18,6 +22,11 @@ DB_BQ_CREDENTIALS_PATH = os.environ.get(
     'OBJ_DB_BQ_CREDENTIALS_PATH',
     os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + '/.secrets/bach-big-query-testing.json'
 )
+
+
+@pytest.fixture()
+def pg_engine() -> Engine:
+    return sqlalchemy.create_engine(DB_PG_TEST_URL)
 
 
 def pytest_addoption(parser):
