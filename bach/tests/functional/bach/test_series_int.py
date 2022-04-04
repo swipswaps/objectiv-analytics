@@ -189,18 +189,17 @@ def test_int_float_arithmetic(engine):
     helper_test_simple_arithmetic(engine=engine, a=10, b=2.25)
 
 
-def test_int_shifts(pg_engine):
-    # TODO: BigQuery
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)[['inhabitants']]
-    expected = [8, 3]
+def test_int_shifts(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)[['inhabitants']]
     bt['a'] = 8
     bt['b'] = 3
     bt['lshift'] = bt.a << bt.b
     bt['rshift'] = bt.a >> bt.b
-    expected.extend([64, 1])
+    expected = [8, 3, 64, 1]
 
+    bt = bt.sort_index()[:1]  # Only get the first row
     assert_equals_data(
-        bt[:1],
+        bt,
         expected_columns=list(bt.all_series.keys()),
         expected_data=[
             [1, 93485, *expected],

@@ -238,12 +238,18 @@ class SeriesInt64(SeriesAbstractNumeric):
         )
 
     def __rshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) >> cast({} as int)',
-                                          other_dtypes=tuple(['int64']))
+        if is_postgres(self.engine):
+            # Postgres expects the argument to a bitshift to be a regular int, not bigint.
+            return self._arithmetic_operation(other, 'rshift', '({}) >> cast({} as int)',
+                                              other_dtypes=tuple(['int64']))
+        return self._arithmetic_operation(other, 'rshift', '({}) >> ({})', other_dtypes=tuple(['int64']))
 
     def __lshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
-                                          other_dtypes=tuple(['int64']))
+        if is_postgres(self.engine):
+            # Postgres expects the argument to a bitshift to be a regular int, not bigint.
+            return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
+                                              other_dtypes=tuple(['int64']))
+        return self._arithmetic_operation(other, 'lshift', '({}) << ({})', other_dtypes=tuple(['int64']))
 
     def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
         # sum() has the tendency to return float on bigint arguments. Cast it back.
