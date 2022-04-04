@@ -493,16 +493,13 @@ def test_series_dropna() -> None:
 
 def test_series_unstack():
     bt = get_bt_with_test_data(full_data_set=True)
-    bt['municipality_none'] = bt[bt.skating_order < 10].municipality
-    stacked_bt = bt.groupby(['city', 'municipality_none']).inhabitants.sum()
-
-    with pytest.raises(Exception, match='index contains empty values, cannot be unstacked'):
-        stacked_bt.unstack()
 
     stacked_bt = bt.groupby(['city','municipality']).inhabitants.sum()
     unstacked_bt = stacked_bt.unstack()
 
-    expected_columns = ['De Friese Meren','Harlingen','Leeuwarden','Noardeast-Fryslân','Súdwest-Fryslân','Waadhoeke']
+    expected_columns = [
+        'De Friese Meren', 'Harlingen', 'Leeuwarden', 'Noardeast-Fryslân', 'Súdwest-Fryslân', 'Waadhoeke',
+    ]
     assert sorted(unstacked_bt.data_columns) == expected_columns
     unstacked_bt_sorted = unstacked_bt.copy_override(series={x: unstacked_bt[x] for x in expected_columns})
 

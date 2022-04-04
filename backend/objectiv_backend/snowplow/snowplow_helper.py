@@ -153,7 +153,7 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
                 # List of failure messages associated with the tracker protocol violations
                 "messages": [
                     {
-                    "schemaKey": "iglu:io.objectiv/taxonomy/jsonschema/2-0-1",
+                    "schemaKey": config.schema_objectiv_taxonomy,
                     "error": {
                         "error": "ValidationError",
                         "dataReports": data_reports
