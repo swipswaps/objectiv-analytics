@@ -181,14 +181,12 @@ def test_integer_divide_constant(engine):
     )
 
 
-def test_int_int_arithmetic(pg_engine):
-    # TODO: BigQuery
-    helper_test_simple_arithmetic(engine=pg_engine, a=10, b=3)
+def test_int_int_arithmetic(engine):
+    helper_test_simple_arithmetic(engine=engine, a=10, b=3)
 
 
-def test_int_float_arithmetic(pg_engine):
-    # TODO: BigQuery
-    helper_test_simple_arithmetic(engine=pg_engine, a=10, b=2.25)
+def test_int_float_arithmetic(engine):
+    helper_test_simple_arithmetic(engine=engine, a=10, b=2.25)
 
 
 def test_int_shifts(pg_engine):
