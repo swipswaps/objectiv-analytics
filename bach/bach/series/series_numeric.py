@@ -5,11 +5,13 @@ from abc import ABC
 from typing import cast, Union, TYPE_CHECKING, Optional, List
 
 import numpy
+from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression, AggregateFunctionExpression
 from bach.series.series import WrappedPartition
 from sql_models.constants import DBDialect
+from sql_models.util import is_postgres, is_bigquery, DatabaseNotSupportedException
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
@@ -186,18 +188,23 @@ class SeriesInt64(SeriesAbstractNumeric):
     }
     supported_value_types = (int, numpy.int64, numpy.int32)
 
-    # Notes for supported_value_to_literal() and supported_literal_to_expression():
-    # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
-    # consistently get bigints, so always cast the result
-    # See the section on numeric constants in the Postgres documentation
-    # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+    @classmethod
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        if is_postgres(dialect):
+            # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
+            # consistently get bigints, so always cast the result
+            # See the section on numeric constants in the Postgres documentation
+            # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
+        if is_bigquery(dialect):
+            # BigQuery has only one integer type, so there is no confusion between 32-bit and 64-bit integers
+            # https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#integer_type
+            # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#integer_literals
+            return literal
+        raise DatabaseNotSupportedException(dialect)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as bigint)', literal)
-
-    @classmethod
-    def supported_value_to_literal(cls, value: int) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: int) -> Expression:
         return Expression.raw(str(value))
 
     @classmethod
@@ -248,6 +255,8 @@ class SeriesFloat64(SeriesAbstractNumeric):
     supported_value_types = (float, numpy.float64)
 
     # Notes for supported_value_to_literal() and supported_literal_to_expression():
+    #
+    # ### Postgres ###
     # Postgres will automatically parse any number with a decimal point as a number of type `numeric`,
     # which could be casted to float. However we specify the value always as a string, as there are some
     # values that cannot be expressed as a numeric literal directly (NaN, infinity, and -infinity), and
@@ -255,13 +264,20 @@ class SeriesFloat64(SeriesAbstractNumeric):
     # See the sections on numeric constants, and on fLoating-point types in the Postgres documentation
     # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
     # https://www.postgresql.org/docs/14/datatype-numeric.html#DATATYPE-FLOAT
+    #
+    # ### BigQuery ###
+    # BigQuery parses floating point literals as a float, no casts needed. However the special values (NaN,
+    # infinity, and -infinity) can only be specified as strings that are then cast. For simplicity, we
+    # always use a string literal that we then cast to float, just as we do for Postgres.
+    # https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#floating_point_types
+    # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#floating_point_literals
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct("cast({} as float)", literal)
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[float, numpy.float64]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[float, numpy.float64]) -> Expression:
         return Expression.string_value(str(value))
 
     @classmethod

@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Union, cast, List, Tuple
 
 import numpy
+from sqlalchemy.engine import Dialect
 
 from bach import DataFrame
 from bach.series import Series, SeriesString, SeriesBoolean, SeriesFloat64, SeriesInt64
@@ -14,6 +15,7 @@ from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from bach.types import DtypeOrAlias
 from sql_models.constants import DBDialect
+from sql_models.util import DatabaseNotSupportedException, is_postgres
 
 _SECONDS_IN_DAY = 24 * 60 * 60
 
@@ -166,11 +168,11 @@ class SeriesTimestamp(SeriesAbstractDateTime):
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as timestamp without time zone)', literal)
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[str, datetime.datetime]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.datetime]) -> Expression:
         # TODO: check here already that the string has the correct format
         str_value = str(value)
         return Expression.string_value(str_value)
@@ -214,11 +216,11 @@ class SeriesDate(SeriesAbstractDateTime):
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         return Expression.construct(f'cast({{}} as date)', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[str, datetime.date]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.date]) -> Expression:
         if isinstance(value, datetime.date):
             value = str(value)
         # TODO: check here already that the string has the correct format
@@ -278,11 +280,11 @@ class SeriesTime(SeriesAbstractDateTime):
     supported_value_types = (datetime.time, str)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as time without time zone)', literal)
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[str, datetime.time]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.time]) -> Expression:
         value = str(value)
         # TODO: check here already that the string has the correct format
         return Expression.string_value(value)
@@ -313,12 +315,15 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as interval)', literal)
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        if not is_postgres(dialect):
+            raise DatabaseNotSupportedException(dialect)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
     def supported_value_to_literal(
             cls,
+            dialect: Dialect,
             value: Union[str, numpy.timedelta64, datetime.timedelta]
     ) -> Expression:
         value = str(value)
