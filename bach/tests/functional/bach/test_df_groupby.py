@@ -639,11 +639,12 @@ def test_groupby_frame_split_recombine_aggregation_applied():
     r1 = r1.rename(columns={'inhabitants': 'inhabitants_sum'})
     assert r1.base_node == bt.base_node
 
+    expected_columns = ['inhabitants_sum', 'founding_sum', 'founding_mean']
     for r in [founding_inhabitants_sum, r1]:
         assert_equals_data(
-            r,
+            r[expected_columns],
             order_by=['municipality'],
-            expected_columns=['municipality', 'inhabitants_sum', 'founding_sum', 'founding_mean'],
+            expected_columns=['municipality'] + expected_columns,
 
             expected_data=[
                 ['Leeuwarden', 93485, 1285, 1285],

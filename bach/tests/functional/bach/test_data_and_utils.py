@@ -15,9 +15,10 @@ from sqlalchemy.engine import ResultProxy, Engine
 
 from bach import DataFrame, Series
 from bach.types import get_series_type_from_db_dtype
+from sql_models.constants import DBDialect
 from sql_models.util import is_bigquery, is_postgres
+from tests.conftest import DB_PG_TEST_URL
 
-DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
 
 # Three data tables for testing are defined here that can be used in tests
 # 1. cities: 3 rows (or 11 for the full dataset) of data on cities
@@ -135,7 +136,7 @@ def get_pandas_df(dataset: List[List[Any]], columns: List[str]) -> pandas.DataFr
 
 def get_from_df(table: str, df: pandas.DataFrame, convert_objects=True) -> DataFrame:
     """ Create a database table with the data from the data-frame. """
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    engine = sqlalchemy.create_engine(DB_PG_TEST_URL)
     buh_tuh = DataFrame.from_pandas(
         engine=engine,
         df=df,
@@ -279,13 +280,13 @@ def _get_to_pandas_data(df: DataFrame):
     return column_names, db_values
 
 
-def assert_db_type(
+def assert_postgres_type(
         series: Series,
         expected_db_type: str,
         expected_series_type: Type[Series]
 ):
     """
-    Check that the given Series has the expected data type in the database, and that it has the
+    Check that the given Series has the expected data type in the Postgres database, and that it has the
     expected Series type after being read back from the database.
     :param series: Series object to check the type of
     :param expected_db_type: one of the types listed on https://www.postgresql.org/docs/current/datatype.html
@@ -293,10 +294,10 @@ def assert_db_type(
     """
     sql = series.to_frame().view_sql()
     sql = f'with check_type as ({sql}) select pg_typeof("{series.name}") from check_type limit 1'
-    db_rows = run_query(sqlalchemy.create_engine(DB_TEST_URL), sql)
+    db_rows = run_query(sqlalchemy.create_engine(DB_PG_TEST_URL), sql)
     db_values = [list(row) for row in db_rows]
     db_type = db_values[0][0]
     if expected_db_type:
         assert db_type == expected_db_type
-    series_type = get_series_type_from_db_dtype(db_type)
+    series_type = get_series_type_from_db_dtype(DBDialect.POSTGRES, db_type)
     assert series_type == expected_series_type

@@ -440,10 +440,11 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df['extra_col'] = 1
-            >>> df.loc['a', 'extra_col']
-                    extra_col
-            index
-            a           1
+            >>> df.loc['a', 'extra_col'].to_pandas()
+            __stacked_index
+            extra_col    1
+            Name: __stacked, dtype: int64
+
 
         **Setting Values**
 
@@ -454,13 +455,12 @@ class DataFrame:
 
             >>> df.loc['a'] = 2
             >>> df.to_pandas()
-
-                    values   extra_col
+                   values  extra_col
             index
-            a           1           2
-            b           2           1
-            c           3           1
-            d           4           1
+            a           2          2
+            b           2          1
+            c           3          1
+            d           4          1
 
         **Set values for multiple rows and specific columns**: Modifies only the passed columns.
 
@@ -469,13 +469,12 @@ class DataFrame:
 
             >>> df.loc[['b', 'd'], 'values'] = 10
             >>> df.to_pandas()
-
-                    values   extra_col
+                   values  extra_col
             index
-            a           1           2
-            b          10           1
-            c           3           1
-            d          10           1
+            a           2          2
+            b          10          1
+            c           3          1
+            d          10          1
 
         **Set values for row slice**: Modifies all rows included in the slice.
 
@@ -484,7 +483,6 @@ class DataFrame:
 
             >>> df.loc['a':'c', 'values'] = 3
             >>> df.to_pandas()
-
                     values   extra_col
             index
             a           3           2
@@ -1041,7 +1039,12 @@ class DataFrame:
             key_set = set(key)
             if not key_set.issubset(set(self.data_columns)):
                 raise KeyError(f"Keys {key_set.difference(set(self.data_columns))} not in data_columns")
-            selected_data = {key: data for key, data in self.data.items() if key in key_set}
+
+            if isinstance(key, set):
+                selected_data = {col: data for col, data in self.data.items() if col in key_set}
+            else:
+                # should change order of columns in select
+                selected_data = {col: self.data[col] for col in key}
 
             return self.copy_override(series=selected_data)
 

@@ -2,13 +2,17 @@
 Copyright 2021 Objectiv B.V.
 """
 import json
-from typing import Optional, Dict, Union, TYPE_CHECKING, List
+from typing import Optional, Dict, Union, TYPE_CHECKING, List, Tuple
+
+from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from bach.sql_model import BachSqlModel
-from sql_models.util import quote_string
+from bach.types import DtypeOrAlias
+from sql_models.constants import DBDialect
+from sql_models.util import quote_string, is_postgres, DatabaseNotSupportedException
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
@@ -36,62 +40,91 @@ class SeriesJsonb(Series):
 
     Examples:
 
-    >>> # load some json strings and convert them to jsonb type
-    >>> pdf = pd.DataFrame(['["a","b","c"]',
-    >>>                     '["d","e","f","g"]',
-    >>>                     '[{"h":"i","j":"k"},{"l":["m","n","o"]},{"p":"q"}]'], columns=['jsonb_column'])
-    >>> df = DataFrame.from_pandas(engine, pdf, convert_objects=True)
-    >>> df['jsonb_column'] = df.jsonb_column.astype('jsonb')
-    >>>
-    >>> # slice and show with .head()
-    >>> df.jsonb_column.json[:2].head()
-    _index_0
-    0                                            [a, b]
-    1                                            [d, e]
-    2    [{'h': 'i', 'j': 'k'}, {'l': ['m', 'n', 'o']}]
-    Name: jsonb_column, dtype: object
-    >>>
-    >>> # selecting one position returns the single entry:
-    >>> df.jsonb_column.json[1].head()
-    _index_0
-    0                         b
-    1                         e
-    2    {'l': ['m', 'n', 'o']}
-    Name: jsonb_column, dtype: object
-    >>>
-    >>> # selecting from objects is done by entering a key:
-    >>> df.jsonb_column.json[1].json['l'].head()
-    _index_0
-    0         None
-    1         None
-    2    [m, n, o]
-    Name: jsonb_column, dtype: object
+     .. testsetup:: jsonb
+        :skipif: engine is None
+
+        data = ['["a","b","c"]', '["d","e","f","g"]', '[{"h":"i","j":"k"},{"l":["m","n","o"]},{"p":"q"}]']
+        pdf = pd.DataFrame(data=data, columns=['jsonb_column'])
+        df = DataFrame.from_pandas(engine, pdf, convert_objects=True)
+        df['jsonb_column'] = df.jsonb_column.astype('jsonb')
+
+    .. doctest:: jsonb
+        :skipif: engine is None
+
+        >>> pdf
+                                                jsonb_column
+        0                                      ["a","b","c"]
+        1                                  ["d","e","f","g"]
+        2  [{"h":"i","j":"k"},{"l":["m","n","o"]},{"p":"q"}]
+
+    .. doctest:: jsonb
+        :skipif: engine is None
+
+        >>> df = DataFrame.from_pandas(engine, pdf, convert_objects=True)
+        >>> df['jsonb_column'] = df.jsonb_column.astype('jsonb')
+        >>> # load some json strings and convert them to jsonb type
+        >>> # slice and show with .head()
+        >>> df.jsonb_column.json[:2].head()
+        _index_0
+        0                                            [a, b]
+        1                                            [d, e]
+        2    [{'h': 'i', 'j': 'k'}, {'l': ['m', 'n', 'o']}]
+        Name: jsonb_column, dtype: object
+
+    .. doctest:: jsonb
+        :skipif: engine is None
+
+        >>> df.jsonb_column.json[1].head()
+        _index_0
+        0                         b
+        1                         e
+        2    {'l': ['m', 'n', 'o']}
+        Name: jsonb_column, dtype: object
+
+    .. doctest:: jsonb
+        :skipif: engine is None
+
+        >>> # selecting from objects is done by entering a key:
+        >>> df.jsonb_column.json[1].json['l'].head()
+        _index_0
+        0         None
+        1         None
+        2    [m, n, o]
+        Name: jsonb_column, dtype: object
 
     A last case is selecting based on the objects *in* an array.
     With this method, a dict is passed in the `.json[]` selector. The value of the first match with the dict
     to the objects in a json array is returned for the `.json[]` selector. A match is when all key/value pairs
     of the dict are found in an object. This can be used for selecting a subset of a json array with objects.
 
-    >>> # selecting from arrays by searching objects in the array.
-    >>> df.jsonb_column.json[:{"j":"k"}].head()
-    _index_0
-    0                      None
-    1                      None
-    2    [{'h': 'i', 'j': 'k'}]
-    Name: jsonb_column, dtype: object
-    >>>
-    >>> # or:
-    >>> df.jsonb_column.json[{"l":["m","n","o"]}:].head()
-    _index_0
-    0                                    None
-    1                                    None
-    2    [{'l': ['m', 'n', 'o']}, {'p': 'q'}]
-    Name: jsonb_column, dtype: object
+    .. doctest:: jsonb
+        :skipif: engine is None
+
+        >>> # selecting from arrays by searching objects in the array.
+        >>> df.jsonb_column.json[:{"j":"k"}].head()
+        _index_0
+        0                      None
+        1                      None
+        2    [{'h': 'i', 'j': 'k'}]
+        Name: jsonb_column, dtype: object
+
+    .. doctest:: jsonb
+        :skipif: engine is None
+
+        >>> # or:
+        >>> df.jsonb_column.json[{"l":["m","n","o"]}:].head()
+        _index_0
+        0                                    None
+        1                                    None
+        2    [{'l': ['m', 'n', 'o']}, {'p': 'q'}]
+        Name: jsonb_column, dtype: object
     """
     dtype = 'jsonb'
     # todo can only assign a type to one series type, and object is quite generic
-    dtype_aliases = tuple()  # type: ignore
-    supported_db_dtype = 'jsonb'
+    dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'jsonb',
+    }
     supported_value_types = (dict, list)
     return_dtype = dtype
 
@@ -108,27 +141,48 @@ class SeriesJsonb(Series):
 
             :param key: A very mixed key to slice on, please see below.
 
-            >>> # slice and show with .head()
-            >>> df.jsonb_column.json[:2].head()
-            _index_0
-            0                                            [a, b]
-            1                                            [d, e]
-            2    [{'h': 'i', 'j': 'k'}, {'l': ['m', 'n', 'o']}]
-            Name: jsonb_column, dtype: object
-            >>> # selecting one position returns the single entry:
-            >>> df.jsonb_column.json[1].head()
-            _index_0
-            0                         b
-            1                         e
-            2    {'l': ['m', 'n', 'o']}
-            Name: jsonb_column, dtype: object
-            >>> # selecting from objects is done by entering a key:
-            >>> df.jsonb_column.json[1].json['l'].head()
-            _index_0
-            0         None
-            1         None
-            2    [m, n, o]
-            Name: jsonb_column, dtype: object
+            .. testsetup:: jsonb__getitem__
+                :skipif: engine is None
+
+                data = [
+                    '["a","b","c"]', '["d","e","f","g"]', '[{"h":"i","j":"k"},{"l":["m","n","o"]},{"p":"q"}]',
+                ]
+                pdf = pd.DataFrame(data=data, columns=['jsonb_column'])
+                df = DataFrame.from_pandas(engine, pdf, convert_objects=True)
+                df['jsonb_column'] = df.jsonb_column.astype('jsonb')
+
+            .. doctest:: jsonb__getitem__
+                :skipif: engine is None
+
+                >>> # slice and show with .head()
+                >>> df.jsonb_column.json[:2].head()
+                _index_0
+                0                                            [a, b]
+                1                                            [d, e]
+                2    [{'h': 'i', 'j': 'k'}, {'l': ['m', 'n', 'o']}]
+                Name: jsonb_column, dtype: object
+
+            .. doctest:: jsonb__getitem__
+                :skipif: engine is None
+
+                >>> # selecting one position returns the single entry:
+                >>> df.jsonb_column.json[1].head()
+                _index_0
+                0                         b
+                1                         e
+                2    {'l': ['m', 'n', 'o']}
+                Name: jsonb_column, dtype: object
+
+            .. doctest:: jsonb__getitem__
+                :skipif: engine is None
+
+                >>> # selecting from objects is done by entering a key:
+                >>> df.jsonb_column.json[1].json['l'].head()
+                _index_0
+                0         None
+                1         None
+                2    [m, n, o]
+                Name: jsonb_column, dtype: object
 
             Or select based on the objects *in* an array.
             With this method, a dict is passed in the `.json[]` selector. The value of the first match with
@@ -136,20 +190,27 @@ class SeriesJsonb(Series):
             all key/value pairs of the dict are found in an object. This can be used for selecting a subset
             of a json array with objects.
 
-            >>> # selecting from arrays by searching objects in the array.
-            >>> df.jsonb_column.json[:{"j":"k"}].head()
-            _index_0
-            0                      None
-            1                      None
-            2    [{'h': 'i', 'j': 'k'}]
-            Name: jsonb_column, dtype: object
-            >>> # or:
-            >>> df.jsonb_column.json[{"l":["m","n","o"]}:].head()
-            _index_0
-            0                                    None
-            1                                    None
-            2    [{'l': ['m', 'n', 'o']}, {'p': 'q'}]
-            Name: jsonb_column, dtype: object
+            .. doctest:: jsonb__getitem__
+                :skipif: engine is None
+
+                >>> # selecting from arrays by searching objects in the array.
+                >>> df.jsonb_column.json[:{"j":"k"}].head()
+                _index_0
+                0                      None
+                1                      None
+                2    [{'h': 'i', 'j': 'k'}]
+                Name: jsonb_column, dtype: object
+
+            .. doctest:: jsonb__getitem__
+                :skipif: engine is None
+
+                >>> # or:
+                >>> df.jsonb_column.json[{"l":["m","n","o"]}:].head()
+                _index_0
+                0                                    None
+                1                                    None
+                2    [{'l': ['m', 'n', 'o']}, {'p': 'q'}]
+                Name: jsonb_column, dtype: object
             """
             if isinstance(key, int):
                 return self._series_object\
@@ -238,6 +299,8 @@ class SeriesJsonb(Series):
     @property
     def json(self):
         """
+        .. _json_accessor:
+
         Get access to json operations via the class that's return through this accessor.
         Use as `my_series.json.get_value()` or `my_series.json[:2]`
 
@@ -249,21 +312,23 @@ class SeriesJsonb(Series):
         return self.Json(self)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as jsonb)', literal)
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        if not is_postgres(dialect):
+            raise DatabaseNotSupportedException(dialect)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[dict, list]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[dict, list]) -> Expression:
         json_value = json.dumps(value)
         return Expression.string_value(json_value)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype in ['jsonb', 'json']:
             return expression
         if source_dtype != 'string':
             raise ValueError(f'cannot convert {source_dtype} to jsonb')
-        return Expression.construct('cast({} as jsonb)', expression)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def _comparator_operation(self, other, comparator, other_dtypes=('json', 'jsonb')):
         return self._binary_operation(
@@ -297,8 +362,10 @@ class SeriesJson(SeriesJsonb):
 
     """
     dtype = 'json'
-    dtype_aliases = tuple()  # type: ignore
-    supported_db_dtype = 'json'
+    dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'json',
+    }
     return_dtype = 'jsonb'
 
     def __init__(self,

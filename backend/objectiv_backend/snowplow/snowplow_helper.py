@@ -70,6 +70,7 @@ def objectiv_event_to_snowplow_payload(event: EventData, config: SnowplowConfig)
             "e": "se",  # mandatory: event type: structured event
             "p": "web",  # mandatory: platform
             "tv": "objectiv-tracker-0.0.5",  # mandatory: tracker version
+            "eid": event['id'],  # event_id
             "url": path_context.get('id', ''),
             "cx": snowplow_custom_context
         }]
@@ -152,7 +153,7 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
                 # List of failure messages associated with the tracker protocol violations
                 "messages": [
                     {
-                    "schemaKey": "iglu:io.objectiv/taxonomy/jsonschema/2-0-1",
+                    "schemaKey": config.schema_objectiv_taxonomy,
                     "error": {
                         "error": "ValidationError",
                         "dataReports": data_reports
@@ -227,8 +228,6 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
                     if ee.event_id == event['id']:
                         event_error = ee
             failed_event = snowplow_schema_violation(payload=payload, config=config, event_error=event_error)
-
-            print(json.dumps(failed_event, indent=4))
 
             # serialize (json) and encode to bytestring for publishing
             data = json.dumps(failed_event, separators=(',', ':')).encode('utf-8')

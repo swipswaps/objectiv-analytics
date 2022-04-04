@@ -7,8 +7,14 @@ Bach uses [`sql_models`](./sql_models/) under the hood, which makes it possible 
 ## Using Bach
 To use Bach, use the following command:
 ```bash
+pip install objectiv-bach
+```
+
+If you want the latest and greatest from your local checkout, install objectiv_bach in edit mode:
+```bash
 pip install -e .
 ```
+
 This will install Bach in edit mode, meaning you get the latest version from the local checkout.
 For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs).
 
@@ -20,7 +26,7 @@ For detailed installation & usage instructions, visit [Objectiv Docs](https://ww
   found in the [`sql_models`](./sql_models/) package
 
 ## Support & Troubleshooting
-If you need help using or installing Bach, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
+If you need help using or installing Bach, join our [Slack channel](https://objectiv.io/join-slack/) and post your question there. 
 
 ## Bug Reports & Feature Requests
 If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://objectiv.io/docs/home/the-project/contribute/).
