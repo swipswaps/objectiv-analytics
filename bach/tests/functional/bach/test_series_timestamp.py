@@ -2,11 +2,13 @@
 Copyright 2021 Objectiv B.V.
 """
 import datetime
+from typing import List, Any
 
 import pytest
+from sqlalchemy.engine import Engine
 
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_food_data, \
-    get_bt_with_test_data
+    get_bt_with_test_data, get_df_with_test_data
 
 
 def test_timestamp_data():
@@ -94,17 +96,17 @@ def test_timestamp_comparator(asstring: bool):
     )
 
 
-def test_timestamp_arithmetic():
+def test_timestamp_arithmetic(engine):
     data = [
         ['d', datetime.date(2020, 3, 11), 'date', (None, None)],
         ['t', datetime.time(23, 11, 5), 'time', (None, None)],
         ['td', datetime.timedelta(days=321, seconds=9877), 'timedelta', ('timestamp', 'timestamp')],
         ['dt', datetime.datetime(2021, 5, 3, 11, 28, 36, 388000), 'timestamp', (None, 'timedelta')]
     ]
-    types_plus_min(data, datetime.datetime(2019, 8, 16, 2, 54, 39, 166000), 'timestamp')
+    types_plus_min(engine, data, datetime.datetime(2019, 8, 16, 2, 54, 39, 166000), 'timestamp')
 
 
-def types_plus_min(data, base_value, base_type):
+def types_plus_min(engine: Engine, data: List[list], base_value: Any, base_type: str):
     """
     Function to test all + and - operation combinations of data vs base, to make sure
     that all operations supported in python are supported in Bach and vice versa.
@@ -117,7 +119,7 @@ def types_plus_min(data, base_value, base_type):
     - value_dtype is the dtype in Bach for the value in Python
     - the tuple(dtype_after_plus, dtype_after_min) contains the dtypes that the resulting series should have.
     """
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+    bt = get_df_with_test_data(engine=engine, full_data_set=True)[['inhabitants']]
 
     base_name = 'base'
     bt[base_name] = base_value

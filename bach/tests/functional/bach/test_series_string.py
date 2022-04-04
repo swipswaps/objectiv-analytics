@@ -2,16 +2,18 @@
 Copyright 2021 Objectiv B.V.
 """
 from bach import Series, SeriesString
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
+from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
+    get_df_with_test_data
 
 
-def test_from_const():
+def test_from_const(pg_engine):
+    # TODO: BigQuery
     a = 'a string'
     b = 'a string\'"\'\' "" \\ with quotes'
     c = None
     d = '\'\'!@&*(HJD☢%'
 
-    bt = get_bt_with_test_data()[['city']]
+    bt = get_df_with_test_data(pg_engine)[['city']]
     bt['a'] = a
     bt['b'] = b
     bt['c'] = SeriesString.from_const(base=bt, value=c, name='temp')
@@ -27,8 +29,9 @@ def test_from_const():
     )
 
 
-def test_string_slice():
-    bt = get_bt_with_test_data()
+def test_string_slice(engine):
+    bt = get_df_with_test_data(engine)
+    # TODO: this test passes on BigQuery, but is very slow
 
     # Now try some slices
     for s in [
@@ -65,8 +68,8 @@ def test_string_slice():
             )
 
 
-def test_add_string_series():
-    bt = get_bt_with_test_data()
+def test_add_string_series(engine):
+    bt = get_df_with_test_data(engine)
     bts = bt['city'] + ' is in the municipality ' + bt['municipality']
     assert isinstance(bts, Series)
     assert_equals_data(

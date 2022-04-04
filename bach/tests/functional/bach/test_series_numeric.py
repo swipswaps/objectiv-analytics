@@ -4,7 +4,6 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-import pytest
 from psycopg2._range import NumericRange
 from sqlalchemy.engine import Engine
 
