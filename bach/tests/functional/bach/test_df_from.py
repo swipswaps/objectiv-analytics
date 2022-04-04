@@ -6,13 +6,10 @@ tests for:
  * DataFrame.from_model()
 
 """
-import sqlalchemy
 from sqlalchemy.engine import Engine
 
 from bach import DataFrame
 from sql_models.model import CustomSqlModelBuilder, SqlModel
-from sql_models.util import is_postgres, is_bigquery
-from tests.functional.bach.test_data_and_utils import DB_PG_TEST_URL
 from sql_models.util import is_postgres, is_bigquery
 
 
@@ -52,10 +49,10 @@ def test_from_table_basic(engine):
     assert df == df_all_dtypes
 
 
-def test_from_model_basic():
+def test_from_model_basic(pg_engine):
     # This is essentially the same test as test_from_table_basic(), but tests creating the dataframe with
     # from_model instead of from_table
-    engine = sqlalchemy.create_engine(DB_PG_TEST_URL)
+    engine = pg_engine
     table_name = 'test_df_from_table'
     _create_test_table(engine, table_name)
     sql_model: SqlModel = CustomSqlModelBuilder(sql=f'select * from {table_name}')()
@@ -102,12 +99,12 @@ def test_from_table_column_ordering(engine):
     assert df == df_all_dtypes
 
 
-def test_from_model_column_ordering():
+def test_from_model_column_ordering(pg_engine):
     # This is essentially the same test as test_from_table_model_ordering(), but tests creating the dataframe with
     # from_model instead of from_table
 
     # Create a Dataframe in which the index is not the first column in the table.
-    engine = sqlalchemy.create_engine(DB_PG_TEST_URL)
+    engine = pg_engine
     table_name = 'test_df_from_table'
     _create_test_table(engine, table_name)
     sql_model: SqlModel = CustomSqlModelBuilder(sql=f'select * from {table_name}')()
