@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql.base import PGDialect
 from bach.expression import Expression
 from bach.merge import (
     _determine_merge_on, _determine_result_columns, ResultSeries, merge, How, MergeOn,
-    _verify_on_conflicts
+    _verify_on_conflicts, _resolve_merge_expression_references
 )
 from tests.unit.bach.util import get_fake_df
 
@@ -117,11 +117,9 @@ def test__determine_merge_df_serie_happy():
            MergeOn(['a'], ['a'], [])
 
 
-def test__determine_merge_on_w_conditional() -> None:
-    fake_engine = type('FakeEngine', (object,), {})()
-    fake_engine.dialect = PGDialect()
-    left = get_fake_df(['a'], ['b', 'c'], engine=fake_engine)
-    right = get_fake_df(['a'], ['c', 'd'], engine=fake_engine).materialize()['c']
+def test__determine_merge_on_w_conditional(dialect) -> None:
+    left = get_fake_df(['a'], ['b', 'c'], dialect=dialect)
+    right = get_fake_df(['a'], ['c', 'd'], dialect=dialect).materialize()['c']
     series_bool = left['c'] == right
 
     assert call__determine_merge_on(left, right, on=[series_bool]) == MergeOn([], [], [series_bool])
@@ -284,11 +282,9 @@ def test_verify_on_conflicts() -> None:
         )
 
 
-def test_verify_on_conflicts_conditional() -> None:
-    fake_engine = type('FakeEngine', (object,), {})()
-    fake_engine.dialect = PGDialect()
-    left = get_fake_df(['a'], ['b'], 'float64', engine=fake_engine)
-    right = get_fake_df(['a'], ['b'], 'float64', engine=fake_engine)
+def test_verify_on_conflicts_conditional(dialect) -> None:
+    left = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+    right = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
     bool_series = left['b'] == left['b']
 
     with pytest.raises(ValueError, match=r'valid only when left.base_node != right.base_node.'):
@@ -321,7 +317,7 @@ def test_verify_on_conflicts_conditional() -> None:
             right_index=False,
         )
 
-    other_df = get_fake_df(['a'], ['b'], 'float64', engine=fake_engine)
+    other_df = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
     other_df = other_df.materialize(node_name='other')
     bool_series = left['b'] > right['b'] + other_df['b']
 
@@ -336,6 +332,16 @@ def test_verify_on_conflicts_conditional() -> None:
             left_index=False,
             right_index=False,
         )
+
+
+def test__resolve_merge_expression_reference(dialect) -> None:
+    left = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+    left = left.materialize()
+    right = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+
+    bool_series = left['b'].astype(int) == right['b'].astype(int)
+    result = _resolve_merge_expression_references(dialect, left, right, MergeOn([], [], [bool_series]))
+    assert result[0].to_sql(dialect) == 'cast("l"."b" as bigint) = cast("r"."b" as bigint)'
 
 
 def call__determine_merge_on(
