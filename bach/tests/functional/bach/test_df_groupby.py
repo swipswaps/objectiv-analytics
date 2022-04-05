@@ -688,3 +688,4 @@ def test_materialize_on_double_aggregation(pg_engine):
     btg_materialized_mean = btg_materialized.founding_sum.mean()
     # did not get materialized again
     assert btg_materialized_mean.base_node == btg_materialized.base_node
+    assert btg_materialized.founding_sum.mean().value == 2413.5
