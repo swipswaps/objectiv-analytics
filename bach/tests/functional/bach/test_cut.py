@@ -97,12 +97,10 @@ def test_cut_w_ignore_index() -> None:
     series = get_from_df('cut_df', p_series.to_frame()).a
 
     result = CutOperation(series=series, bins=bins, right=True, ignore_index=False)()
-    assert 'a' in result.index
-    assert '_index_0' in result.index
+    assert ['_index_0', 'a'] == list(result.index.keys())
 
     result_w_ignore = CutOperation(series=series, bins=bins, right=True, ignore_index=True)()
-    assert 'a' in result_w_ignore.index
-    assert '_index_0' not in result_w_ignore.index
+    assert ['a'] == list(result_w_ignore.index.keys())
 
 
 def test_cut_w_include_empty_bins() -> None:

@@ -71,9 +71,10 @@ class CutOperation:
         bucket_properties_df = self._calculate_bucket_properties()
         range_series = self._calculate_bucket_ranges(bucket_properties_df)
 
-        final_index_keys = [self.series.name]
+        final_index_keys = []
         if not self.ignore_index:
-            final_index_keys.extend(self.series.index.keys())
+            final_index_keys = list(self.series.index.keys())
+        final_index_keys += [self.series.name]
 
         df = self.series.to_frame().reset_index(drop=self.ignore_index)
 
