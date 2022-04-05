@@ -497,6 +497,11 @@ class DataFrame:
         from bach.indexing import LocIndexer
         return LocIndexer(self)
 
+    @property
+    def plot(self):
+        from bach.plotting import PlotHandler
+        return PlotHandler(self)
+
     def __eq__(self, other: Any) -> bool:
         """
         Compares two DataFrames for equality.
