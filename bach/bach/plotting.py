@@ -37,7 +37,6 @@ class PlotHandler(object):
                 "hist method requires numerical or datetime columns, nothing to plot."
             )
 
-        from bach.operations.concat import SeriesConcatOperation
         from bach.operations.cut import CutOperation
 
         df = self.df.copy()
@@ -49,6 +48,7 @@ class PlotHandler(object):
             bins=bins,
             method='bach',
             include_empty_bins=True,
+            ignore_index=False,
         )().to_frame()
 
         # create frequency distribution dataframe per label (numeric column)

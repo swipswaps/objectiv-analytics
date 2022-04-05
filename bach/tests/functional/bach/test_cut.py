@@ -91,6 +91,20 @@ def test_cut_operation_boundary() -> None:
     compare_boundaries(expected, result)
 
 
+def test_cut_w_ignore_index() -> None:
+    bins = 3
+    p_series = pd.Series(data=[1, 2, 3, 4], name='a')
+    series = get_from_df('cut_df', p_series.to_frame()).a
+
+    result = CutOperation(series=series, bins=bins, right=True, ignore_index=False)()
+    assert 'a' in result.index
+    assert '_index_0' in result.index
+
+    result_w_ignore = CutOperation(series=series, bins=bins, right=True, ignore_index=True)()
+    assert 'a' in result_w_ignore.index
+    assert '_index_0' not in result_w_ignore.index
+
+
 def test_cut_w_include_empty_bins() -> None:
     bins = 3
     p_series = pd.Series(data=[1, 1, 2, 3, 6, 7, 8], name='a')
