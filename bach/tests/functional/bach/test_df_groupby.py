@@ -688,22 +688,3 @@ def test_materialize_on_double_aggregation(pg_engine):
     btg_materialized_mean = btg_materialized.founding_sum.mean()
     # did not get materialized again
     assert btg_materialized_mean.base_node == btg_materialized.base_node
-    assert btg_materialized.founding_sum.mean().value == 2413.5
-
-
-def test_unmaterializable_groupby_boolean_functions(engine):
-    # Windowing function are not allowed as boolean row selectors.
-    bt = get_df_with_test_data(engine, full_data_set=True)
-    btg_min_fnd = bt.groupby('municipality')['founding'].min()
-
-    assert btg_min_fnd.base_node == bt.base_node
-    assert btg_min_fnd.group_by != bt.group_by
-    assert not btg_min_fnd.expression.is_single_value
-
-    with pytest.raises(ValueError, match=r'dtypes of indexes to be merged should be the same'):
-        # todo pandas: Can only compare identically-labeled Series objects
-        bt[btg_min_fnd == bt.founding]
-
-    with pytest.raises(ValueError, match=r'dtypes of indexes to be merged should be the same'):
-        # todo pandas: Can only compare identically-labeled Series objects
-        bt[bt.founding == btg_min_fnd]
