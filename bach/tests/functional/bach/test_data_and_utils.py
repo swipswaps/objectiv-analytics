@@ -257,6 +257,7 @@ def assert_equals_data(
 
 def _get_view_sql_data(df: DataFrame):
     sql = df.view_sql()
+    print(f'\n\n{sql}\n\n')
     db_rows = run_query(df.engine, sql)
     column_names = list(db_rows.keys())
     db_values = [list(row) for row in db_rows]

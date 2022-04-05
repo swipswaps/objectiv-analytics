@@ -1584,8 +1584,8 @@ class DataFrame:
         if is_bigquery(self.engine) and group_by_expressions:
             # BigQuery allows grouping by an expression (other than just a column-reference), but then that
             # expression cannot be in the select (unless all columns that are in the expression are also
-            # grouped on). However, we always include all expressions that are grouped on in the result tho,
-            # as that is the new index. So this presents a problem.
+            # grouped on). However, we always include all expressions that are grouped on in the result, as
+            # that is the new index. So this presents a problem.
             # To prevent problems with this we add the group-by expressions to the frame, materialize them,
             # and then create the group-by.
             # TODO: situations with more than one expression that refers the same column (for all databases)
