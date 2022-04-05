@@ -7,6 +7,7 @@ import pytest
 
 from bach import Series, SeriesAbstractNumeric
 from bach.partitioning import GroupingList, GroupingSet, Rollup, Cube
+from sql_models.util import is_postgres
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
 
@@ -123,14 +124,15 @@ def test_group_by_multiple_syntax(engine):
         }
 
 
-def test_group_by_expression(pg_engine):
-    # TODO: BigQuery
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)
+def test_group_by_expression(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby(bt['city'].str[:1])
     result_bt = btg.nunique()
 
-    # no materialization has taken place yet.
-    assert result_bt.base_node == bt.base_node
+    if is_postgres(engine):
+        # no materialization has taken place yet. Only supported on Postgres, on other BigQuery we have to
+        # materialize
+        assert result_bt.base_node == bt.base_node
 
     for d in result_bt.data.values():
         assert not d.expression.is_single_value
@@ -211,10 +213,9 @@ def test_group_by_series_selection(engine):
     }
 
 
-def test_dataframe_agg_all(pg_engine):
-    # TODO: BigQuery
+def test_dataframe_agg_all(engine):
     # test agg syntax for single function on a Dataframe that has no group_by set, e.g. on all rows.
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)[['municipality', 'inhabitants']]
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants']]
 
     result_bt = bt.nunique()
     result_bt_str = bt.agg('nunique')

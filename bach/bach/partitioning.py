@@ -123,7 +123,7 @@ class Cube(GroupBy):
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
         # help mypy, our parent always returns an Expression
-        return Expression.construct('cube {}', cast(Expression, super().get_group_by_column_expression()))
+        return Expression.construct('cube ({})', cast(Expression, super().get_group_by_column_expression()))
 
 
 class Rollup(GroupBy):
@@ -138,7 +138,7 @@ class Rollup(GroupBy):
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
         # help mypy, our parent always returns an Expression
-        return Expression.construct('rollup {}', cast(Expression, super().get_group_by_column_expression()))
+        return Expression.construct('rollup ({})', cast(Expression, super().get_group_by_column_expression()))
 
 
 class GroupingList(GroupBy):
@@ -169,14 +169,14 @@ class GroupingList(GroupBy):
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
         grouping_optional_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
+        grouping_expr_list: List[Expression] = []
+        for expr in grouping_optional_expr_list:
+            if expr is None:
+                grouping_expr_list.append(Expression.construct(''))
+            else:
+                grouping_expr_list.append(expr)
 
-        # Ensure that there are no None expressions in the list. If there are that's a bug, and we are
-        # okay with breaking here. Without the cast mypy will complain as construct doesn't accept Nones
-        if None in grouping_optional_expr_list:
-            raise Exception(f'Result of get_group_by_column_expression() calls contains None, unexpected.')
-        grouping_expr_list = cast(List[Expression], grouping_optional_expr_list)
-
-        fmtstr = ', '.join(["{}"] * len(grouping_expr_list))
+        fmtstr = ', '.join(["({})"] * len(grouping_expr_list))
         return Expression.construct(fmtstr, *grouping_expr_list)
 
 
@@ -187,14 +187,14 @@ class GroupingSet(GroupingList):
     """
     def get_group_by_column_expression(self) -> Optional[Expression]:
         grouping_optional_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
+        grouping_expr_list: List[Expression] = []
+        for expr in grouping_optional_expr_list:
+            if expr is None:
+                grouping_expr_list.append(Expression.construct(''))
+            else:
+                grouping_expr_list.append(expr)
 
-        # Ensure that there are no None expressions in the list. If there are that's a bug, and we are
-        # okay with breaking here. Without the cast mypy will complain as construct doesn't accept Nones
-        if None in grouping_optional_expr_list:
-            raise Exception(f'Result of get_group_by_column_expression() calls contains None, unexpected.')
-        grouping_expr_list = cast(List[Expression], grouping_optional_expr_list)
-
-        fmtstr = ', '.join(["{}"] * len(grouping_expr_list))
+        fmtstr = ', '.join(["({})"] * len(grouping_expr_list))
         fmtstr = f'grouping sets ({fmtstr})'
         return Expression.construct(fmtstr, *grouping_expr_list)
 
