@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from bach import DataFrame, Series
+from sql_models.util import is_bigquery, is_postgres
 from tests.functional.bach.test_data_and_utils import assert_equals_data, df_to_list, \
     get_df_with_test_data, get_bt_with_test_data
 
@@ -166,8 +167,18 @@ def test_get_item_mixed_groupby(engine):
         grouped[bt.founding < 1300]
 
     # check that it's illegal to mix different groupings in filters
-    with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries with non matching group_by"):
-        grouped[grouped_other_sum > 50000]
+    if is_postgres(engine):
+        # On postgres grouped_other has not been materialized
+        with pytest.raises(ValueError,
+                           match="Can not apply aggregated BooleanSeries with non matching group_by"):
+            df_filtered = grouped[grouped_other_sum > 50000]
+    elif is_bigquery(engine):
+        # On BigQuery grouped_other has been materialized, and thus the following statement should NOT
+        # give an error
+            df_filtered = grouped[grouped_other_sum > 50000]
+    else:
+        raise Exception(f'Engine {engine.name} not supported by test.')
+
     # check the other way around for good measure
     with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries with non matching group_by"):
         grouped_other[grouped_sum > 50000]
