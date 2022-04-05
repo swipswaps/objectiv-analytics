@@ -78,6 +78,10 @@ class GroupBy:
             # they will not be aggregated by this group_by
             self._index[col.name] = col.copy_override(index={}, group_by=None, index_sorting=[])
 
+    @property
+    def index(self) -> Dict[str, Series]:
+        return copy(self._index)
+
     def __eq__(self, other):
         if not isinstance(other, GroupBy):
             return False
@@ -92,15 +96,16 @@ class GroupBy:
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
         """
-        get the group_by expression, including all the relevant columns and the way of grouping,
-        but without the "group by" clause, as these potentially have to be nested into one group-by
-        """
-        fmtstr = ', '.join(['{}'] * len(self._index))
-        return Expression.construct(f'({fmtstr})', *[g.expression for g in self._index.values()])
+        Get the group_by expression, including all the relevant columns and the way of grouping,
+        but without the "group by" clause, as these potentially have to be nested into one group-by.
 
-    @property
-    def index(self) -> Dict[str, Series]:
-        return copy(self._index)
+        Will return None if self.index is empty, i.e. there was a group-by but no columns are
+        specified.
+        """
+        if not self.index:
+            return None
+        fmtstr = ', '.join(['{}'] * len(self.index))
+        return Expression.construct(f'{fmtstr}', *[g.expression for g in self.index.values()])
 
     def copy_override_base_node(self: G, base_node: BachSqlModel) -> G:
         new_cols = [col.copy_override(base_node=base_node) for col in self.index.values()]

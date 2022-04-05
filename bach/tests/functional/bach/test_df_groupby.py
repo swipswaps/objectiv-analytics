@@ -10,9 +10,8 @@ from bach.partitioning import GroupingList, GroupingSet, Rollup, Cube
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
 
-def test_group_by_all(pg_engine):
-    # TODO: BigQuery
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)
+def test_group_by_all(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby()
     result_bt = btg.nunique()
 
@@ -79,10 +78,9 @@ def test_group_by_single_syntax(engine):
         }
 
 
-def test_group_by_multiple_syntax(pg_engine):
-    # TODO: BigQuery
+def test_group_by_multiple_syntax(engine):
     # Test whether multiple columns are accepted in different forms
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)
+    bt = get_df_with_test_data(engine, full_data_set=True)
     result_bt_list = bt.groupby(['municipality', 'city']).count()
     result_bt_list_series = bt.groupby([bt.municipality, bt.city]).count()
     result_bt_list_mixed1 = bt.groupby(['municipality', bt.city]).count()
