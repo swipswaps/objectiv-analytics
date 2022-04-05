@@ -75,7 +75,7 @@ def test_unstack_level() -> None:
     with pytest.raises(IndexError, match=r'Too many levels'):
         bt.unstack(level=3)
 
-    with pytest.raises(IndexError, match=r'does not exist in DataFrame index'):
+    with pytest.raises(IndexError, match=r'does not exist in DataFrame/Series index'):
         bt.unstack(level='random')
 
 
