@@ -167,21 +167,18 @@ def test_get_item_mixed_groupby(engine):
         grouped[bt.founding < 1300]
 
     # check that it's illegal to mix different groupings in filters
-    if is_postgres(engine):
-        # On postgres grouped_other has not been materialized
-        with pytest.raises(ValueError,
-                           match="Can not apply aggregated BooleanSeries with non matching group_by"):
-            df_filtered = grouped[grouped_other_sum > 50000]
-    elif is_bigquery(engine):
-        # On BigQuery grouped_other has been materialized, and thus the following statement should NOT
-        # give an error
-            df_filtered = grouped[grouped_other_sum > 50000]
-    else:
-        raise Exception(f'Engine {engine.name} not supported by test.')
+    expected_message = "Can not apply aggregated BooleanSeries with non matching group_by"
+    if is_bigquery(engine):
+        # on bigquery we have materialized grouped_other. This results in a different error message
+        expected_message = "Cannot apply Boolean series with a different base_node to DataFrame"
+
+    with pytest.raises(ValueError, match=expected_message):
+            grouped[grouped_other_sum > 50000]
 
     # check the other way around for good measure
-    with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries with non matching group_by"):
+    with pytest.raises(ValueError, match=expected_message):
         grouped_other[grouped_sum > 50000]
+
     # or the combination of both, behold!
     with pytest.raises(ValueError, match="Cannot apply Boolean series with a different base_node to DataFrame"):
         # todo do internal merge, similar to setting with different base nodes
