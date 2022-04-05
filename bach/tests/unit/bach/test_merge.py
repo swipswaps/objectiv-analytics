@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql.base import PGDialect
 from bach.expression import Expression
 from bach.merge import (
     _determine_merge_on, _determine_result_columns, ResultSeries, merge, How, MergeOn,
-    _verify_on_conflicts
+    _verify_on_conflicts, _resolve_merge_expression_references
 )
 from tests.unit.bach.util import get_fake_df
 
@@ -332,6 +332,16 @@ def test_verify_on_conflicts_conditional(dialect) -> None:
             left_index=False,
             right_index=False,
         )
+
+
+def test__resolve_merge_expression_reference(dialect) -> None:
+    left = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+    left = left.materialize()
+    right = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+
+    bool_series = left['b'].astype(int) == right['b'].astype(int)
+    result = _resolve_merge_expression_references(dialect, left, right, MergeOn([], [], [bool_series]))
+    assert result[0].to_sql(dialect) == 'cast("l"."b" as bigint) = cast("r"."b" as bigint)'
 
 
 def call__determine_merge_on(

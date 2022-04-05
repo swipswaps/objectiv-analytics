@@ -4,12 +4,15 @@ Copyright 2021 Objectiv B.V.
 import json
 from typing import Optional, Dict, Union, TYPE_CHECKING, List, Tuple
 
+from sqlalchemy.engine import Dialect
+
 from bach.series import Series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from bach.sql_model import BachSqlModel
 from bach.types import DtypeOrAlias
-from sql_models.util import quote_string
+from sql_models.constants import DBDialect
+from sql_models.util import quote_string, is_postgres, DatabaseNotSupportedException
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
@@ -119,7 +122,9 @@ class SeriesJsonb(Series):
     dtype = 'jsonb'
     # todo can only assign a type to one series type, and object is quite generic
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
-    supported_db_dtype = 'jsonb'
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'jsonb',
+    }
     supported_value_types = (dict, list)
     return_dtype = dtype
 
@@ -307,21 +312,23 @@ class SeriesJsonb(Series):
         return self.Json(self)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as jsonb)', literal)
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        if not is_postgres(dialect):
+            raise DatabaseNotSupportedException(dialect)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[dict, list]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[dict, list]) -> Expression:
         json_value = json.dumps(value)
         return Expression.string_value(json_value)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype in ['jsonb', 'json']:
             return expression
         if source_dtype != 'string':
             raise ValueError(f'cannot convert {source_dtype} to jsonb')
-        return Expression.construct('cast({} as jsonb)', expression)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def _comparator_operation(self, other, comparator, other_dtypes=('json', 'jsonb')):
         return self._binary_operation(
@@ -356,7 +363,9 @@ class SeriesJson(SeriesJsonb):
     """
     dtype = 'json'
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
-    supported_db_dtype = 'json'
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'json',
+    }
     return_dtype = 'jsonb'
 
     def __init__(self,

@@ -2,7 +2,8 @@
 Copyright 2021 Objectiv B.V.
 """
 import datetime
-from typing import Type
+import math
+from typing import Type, Any, List
 import pytest
 
 import numpy as np
@@ -13,92 +14,120 @@ from bach import SeriesInt64, SeriesString, SeriesFloat64, SeriesDate, SeriesTim
 from sql_models.util import is_postgres
 from tests.conftest import get_postgres_engine_dialect
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_postgres_type, \
-    assert_equals_data, CITIES_INDEX_AND_COLUMNS, get_bt_with_railway_data, get_df_with_test_data
+    assert_equals_data, CITIES_INDEX_AND_COLUMNS, get_bt_with_railway_data, get_df_with_test_data, run_query
 
 
-def check_set_const(engine, constant, expected_series: Type[Series], expected_pg_db_type: str):
+def check_set_const(engine, constants: List[Any], expected_series: Type[Series], expected_pg_db_type: str):
     bt = get_df_with_test_data(engine)
-    bt['new_column'] = constant
+    column_names = []
+    for i, constant in enumerate(constants):
+        column_name = f'new_columns_{i}'
+        column_names.append(column_name)
+        bt[column_name] = constant
 
     if is_postgres(engine):
         # we don't have an easy way to get the database type in BigQuery, so only support that check for PG
-        assert_postgres_type(bt['new_column'], expected_pg_db_type, expected_series)
+        for column_name in column_names:
+            assert_postgres_type(bt[column_name], expected_pg_db_type, expected_series)
 
     assert_equals_data(
         bt,
         expected_columns=[
             '_index_skating_order',  # index
             'skating_order', 'city', 'municipality', 'inhabitants', 'founding',  # original columns
-            'new_column'  # new
-        ],
+        ] + column_names,
         expected_data=[
-            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, constant],
-            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, constant],
-            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, constant]
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285] + constants,
+            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456] + constants,
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268] + constants
         ]
     )
-    assert bt.new_column == bt['new_column']
 
 
 def test_set_const_int(engine):
-    check_set_const(engine, np.int64(4), SeriesInt64, 'bigint')
-    check_set_const(engine, 5, SeriesInt64, 'bigint')
-    check_set_const(engine, 2147483647, SeriesInt64, 'bigint')
-    check_set_const(engine, 2147483648, SeriesInt64, 'bigint')
+    constants = [
+        np.int64(4),
+        5,
+        2147483647,
+        2147483648
+    ]
+    check_set_const(engine, constants, SeriesInt64, 'bigint')
 
 
-def test_set_const_float():
-    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
-    check_set_const(engine, 5.1, SeriesFloat64, 'double precision')
+def test_set_const_float(engine):
+    constants = [
+        5.1,
+        0.0,
+        -5.1,
+        -0.0,
+        float('infinity'),
+        float('-infinity')
+    ]
+    check_set_const(engine, constants, SeriesFloat64, 'double precision')
+
+    # Special case: test the float value 'Not a Number' (NaN). We cannot use check_set_const(), as that will
+    # check that the result contains NaN, and `NaN == NaN` gives `False`, and thus the test would incorrectly
+    # fail.
+    constant = float('NaN')
+    bt = get_df_with_test_data(engine)
+    bt['new_column'] = constant
+    result = run_query(engine=engine, sql=bt.view_sql())
+    for row in result:
+        assert math.isnan(row['new_column'])
 
 
 def test_set_const_bool(engine):
-    check_set_const(engine, True, SeriesBoolean, 'boolean')
+    constants = [
+        True,
+        False
+    ]
+    check_set_const(engine, constants, SeriesBoolean, 'boolean')
 
 
 def test_set_const_str(engine):
-    check_set_const(engine, 'keatsen', SeriesString, 'text')
+    constants = [
+        'keatsen'
+    ]
+    check_set_const(engine, constants, SeriesString, 'text')
 
 
 def test_set_const_date(engine):
-    check_set_const(engine, datetime.date(2019, 1, 5), SeriesDate, 'date')
+    constants = [
+        datetime.date(2019, 1, 5)
+    ]
+    check_set_const(engine, constants, SeriesDate, 'date')
 
 
-def test_set_const_datetime():
-    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
-    check_set_const(engine, datetime.datetime.now(), SeriesTimestamp, 'timestamp without time zone')
+def test_set_const_datetime(engine):
+    constants = [
+        datetime.datetime.now()
+    ]
+    check_set_const(engine, constants, SeriesTimestamp, 'timestamp without time zone')
 
 
-def test_set_const_time():
-    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
-    check_set_const(
-        engine,
-        datetime.time.fromisoformat('00:05:23.283'),
-        SeriesTime,
-        'time without time zone'
-    )
+def test_set_const_time(engine):
+    constants = [
+        datetime.time.fromisoformat('00:05:23.283')
+    ]
+    check_set_const(engine, constants, SeriesTime, 'time without time zone')
 
 
 def test_set_const_timedelta():
     engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
-    check_set_const(
-        engine,
+    constants = [
         np.datetime64('2005-02-25T03:30') - np.datetime64('2005-01-25T03:30'),
-        SeriesTimedelta,
-        'interval'
-    )
-    check_set_const(
-        engine,
         datetime.datetime.now() - datetime.datetime(2015, 4, 6),
-        SeriesTimedelta,
-        'interval'
-    )
+    ]
+    check_set_const(engine, constants, SeriesTimedelta, 'interval')
 
 
 def test_set_const_json():
     engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
-    check_set_const(engine, ['a', 'b', 'c'], SeriesJsonb, 'jsonb')
-    check_set_const(engine, {'a': 'b', 'c': 'd'}, SeriesJsonb, 'jsonb')
+    constants = [
+        ['a', 'b', 'c'],
+        {'a': 'b', 'c': 'd'},
+    ]
+    check_set_const(engine, constants, SeriesJsonb, 'jsonb')
 
 
 def test_set_const_int_from_series():
