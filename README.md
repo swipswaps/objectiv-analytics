@@ -29,8 +29,8 @@ Follow our step-by-step [Quickstart Guide](https://objectiv.io/docs/home/quickst
 ### Open analytics taxonomy
 
 | [![image](https://user-images.githubusercontent.com/82152911/159288731-a6351cd2-13ff-4cdc-890a-37efff0be076.png)](https://www.objectiv.io/docs/taxonomy)| 
-| --- |
-| _hi_ |
+|:--:|
+| *The open analytics taxonomy* |
 
 Our proposal for [a common way to collect & structure analytics data](https://www.objectiv.io/docs/taxonomy). Describes classes for common user interactions and their contexts. 
 
@@ -63,6 +63,7 @@ Python-based [modeling library](https://www.objectiv.io/docs/modeling/bach) that
 * Pandas-compatible: Use popular pandas ML libraries in your models
 * Output your entire model to SQL with a single command
 
+---
 
 For more information, visit [objectiv.io](https://www.objectiv.io) or [Objectiv Docs](https://www.objectiv.io/docs) - Objectiv's official documentation..
 
