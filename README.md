@@ -33,7 +33,7 @@ Our proposal for [a common way to collect & structure analytics data](https://ww
 
 [![taxonomy](https://user-images.githubusercontent.com/82152911/162000133-1eea0192-c882-4121-a866-8c1a3f8ffee3.svg)](https://www.objectiv.io/docs/taxonomy)
 
-* Used as an instrument of validation by Objectiv's Tracker SDK
+* Used for validation of data collection and debugging of instrumentation
 * Designed to ensure collected data is model-ready without cleaning, transformation or tracking plans
 * Enables models to be shared and reused as a result of consistent data collection
 
@@ -48,7 +48,7 @@ Supports front-end engineers to [implement tracking instrumentation](https://www
  
 ### Open model hub
 
-A [growing collection of pre-built models](https://www.objectiv.io/docs/modeling/models) that you run, combine or customize to quickly build in-depth analyses.
+A [growing collection of pre-built models](https://www.objectiv.io/docs/modeling/example_notebooks) that you run, combine or customize to quickly build in-depth analyses.
 
 * All models work with any dataset that embraces the open analytics taxonomy
 * Currently covers a handful of common product analytics operations
@@ -58,7 +58,7 @@ A [growing collection of pre-built models](https://www.objectiv.io/docs/modeling
 
 Python-based [modeling library](https://www.objectiv.io/docs/modeling/bach) that enables using pandas-like operations on the full SQL dataset.
 
-* Includes optimized operations for datasets that embrace the open analytics taxonomy
+* Includes specific operations to easily work with datasets that embrace the open analytics taxonomy
 * Pandas-compatible: use popular pandas ML libraries in your models
 * Output your entire model to SQL with a single command
 
@@ -66,7 +66,7 @@ Python-based [modeling library](https://www.objectiv.io/docs/modeling/bach) that
 
 ## Compatible data stores
 
-Objectiv currently supports PostgreSQL. We're working on support for Snowplow and Bigquery for event handling at scale. Amazon Redshift is planned next.
+Objectiv currently supports PostgreSQL. We're working on support for Snowplow and BigQuery for event handling at scale. Amazon Redshift is planned next.
 
 ---
 
