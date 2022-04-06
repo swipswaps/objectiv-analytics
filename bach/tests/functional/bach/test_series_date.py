@@ -7,7 +7,7 @@ import pytest
 
 from bach import SeriesDate
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_food_data, \
-    assert_postgres_type, get_bt_with_test_data
+    assert_postgres_type, get_df_with_test_data
 from tests.functional.bach.test_series_timestamp import types_plus_min
 
 
@@ -101,18 +101,19 @@ def test_date_format():
     )
 
 
-def test_date_arithmetic():
+def test_date_arithmetic(pg_engine):
+    # TODO: BigQuery
     data = [
         ['d', datetime.date(2020, 3, 11), 'date', (None, 'timedelta')],
         ['t', datetime.time(23, 11, 5), 'time', (None, None)],
         ['td', datetime.timedelta(days=321, seconds=9877), 'timedelta', ('date', 'date')],
         ['dt', datetime.datetime(2021, 5, 3, 11, 28, 36, 388000), 'timestamp', (None, None)]
     ]
-    types_plus_min(data, datetime.date(2021, 7, 23), 'date')
+    types_plus_min(pg_engine, data, datetime.date(2021, 7, 23), 'date')
 
 
-def test_to_pandas():
-    bt = get_bt_with_test_data()
+def test_to_pandas(engine):
+    bt = get_df_with_test_data(engine)
     bt['d'] = datetime.date(2020, 3, 11)
     bt[['d']].to_pandas()
     assert bt[['d']].to_numpy()[0] == [datetime.date(2020, 3, 11)]

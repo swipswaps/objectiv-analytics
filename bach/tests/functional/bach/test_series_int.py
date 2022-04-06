@@ -3,12 +3,12 @@ Copyright 2021 Objectiv B.V.
 """
 from bach import Series, SeriesInt64
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
-    assert_postgres_type
-from tests.functional.bach.test_series_numeric import _test_simple_arithmetic
+    assert_postgres_type, get_df_with_test_data
+from tests.functional.bach.test_series_numeric import helper_test_simple_arithmetic
 
 
-def test_add_int_constant():
-    bt = get_bt_with_test_data()
+def test_add_int_constant(engine):
+    bt = get_df_with_test_data(engine)
     bts = bt['founding'] + 200
     assert isinstance(bts, Series)
     assert_postgres_type(bt['founding'], 'bigint', SeriesInt64)
@@ -23,8 +23,8 @@ def test_add_int_constant():
     )
 
 
-def test_create_big_int_constant():
-    bt = get_bt_with_test_data()
+def test_create_big_int_constant(engine):
+    bt = get_df_with_test_data(engine)
     bt = bt[['city']]
     # just under max size of a 4 byte integer
     bt['new'] = 2147483647
@@ -46,8 +46,8 @@ def test_create_big_int_constant():
     )
 
 
-def test_comparator_int_constant_boolean():
-    bt = get_bt_with_test_data()
+def test_comparator_int_constant_boolean(engine):
+    bt = get_df_with_test_data(engine)
     # [1, 1285],
     # [2, 1456],
     # [3, 1268]
@@ -122,8 +122,8 @@ def test_comparator_int_constant_boolean():
     )
 
 
-def test_add_int_series():
-    bt = get_bt_with_test_data()
+def test_add_int_series(engine):
+    bt = get_df_with_test_data(engine)
     # Add two integer columns
     bts = bt['founding'] + bt['inhabitants']
     assert isinstance(bts, Series)
@@ -150,8 +150,9 @@ def test_add_int_series():
     )
 
 
-def test_divide_constant():
-    bt = get_bt_with_test_data()
+def test_divide_constant(pg_engine):
+    # TODO: BigQuery
+    bt = get_df_with_test_data(pg_engine)
     bts = bt['inhabitants'] / 1000
     assert isinstance(bts, Series)
     assert_equals_data(
@@ -165,8 +166,8 @@ def test_divide_constant():
     )
 
 
-def test_integer_divide_constant():
-    bt = get_bt_with_test_data()
+def test_integer_divide_constant(engine):
+    bt = get_df_with_test_data(engine)
     bts = bt['inhabitants'] // 1000
     assert isinstance(bts, Series)
     assert_equals_data(
@@ -179,16 +180,18 @@ def test_integer_divide_constant():
         ]
     )
 
-def test_int_int_arithmetic():
-    _test_simple_arithmetic(10, 3)
+
+def test_int_int_arithmetic(engine):
+    helper_test_simple_arithmetic(engine=engine, a=10, b=3)
 
 
-def test_int_float_arithmetic():
-    _test_simple_arithmetic(10, 2.25)
+def test_int_float_arithmetic(engine):
+    helper_test_simple_arithmetic(engine=engine, a=10, b=2.25)
 
 
-def test_int_shifts():
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+def test_int_shifts(pg_engine):
+    # TODO: BigQuery
+    bt = get_df_with_test_data(pg_engine, full_data_set=True)[['inhabitants']]
     expected = [8, 3]
     bt['a'] = 8
     bt['b'] = 3

@@ -5,7 +5,7 @@ import pytest
 
 from bach import DataFrame, Series
 from tests.functional.bach.test_data_and_utils import assert_equals_data, df_to_list, \
-    get_df_with_test_data, get_bt_with_test_data
+    get_df_with_test_data
 
 
 def test_get_item_single(engine):
@@ -64,8 +64,9 @@ def test_get_item_multiple(engine):
     )
 
 
-def test_positional_slicing():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_positional_slicing(pg_engine):
+    # TODO: BigQuery
+    bt = get_df_with_test_data(pg_engine, full_data_set=True)
 
     class ReturnSlice:
         def __getitem__(self, key):
