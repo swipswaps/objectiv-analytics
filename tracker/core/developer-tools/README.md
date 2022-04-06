@@ -1,29 +1,24 @@
-# Objectiv Schema TypeScript
-
-TypeScript implementation of the open taxonomy for analytics for Objectiv trackers.
+# Objectiv JavaScript Developer Tools 
+Validation and logging utilities to help pinpoint instrumentation issues while developing.  
 
 ---
-
 ## Package installation
 
 ```sh
-yarn add @objectiv/schema --dev
+yarn add @objectiv/developer-tools --dev
 ```
 
 ### or
-
 ```sh
-npm install @objectiv/schema --save-dev
+npm install @objectiv/developer-tools --save-dev
 ```
 
 ## Usage
-
 For a detailed usage guide, see the documentation: [https://objectiv.io/docs](https://objectiv.io/docs)
 
 ## Copyright and license
-
 Licensed and distributed under the Apache 2.0 License (An OSI Approved License).
 
-Copyright (c) 2021-2022 Objectiv B.V.
+Copyright (c) 2022 Objectiv B.V.
 
 All rights reserved.

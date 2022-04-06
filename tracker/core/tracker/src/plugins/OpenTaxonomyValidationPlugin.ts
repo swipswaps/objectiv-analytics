@@ -24,6 +24,16 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    * At initialization, we retrieve TrackerPlatform and initialize all Validation Rules.
    */
   initialize({ platform }: TrackerInterface) {
+    import('@objectiv/developer-tools')
+      .then((module) => {
+        TrackerConsole.log(module.GlobalContextErrorMessages);
+      })
+      .catch(() => {
+        TrackerConsole.debug(
+          '@objectiv/developer-tools not found: OpenTaxonomyValidationPlugin validation has been disabled.'
+        );
+      });
+
     this.validationRules = [
       new GlobalContextValidationRule({
         platform,

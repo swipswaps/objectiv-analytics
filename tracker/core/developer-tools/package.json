@@ -1,0 +1,67 @@
+{
+  "name": "@objectiv/developer-tools",
+  "version": "0.0.18",
+  "description": "Validation and logging utilities to help pinpoint instrumentation issues while developing",
+  "license": "Apache-2.0",
+  "homepage": "https://objectiv.io",
+  "keywords": [
+    "objectiv",
+    "tracking",
+    "analytics",
+    "events",
+    "taxonomy",
+    "validation",
+    "logging",
+    "debugging",
+    "development"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/objectiv/objectiv-analytics.git",
+    "directory": "tracker/core/developer-tools"
+  },
+  "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
+  "contributors": [
+    {
+      "name": "Surai Di Rosa",
+      "email": "surai.dirosa@gmail.com",
+      "url": "https://github.com/sdirosa"
+    }
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/esm/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "generate": "ts-node src/scripts/generateErrorMessages.ts && yarn prettify",
+    "build": "tsup src/index.ts --format cjs,esm --legacy-output --minify --dts --sourcemap --clean",
+    "prettify": "prettier --write .",
+    "tsc": "tsc --noEmit",
+    "check:dependencies": "npx depcheck",
+    "npm-publish": "shx rm -f .npmrc && npm publish --access=public",
+    "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.4.1",
+    "jest": "^27.5.1",
+    "jest-standard-reporter": "^2.0.0",
+    "prettier": "^2.5.1",
+    "shx": "^0.3.4",
+    "ts-jest": "^27.1.3",
+    "ts-node": "^10.7.0",
+    "tsup": "^5.12.0",
+    "typescript": "^4.6.2"
+  },
+  "peerDependencies": {
+    "@objectiv/tracker-core": "^0.0.18"
+  }
+}

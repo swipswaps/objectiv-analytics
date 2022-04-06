@@ -2,18 +2,15 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { TrackerPlatform } from '../Tracker';
-import { TrackerConsole } from '../TrackerConsole';
-import { TrackerEvent } from '../TrackerEvent';
-import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
-import { ContextErrorType } from './ContextErrorMessages';
+import { LocationContextErrorMessages, LocationContextErrorType } from '@objectiv/developer-tools';
+import { TrackerConsole, TrackerEvent, TrackerPlatform, TrackerValidationRuleInterface } from '@objectiv/tracker-core';
+import { LocationContextName } from '../ContextNames';
 import { ContextValidationRuleConfig } from './ContextValidationRuleConfig';
-import { logContextValidationRuleError } from './logContextValidationRuleError';
 
 /**
  * LocationStack order matters, the LocationContextValidationRule config supports specifying a required position.
  */
-export type LocationContextValidationRuleConfig = ContextValidationRuleConfig & {
+export type LocationContextValidationRuleConfig = ContextValidationRuleConfig<LocationContextName> & {
   /**
    * Optional. Restricts in which position the specified LocationContext may be.
    */
@@ -31,7 +28,7 @@ export class LocationContextValidationRule
 {
   readonly validationRuleName = `LocationContextValidationRule`;
   readonly platform: TrackerPlatform;
-  readonly contextName: string;
+  readonly contextName: LocationContextName;
   readonly once?: boolean;
   readonly position?: number;
   readonly logPrefix?: string;
@@ -64,12 +61,25 @@ export class LocationContextValidationRule
     const index = event.location_stack.findIndex((context) => context._type === this.contextName);
     const matches = event.location_stack.filter((context) => context._type === this.contextName);
 
+    let errorType: LocationContextErrorType | null = null;
     if (!matches.length) {
-      logContextValidationRuleError({ rule: this, event, type: ContextErrorType.LOCATION_CONTEXT_MISSING });
+      errorType = LocationContextErrorType.LOCATION_CONTEXT_MISSING;
     } else if (this.once && matches.length > 1) {
-      logContextValidationRuleError({ rule: this, event, type: ContextErrorType.LOCATION_CONTEXT_DUPLICATED });
+      errorType = LocationContextErrorType.LOCATION_CONTEXT_DUPLICATED;
     } else if (typeof this.position === 'number' && index !== this.position) {
-      logContextValidationRuleError({ rule: this, event, type: ContextErrorType.LOCATION_CONTEXT_WRONG_POSITION });
+      errorType = LocationContextErrorType.LOCATION_CONTEXT_WRONG_POSITION;
+    }
+
+    if (errorType) {
+      const errorMessagePrefix = `｢objectiv${this.logPrefix ? ':' + this.logPrefix : ''}｣`;
+      const errorMessageTemplate = LocationContextErrorMessages[this.platform][errorType][this.contextName];
+      const errorMessageBody = errorMessageTemplate.replace(/{{eventName}}/g, event._type);
+
+      TrackerConsole.groupCollapsed(`%c${errorMessagePrefix} Error: ${errorMessageBody}`, 'color:red');
+      TrackerConsole.group(`Event:`);
+      TrackerConsole.log(event);
+      TrackerConsole.groupEnd();
+      TrackerConsole.groupEnd();
     }
   }
 }
