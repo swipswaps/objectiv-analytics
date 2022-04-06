@@ -2,14 +2,18 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import {
+  GlobalContextName,
+  GlobalContextValidationRule,
+  LocationContextName,
+  LocationContextValidationRule
+} from "@objectiv/developer-tools";
 import { isDevMode } from '../helpers';
 import { TrackerInterface } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerPluginInterface } from '../TrackerPluginInterface';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
-import { GlobalContextValidationRule } from '../validationRules/GlobalContextValidationRule';
-import { LocationContextValidationRule } from '../validationRules/LocationContextValidationRule';
 
 /**
  * Validates a number of rules related to the Open Taxonomy:
@@ -24,27 +28,17 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    * At initialization, we retrieve TrackerPlatform and initialize all Validation Rules.
    */
   initialize({ platform }: TrackerInterface) {
-    import('@objectiv/developer-tools')
-      .then((module) => {
-        TrackerConsole.log(module.GlobalContextErrorMessages);
-      })
-      .catch(() => {
-        TrackerConsole.debug(
-          '@objectiv/developer-tools not found: OpenTaxonomyValidationPlugin validation has been disabled.'
-        );
-      });
-
     this.validationRules = [
       new GlobalContextValidationRule({
         platform,
         logPrefix: this.pluginName,
-        contextName: 'ApplicationContext',
+        contextName: GlobalContextName.ApplicationContext,
         once: true,
       }),
       new LocationContextValidationRule({
         platform,
         logPrefix: this.pluginName,
-        contextName: 'RootLocationContext',
+        contextName: LocationContextName.RootLocationContext,
         once: true,
         position: 0,
       }),

@@ -2,11 +2,15 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import {
+  GlobalContextName,
+  GlobalContextValidationRule,
+  LocationContextName,
+  LocationContextValidationRule
+} from '@objectiv/developer-tools';
 import { LogTransport, MockConsoleImplementation, UnusableTransport } from '@objectiv/testing-tools';
 import {
   ContextsConfig,
-  GlobalContextValidationRule,
-  LocationContextValidationRule,
   Tracker,
   TrackerConfig,
   TrackerConsole,
@@ -38,13 +42,13 @@ describe('Tracker', () => {
           new GlobalContextValidationRule({
             platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'ApplicationContext',
+            contextName: GlobalContextName.ApplicationContext,
             once: true,
           }),
           new LocationContextValidationRule({
             platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'RootLocationContext',
+            contextName: LocationContextName.RootLocationContext,
             once: true,
             position: 0,
           }),
@@ -78,13 +82,13 @@ describe('Tracker', () => {
           new GlobalContextValidationRule({
             platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'ApplicationContext',
+            contextName: GlobalContextName.ApplicationContext,
             once: true,
           }),
           new LocationContextValidationRule({
             platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'RootLocationContext',
+            contextName: LocationContextName.RootLocationContext,
             once: true,
             position: 0,
           }),
@@ -118,13 +122,13 @@ describe('Tracker', () => {
           new GlobalContextValidationRule({
             platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'ApplicationContext',
+            contextName: GlobalContextName.ApplicationContext,
             once: true,
           }),
           new LocationContextValidationRule({
             platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'RootLocationContext',
+            contextName: LocationContextName.RootLocationContext,
             once: true,
             position: 0,
           }),

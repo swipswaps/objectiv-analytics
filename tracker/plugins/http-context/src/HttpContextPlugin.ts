@@ -2,8 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { GlobalContextName, GlobalContextValidationRule } from "@objectiv/developer-tools";
 import {
-  GlobalContextValidationRule,
   makeHttpContext,
   TrackerConsole,
   TrackerEvent,
@@ -28,7 +28,7 @@ export class HttpContextPlugin implements TrackerPluginInterface {
       new GlobalContextValidationRule({
         platform: tracker.platform,
         logPrefix: this.pluginName,
-        contextName: 'HttpContext',
+        contextName: GlobalContextName.HttpContext,
         once: true,
       }),
     ];
