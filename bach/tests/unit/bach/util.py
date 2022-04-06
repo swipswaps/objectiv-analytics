@@ -18,6 +18,7 @@ class FakeEngine:
     """ Helper class that serves as a mock for SqlAlchemy Engine objects """
     dialect: Dialect
     name: str = field(init=False)
+    url: str = 'postgresql://user@host:5432/db'
 
     def __post_init__(self):
         super().__setattr__('name', self.dialect.name)  # set the 'frozen' attribute self.name
