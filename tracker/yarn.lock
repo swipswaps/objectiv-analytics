@@ -1509,6 +1509,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/developer-tools@workspace:core/developer-tools"
   dependencies:
+    "@objectiv/testing-tools": ^0.0.18
     "@types/jest": ^27.4.1
     jest: ^27.5.1
     jest-standard-reporter: ^2.0.0
