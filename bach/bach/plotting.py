@@ -28,9 +28,9 @@ class PlotHandler(object):
         """
         Draw a histogram representation of DataFrame's numeric columns.
 
-        :param by: series to group data by. Currently not supported
+        :param by: series to group data by. Currently, not supported
         :param bins: number of equal-width histogram bins.
-        :param kwargs: additional keyword arguments supported by Pandas DataFrame.plot
+        :param kwargs: additional keyword arguments supported by Pandas ``DataFrame.plot``
 
         :returns: a histogram plot (matplotlib.AxesSubplot)
         """
@@ -43,7 +43,7 @@ class PlotHandler(object):
 
         if not numeric_columns:
             raise ValueError(
-                "hist method requires numerical or datetime columns, nothing to plot."
+                "hist method requires numerical columns, nothing to plot."
             )
 
         from bach.operations.cut import CutOperation
