@@ -582,7 +582,7 @@ class Series(ABC):
 
         mod_other_name = other.name
         if (
-            other.base_node == right.base_node
+            (other.base_node == right.base_node or not update_column_references)
             and set(df.all_series) & {f'{other.name}__other', f'{other.name}__data_column'}
         ):
             post_fix = '__other' if other.name not in self.index else '__data_column'
