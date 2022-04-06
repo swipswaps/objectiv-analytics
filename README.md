@@ -1,7 +1,7 @@
 ![objectiv_logo_light](https://user-images.githubusercontent.com/82152911/159266790-19e0e3d4-0d10-4c58-9da7-16edde9ec05a.svg#gh-light-mode-only "Objectiv Logo")
 ![objectiv_logo_dark](https://user-images.githubusercontent.com/82152911/159266895-39f52604-83c1-438d-96bd-9a6d66e74b08.svg#gh-dark-mode-only "Objectiv Logo")
 
-### Open-source infrastructure for product analytics
+## Open-source infrastructure for product analytics
 
 * Collect model-ready user behavior data and feed it straight into your data warehouse
 * Use pandas-like operations and pre-built models that run on the full SQL dataset
@@ -23,16 +23,15 @@ Follow our step-by-step [Quickstart Guide](https://objectiv.io/docs/home/quickst
 ---
 
 ## What's in the box?
-![objectiv-stack](https://user-images.githubusercontent.com/82152911/159297021-2b5e8d50-2d25-47b8-9326-cea8e5e0e2f4.svg#gh-light-mode-only "Objectiv Stack")
-![objectiv-stack-dark](https://user-images.githubusercontent.com/82152911/159297039-33b32dd2-23dc-41ba-b17a-aa1237953c7a.svg#gh-dark-mode-only "Objectiv Stack")
+![objectiv_stack](https://user-images.githubusercontent.com/82152911/161998050-7ec9e452-20c7-447f-a61f-12b904733c74.svg#gh-light-mode-only "Objectiv Stack")
+![objectiv_stack_dark](https://user-images.githubusercontent.com/82152911/161998028-4dbe0759-fb8d-4579-b2c9-200e69adc821.svg#gh-dark-mode-only "Objectiv Stack")
+
 
 ### Open analytics taxonomy
 
-| [![image](https://user-images.githubusercontent.com/82152911/159288731-a6351cd2-13ff-4cdc-890a-37efff0be076.png)](https://www.objectiv.io/docs/taxonomy)| 
-|:--:|
-| *The open analytics taxonomy* |
-
 Our proposal for [a common way to collect & structure analytics data](https://www.objectiv.io/docs/taxonomy). Describes classes for common user interactions and their contexts. 
+
+[![taxonomy](https://user-images.githubusercontent.com/82152911/162000133-1eea0192-c882-4121-a866-8c1a3f8ffee3.svg)](https://www.objectiv.io/docs/taxonomy)
 
 * Used as an instrument of validation by Objectiv's Tracker SDK
 * Designed to ensure collected data is model-ready without cleaning, transformation or tracking plans
@@ -57,11 +56,17 @@ A [growing collection of pre-built models](https://www.objectiv.io/docs/modeling
 
 ### Bach modeling library
 
-Python-based [modeling library](https://www.objectiv.io/docs/modeling/bach) that enables using pandas-like operations on the full SQL dataset
+Python-based [modeling library](https://www.objectiv.io/docs/modeling/bach) that enables using pandas-like operations on the full SQL dataset.
 
 * Includes optimized operations for datasets that embrace the open analytics taxonomy
-* Pandas-compatible: Use popular pandas ML libraries in your models
+* Pandas-compatible: use popular pandas ML libraries in your models
 * Output your entire model to SQL with a single command
+
+---
+
+## Compatible data stores
+
+Objectiv currently supports PostgreSQL. We're working on support for Snowplow and Bigquery for event handling at scale. Amazon Redshift is planned next.
 
 ---
 
