@@ -1,9 +1,15 @@
 ![objectiv_logo_light](https://user-images.githubusercontent.com/82152911/159266790-19e0e3d4-0d10-4c58-9da7-16edde9ec05a.svg#gh-light-mode-only "Objectiv Logo")
 ![objectiv_logo_dark](https://user-images.githubusercontent.com/82152911/159266895-39f52604-83c1-438d-96bd-9a6d66e74b08.svg#gh-dark-mode-only "Objectiv Logo")
 
-Objectiv is **open-source product analytics** that runs in your notebook.
+### Open-source infrastructure for product analytics
 
-## Getting Started
+* Collect model-ready user behavior data and feed it straight into your data warehouse
+* Use pandas-like operations and pre-built models that run on the full SQL dataset
+* Instantly convert models to SQL to feed all data consumers from a single source of truth
+
+Objectiv is self-hosted, 100% free to use and fully open source.
+
+### Getting Started
 
 Follow our step-by-step [Quickstart Guide](https://objectiv.io/docs/home/quickstart-guide) to set up a fully functional dockerized demo pipeline in under 5 minutes.
 
@@ -14,35 +20,51 @@ Follow our step-by-step [Quickstart Guide](https://objectiv.io/docs/home/quickst
 * [Contribution Guide](https://www.objectiv.io/docs/home/the-project/contribute) - Report bugs, request features and contribution information.
 * [Objectiv.io](https://www.objectiv.io) - Objectiv's official website.
 
-### What's in the box?
+---
+
+## What's in the box?
 ![objectiv-stack](https://user-images.githubusercontent.com/82152911/159297021-2b5e8d50-2d25-47b8-9326-cea8e5e0e2f4.svg#gh-light-mode-only "Objectiv Stack")
 ![objectiv-stack-dark](https://user-images.githubusercontent.com/82152911/159297039-33b32dd2-23dc-41ba-b17a-aa1237953c7a.svg#gh-dark-mode-only "Objectiv Stack")
 
-Objectiv is self-hosted. It includes what you need to answer common product & marketing questions fast and accurately, while
-providing a solid foundation for advanced model building and in-depth analysis.
+### Open analytics taxonomy
+
+| [![image](https://user-images.githubusercontent.com/82152911/159288731-a6351cd2-13ff-4cdc-890a-37efff0be076.png)](https://www.objectiv.io/docs/taxonomy)| 
+| --- |
+| _hi_ |
+
+Our proposal for [a common way to collect & structure analytics data](https://www.objectiv.io/docs/taxonomy). Describes classes for common user interactions and their contexts. 
+
+* Used as an instrument of validation by Objectiv's Tracker SDK
+* Designed to ensure collected data is model-ready without cleaning, transformation or tracking plans
+* Enables models to be shared and reused as a result of consistent data collection
+
+Supports a wide range of product analytics use cases. We're currently working on extending the range of marketing related use cases.
+
+### Tracking SDK
+
+Supports front-end engineers to [implement tracking instrumentation](https://www.objectiv.io/docs/tracking) that embraces the open analytics taxonomy.
+
+* Provides guidance and validation to help setting up error-free instrumentation
+* Support for React, React Native, Angular and Browser
+ 
+### Open model hub
+
+A [growing collection of pre-built models](https://www.objectiv.io/docs/modeling/models) that you run, combine or customize to quickly build in-depth analyses.
+
+* All models work with any dataset that embraces the open analytics taxonomy
+* Currently covers a handful of common product analytics operations
+* More advanced models coming soon (i.e. impact attribution of product features on conversion)
+
+### Bach modeling library
+
+Python-based [modeling library](https://www.objectiv.io/docs/modeling/bach) that enables using pandas-like operations on the full SQL dataset
+
+* Includes optimized operations for datasets that embrace the open analytics taxonomy
+* Pandas-compatible: Use popular pandas ML libraries in your models
+* Output your entire model to SQL with a single command
 
 
-## Highlights
-* Run your entire product analytics workflow straight from your notebook
-* Collect model-ready data without tracking plans, data cleaning or transformations
-* Take pre-built models off the shelf to build in-depth analyses in minutes
-* Get granular slicing control with data that carries the structure of your product's UI
-* Build models on the full SQL dataset with dataframes and pandas-like operations
-* Output models to SQL with one command and feed it into your tools and products
-
-| ![example-call-models-in-model-hub](https://user-images.githubusercontent.com/82152911/159271040-04911fa7-78be-455c-9aa4-5d195936913c.gif) |
-|:--:|
-| *Use pre-built models and [pandas-like operations](https://www.objectiv.io/docs/modeling/) that run on the full dataset as SQL.* |
-
-## The open analytics taxonomy
-
-Objectiv's tracker validates all incoming events against an [open analytics taxonomy](https://www.objectiv.io/docs/taxonomy/). This eliminates the need for a tracking plan and ensures a highly consistent dataset that's ready for modeling without cleaning & transformation. As a result, models and datasets are intercompatible and can be shared and reused.
-
-| [![image](https://user-images.githubusercontent.com/82152911/159288731-a6351cd2-13ff-4cdc-890a-37efff0be076.png)](https://www.objectiv.io/docs/taxonomy/) |
-|:--:|
-| *The [open analytics taxonomy](https://www.objectiv.io/docs/taxonomy/) describes classes for common user interactions and their contexts.*
-
-
+For more information, visit [objectiv.io](https://www.objectiv.io) or [Objectiv Docs](https://www.objectiv.io/docs) - Objectiv's official documentation..
 
 ---
 
