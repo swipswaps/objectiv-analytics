@@ -1590,6 +1590,7 @@ class DataFrame:
             # and then create the group-by.
             # TODO: situations with more than one expression that refers the same column (for all databases)
             #   e.g. df.groupby([df.x >= 0, df.x == 0])
+            #   See https://github.com/objectiv/objectiv-analytics/issues/616
             df_new = df.copy()
             gbc_names: List[str] = [gbc.name for gbc in group_by_columns]
             for gbc in group_by_columns:
