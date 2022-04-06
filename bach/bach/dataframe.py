@@ -499,6 +499,14 @@ class DataFrame:
 
     @property
     def plot(self):
+        """
+        The ``.plot`` accessor offers different methods for data visualization. Data is preprocessed based
+        on the kind of plot and draws image directly using Pandas ``DataFrame.plot``:
+
+        .. note::
+            - See pandas documentation online for more information.
+            - Each plotting method queries the database.
+        """
         from bach.plotting import PlotHandler
         return PlotHandler(self)
 
