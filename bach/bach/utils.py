@@ -53,8 +53,7 @@ def is_valid_column_name(dialect: Dialect, name: str) -> bool:
         # Identifiers longer than 63 characters are not necessarily wrong, but they will be truncated which
         # could lead to identifier collisions, so we just disallow it.
         # source: https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
-        result = len(name) < 64
-        return result
+        return len(name) < 64
     if is_bigquery(dialect):
         # sources:
         #  https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#column_names
