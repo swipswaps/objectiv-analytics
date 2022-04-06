@@ -1,10 +1,12 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import TYPE_CHECKING, Optional, Union, List
+from typing import TYPE_CHECKING, Optional, Union, List, cast
 
 import numpy
 import pandas
+
+from bach import SeriesAbstractNumeric
 
 if TYPE_CHECKING:
     from bach.dataframe import DataFrame
@@ -46,13 +48,40 @@ class PlotHandler(object):
                 "hist method requires numerical columns, nothing to plot."
             )
 
+        freq_df = self._calculate_hist_frequencies(bins, numeric_columns)
+
+        # prepare results for Pandas hist compatibility
+        freq_pdf = freq_df.to_pandas()
+        freq_pdf = freq_pdf.pivot_table(
+            columns='column_label', values='frequency', index='range', dropna=False, fill_value=0,
+        )
+        freq_pdf = freq_pdf.reset_index(level=-1, drop=False)
+
+        # get lower bounds per range and add the last upper bound (last_bin + bin_width)
+        freq_pdf['bin_edge'] = freq_pdf['range'].apply(lambda r: r.lower).astype(float)
+        bin_edges = freq_pdf['bin_edge'].to_numpy()
+        bin_width = numpy.ediff1d(bin_edges)[-1]
+        bin_edges = numpy.append(bin_edges, bin_edges[-1] + bin_width)
+
+        # use calculated frequencies as weights, since Pandas will try to recalculate frequencies
+        hist_data = pandas.DataFrame(data={col: freq_pdf['bin_edge'] for col in numeric_columns})
+        weights = freq_pdf[numeric_columns].to_numpy()
+        return hist_data.plot.hist(bins=bin_edges, weights=weights, **kwargs)
+
+    def _calculate_hist_frequencies(self, bins: int, numeric_columns: List[str]) -> 'DataFrame':
+        """
+        Helper for creating histogram's value frequencies per bin.
+
+        returns a DataFrame containing the following data columns:
+            * column_label (names of numeric columns)
+            * range (range of each bin)
+            * frequency (number of values the range contains for the column label)
+        """
         from bach.operations.cut import CutOperation
 
-        df = self.df.copy()
-        df = df[numeric_columns]
-
+        df = self.df[numeric_columns].reset_index(drop=True)
         # stack the df in order to have all numeric values in a single series
-        label_values_series = df.reset_index(drop=True).stack()
+        label_values_series = cast(SeriesAbstractNumeric, df.stack())
         bins_per_col_df = CutOperation(
             label_values_series,
             bins=bins,
@@ -63,21 +92,12 @@ class PlotHandler(object):
 
         # create frequency distribution dataframe per label (numeric column)
         # labels are contained in __stacked_index series (result from DataFrame.stack)
-        freq_df = bins_per_col_df.groupby(by=['__stacked_index', 'range']).count()
+        frequencies = bins_per_col_df.groupby(by=['__stacked_index', 'range']).count()
+        frequencies = frequencies.reset_index(drop=False)
 
-        # prepare results for Pandas hist compatibility
-        freq_pdf = freq_df.to_pandas()
-        freq_pdf = freq_pdf.unstack(level='__stacked_index', fill_value=0)
-        freq_pdf.columns = freq_pdf.columns.droplevel()
-        freq_pdf = freq_pdf.reset_index(drop=False)
-
-        # get lower bounds per range and add the last upper bound (last_bin + bin_width)
-        freq_pdf['bin_edge'] = freq_pdf['range'].apply(lambda r: r.lower).astype(float)
-        bin_edges = freq_pdf['bin_edge'].to_numpy()
-        bin_width = numpy.ediff1d(bin_edges)[-1]
-        bin_edges = numpy.append(bin_edges, bin_edges[-1] + bin_width)
-
-        # use calculated frequencies as weights, since Pandas will try to recalculate frequencies
-        hist_data = pandas.DataFrame(data={col: freq_pdf['bin_edge'] for col in df.data_columns})
-        weights = freq_pdf[numeric_columns].to_numpy()
-        return hist_data.plot.hist(bins=bin_edges, weights=weights, **kwargs)
+        # rename columns to meaningful names
+        frequencies = frequencies.rename(
+            columns={'__stacked_index': 'column_label', '__stacked_count': 'frequency'},
+        )
+        frequencies['column_label'] = frequencies['column_label'].fillna('empty_bins')
+        return frequencies
