@@ -23,13 +23,9 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    * At initialization, we retrieve TrackerPlatform and initialize all Validation Rules.
    */
   initialize({ platform, developerTools }: TrackerInterface) {
-    if(developerTools) {
-      const {
-        GlobalContextName,
-        GlobalContextValidationRule,
-        LocationContextName,
-        LocationContextValidationRule,
-      } = developerTools;
+    if (developerTools) {
+      const { GlobalContextName, GlobalContextValidationRule, LocationContextName, LocationContextValidationRule } =
+        developerTools;
 
       this.validationRules = [
         new GlobalContextValidationRule({

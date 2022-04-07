@@ -6,15 +6,15 @@ import {
   GlobalContextName,
   GlobalContextValidationRule,
   LocationContextName,
-  LocationContextValidationRule
-} from "@objectiv/developer-tools";
+  LocationContextValidationRule,
+} from '@objectiv/developer-tools';
 
 /**
  * DeveloperTools interface definition.
  */
 export interface TrackerDeveloperTools {
-  GlobalContextName: typeof GlobalContextName,
+  GlobalContextName: typeof GlobalContextName;
   GlobalContextValidationRule: typeof GlobalContextValidationRule;
-  LocationContextName: typeof LocationContextName,
+  LocationContextName: typeof LocationContextName;
   LocationContextValidationRule: typeof LocationContextValidationRule;
 }

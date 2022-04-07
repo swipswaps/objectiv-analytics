@@ -8,7 +8,7 @@ import { waitForPromise } from './helpers';
 import { ApplicationContextPlugin } from './plugins/ApplicationContextPlugin';
 import { OpenTaxonomyValidationPlugin } from './plugins/OpenTaxonomyValidationPlugin';
 import { TrackerConsole } from './TrackerConsole';
-import { TrackerDeveloperTools } from "./TrackerDeveloperToolsInterface";
+import { TrackerDeveloperTools } from './TrackerDeveloperToolsInterface';
 import { getLocationPath } from './TrackerElementLocations';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPluginInterface } from './TrackerPluginInterface';

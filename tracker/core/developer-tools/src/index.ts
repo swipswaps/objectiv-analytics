@@ -19,5 +19,5 @@ export default {
   GlobalContextName,
   GlobalContextValidationRule,
   LocationContextName,
-  LocationContextValidationRule
-}
+  LocationContextValidationRule,
+};
