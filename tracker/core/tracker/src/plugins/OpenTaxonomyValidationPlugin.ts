@@ -28,7 +28,7 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
         GlobalContextName,
         GlobalContextValidationRule,
         LocationContextName,
-        LocationContextValidationRule
+        LocationContextValidationRule,
       } = require('@objectiv/developer-tools');
       this.validationRules = [
         new GlobalContextValidationRule({
