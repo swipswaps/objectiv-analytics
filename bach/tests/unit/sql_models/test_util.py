@@ -1,9 +1,13 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from sql_models.util import extract_format_fields, quote_identifier, quote_string, is_postgres,\
-    is_bigquery, DatabaseNotSupportedException
+import pytest
 
+from sql_models.util import extract_format_fields, quote_identifier, quote_string, is_postgres,\
+    is_bigquery
+
+
+pytestmark = [pytest.mark.db_independent]  # mark all tests here as database independent.
 
 def test_extract_format_fields():
     assert extract_format_fields('{test}') == {'test'}
