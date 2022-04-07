@@ -1,15 +1,15 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import numpy
+from datetime import date, datetime, time
 
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
-    get_bt_with_json_data
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_json_data,\
+    CITIES_INDEX_AND_COLUMNS, get_df_with_test_data
 
 
-def test_astype_dtypes():
+def test_astype_dtypes(engine):
     # case 1: cast all columns to a type
-    bt = get_bt_with_test_data()
+    bt = get_df_with_test_data(engine)
     bt_int = bt[['inhabitants', 'founding']]
     bt_float = bt_int.astype('float64')
     assert bt_int.dtypes == {'founding': 'int64', 'inhabitants': 'int64'}
@@ -58,10 +58,19 @@ def test_astype_dtypes():
     assert bt.data['inhabitants'] is not bt_astype2.data['inhabitants']
     assert bt.data['municipality'] is bt_astype2.data['municipality']
     assert bt.data['skating_order'] is not bt_astype2.data['skating_order']
+    assert_equals_data(
+        bt_astype2,
+        expected_columns=CITIES_INDEX_AND_COLUMNS,
+        expected_data=[
+            [1, '1', 'Ljouwert', 'Leeuwarden', '93485', 1285],
+            [2, '2', 'Snits', 'Súdwest-Fryslân', '33520', 1456],
+            [3, '3', 'Drylts', 'Súdwest-Fryslân', '3055', 1268]
+        ]
+    )
 
 
-def test_astype_to_int():
-    bt = get_bt_with_test_data()
+def test_astype_to_int(engine):
+    bt = get_df_with_test_data(engine)
     bt = bt[['inhabitants']]
     bt['inhabitants'] = bt['inhabitants'] / 1000
     bt_int = bt.astype('int64')
@@ -84,6 +93,70 @@ def test_astype_to_int():
             [1, 93],
             [2, 34],
             [3, 3]
+        ]
+    )
+
+
+def test_astype_to_bool(engine):
+    bt = get_df_with_test_data(engine)
+    bt = bt[['skating_order']]
+    bt['skating_order'] = bt['skating_order'] - 1
+    bt['t'] = 'True'
+    bt['f'] = 'False'
+    bt = bt.astype('bool')
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'skating_order', 't', 'f'],
+        expected_data=[
+            [1, False, True, False],
+            [2, True, True, False ],
+            [3, True, True, False ]
+        ]
+    )
+
+
+def test_astype_to_date(engine):
+    bt = get_df_with_test_data(engine)
+    bt = bt[[]]
+    bt['d'] = '1999-12-31'
+    bt = bt.astype('date')
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'd'],
+        expected_data=[[1, date(1999, 12, 31)], [2, date(1999, 12, 31)], [3, date(1999, 12, 31)]]
+    )
+
+
+def test_astype_to_timestamp(engine):
+    bt = get_df_with_test_data(engine)
+    bt = bt[[]]
+    bt['d'] = date(2022, 3, 31)
+    bt['s'] = '2022-02-15 13:37:00'
+    bt = bt.astype('timestamp')
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'd', 's'],
+        expected_data=[
+            [1, datetime(2022, 3, 31, 0, 0), datetime(2022, 2, 15, 13, 37)],
+            [2, datetime(2022, 3, 31, 0, 0), datetime(2022, 2, 15, 13, 37)],
+            [3, datetime(2022, 3, 31, 0, 0), datetime(2022, 2, 15, 13, 37)]
+        ]
+    )
+
+
+def test_astype_to_time(engine):
+    bt = get_df_with_test_data(engine)
+    bt = bt[[]]
+    bt['a'] = '03:04:00'
+    bt['b'] = '23:25:59'
+    bt = bt.astype('time')
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'a', 'b'],
+        expected_data=[
+            [1, time(3, 4, 0), time(23, 25, 59)],
+            [2, time(3, 4, 0), time(23, 25, 59)],
+            [3, time(3, 4, 0), time(23, 25, 59)]
         ]
     )
 
@@ -123,16 +196,3 @@ def test_astype_to_json():
             [3, [{"_type": "WebDocumentContext", "id": "#document"}, {"_type": "SectionContext", "id": "home"}, {"_type": "SectionContext", "id": "top-10"}, {"_type": "ItemContext", "id": "5o7Wv5Q5ZE"}]]
         ]
     )
-
-
-def test_astype_dtype_aliases():
-    bt = get_bt_with_test_data()
-    bt = bt[['inhabitants']]
-    # Using an alias of 'int64' in the call to `astype()` should result in the same DataFrame
-    bt_int0 = bt.astype('int64')
-    bt_int1 = bt.astype('bigint')
-    bt_int2 = bt.astype(int)
-    bt_int3 = bt.astype(numpy.int64)
-    assert bt_int0 == bt_int1
-    assert bt_int0 == bt_int2
-    assert bt_int0 == bt_int3

@@ -32,11 +32,7 @@ build-backend:
 	cd backend && make docker-image
 
 build-notebook:
-	# first, build required packages and put them in the docker scope
-	# for this to work, we need to be in a VENV with bach installed
-	pip wheel --no-deps -w analysis/docker/ ./bach
-	pip wheel --no-deps -w analysis/docker/ ./analysis/bach_open_taxonomy
-	docker build -t objectiv/notebook -f analysis/docker/Dockerfile analysis
+	docker build -t objectiv/notebook -f notebooks/docker/Dockerfile notebooks
 
 publish-tracker:
 	cd tracker && make publish
