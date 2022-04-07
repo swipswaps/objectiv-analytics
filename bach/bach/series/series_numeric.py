@@ -188,6 +188,17 @@ class SeriesAbstractNumeric(Series, ABC):
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(partition, 'var_samp', skipna=skipna)
 
+    def scale(self, with_mean: bool = True, with_std: bool = True) -> 'Series':
+        """
+        Standardizes series based on mean and population standard deviation.
+
+        :param with_mean: if true, each value will be centered before scaling
+        :param with_std: if true, each value will be scaled to unit variance
+
+        :return: Series
+        """
+        return self.to_frame().scale(with_mean, with_std)[self.name]
+
 
 class SeriesInt64(SeriesAbstractNumeric):
     dtype = 'int64'
