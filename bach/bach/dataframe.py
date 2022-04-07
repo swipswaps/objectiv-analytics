@@ -1581,30 +1581,35 @@ class DataFrame:
         has_group_by_expressions = any(
             gbc.expression != Expression.column_reference(gbc.name) for gbc in group_by_columns
         )
-        if is_bigquery(self.engine) and has_group_by_expressions:
-            # BigQuery allows grouping by an expression (other than just a column-reference), but then that
-            # expression cannot be in the select (unless all columns that are in the expression are also
-            # grouped on). However, we always include all expressions that are grouped on in the result, as
-            # that is the new index. So this presents a problem.
-            # To prevent problems with this we add the group-by expressions to the frame, materialize them,
-            # and then create the group-by.
-            # TODO: situations with more than one expression that refers the same column (for all databases)
-            #   e.g. df.groupby([df.x >= 0, df.x == 0])
-            #   See https://github.com/objectiv/objectiv-analytics/issues/616
-            df_new = df.copy()
-            gbc_names = []
-            for gbc in group_by_columns:
-                gbc_names.append(gbc.name)
-                df_new[gbc.name] = gbc
-
-            df_new = df_new.materialize(node_name='bq_materialize_before_groupby')
-            group_by_columns = df_new._partition_by_series(gbc_names)
+        if not (is_bigquery(self.engine) and has_group_by_expressions):
+            # normal path
             group_by = GroupBy(group_by_columns=group_by_columns)
-            return DataFrame._groupby_to_frame(df_new, group_by)
+            return DataFrame._groupby_to_frame(df, group_by)
 
-        # normal path
+        # Remaining case, handled by the code below:
+        #  * a regular groupby on one or more columns and/or expressions
+        #  * is_bigquery(self.engine) is True
+        #  * has_group_by_expressions is True, i.e. at least one of the `by` is an expression
+        #
+        # BigQuery allows grouping by an expression (other than just a column-reference), but then that
+        # expression cannot be in the select (unless all columns that are in the expression are also
+        # grouped on). However, we always include all expressions that are grouped on in the result, as
+        # that is the new index. So this presents a problem.
+        # To prevent problems with this we add the group-by expressions to the frame, materialize them,
+        # and then create the group-by.
+        # TODO: situations with more than one expression that refers the same column (for all databases)
+        #   e.g. df.groupby([df.x >= 0, df.x == 0])
+        #   See https://github.com/objectiv/objectiv-analytics/issues/616
+        df_new = df.copy()
+        gbc_names = []
+        for gbc in group_by_columns:
+            gbc_names.append(gbc.name)
+            df_new[gbc.name] = gbc
+
+        df_new = df_new.materialize(node_name='bq_materialize_before_groupby')
+        group_by_columns = df_new._partition_by_series(gbc_names)
         group_by = GroupBy(group_by_columns=group_by_columns)
-        return DataFrame._groupby_to_frame(df, group_by)
+        return DataFrame._groupby_to_frame(df_new, group_by)
 
     def window(self, **frame_args) -> 'DataFrame':
         """
