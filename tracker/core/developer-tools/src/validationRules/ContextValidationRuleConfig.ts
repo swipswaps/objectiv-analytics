@@ -3,7 +3,7 @@
  */
 
 import { TrackerPlatform, TrackerValidationRuleConfig } from '@objectiv/tracker-core';
-import { ContextName } from "../types";
+import { ContextName } from '../types';
 
 /**
  * Defines options shared between rules that perform Context validation.

@@ -6,7 +6,7 @@ import {
   GlobalContextName,
   GlobalContextValidationRule,
   LocationContextName,
-  LocationContextValidationRule
+  LocationContextValidationRule,
 } from '@objectiv/developer-tools';
 import { LogTransport, MockConsoleImplementation, UnusableTransport } from '@objectiv/testing-tools';
 import {
@@ -38,6 +38,7 @@ describe('Tracker', () => {
     expect(testTracker.plugins.plugins).toEqual([
       {
         pluginName: 'OpenTaxonomyValidationPlugin',
+        initialized: true,
         validationRules: [
           new GlobalContextValidationRule({
             platform: TrackerPlatform.CORE,
@@ -78,6 +79,7 @@ describe('Tracker', () => {
     expect(testTracker.plugins.plugins).toEqual([
       {
         pluginName: 'OpenTaxonomyValidationPlugin',
+        initialized: true,
         validationRules: [
           new GlobalContextValidationRule({
             platform: TrackerPlatform.CORE,
@@ -118,6 +120,7 @@ describe('Tracker', () => {
     expect(testTracker.plugins.plugins).toEqual([
       {
         pluginName: 'OpenTaxonomyValidationPlugin',
+        initialized: true,
         validationRules: [
           new GlobalContextValidationRule({
             platform: TrackerPlatform.CORE,

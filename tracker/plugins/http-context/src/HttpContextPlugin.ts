@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { GlobalContextName, GlobalContextValidationRule } from "@objectiv/developer-tools";
+import { GlobalContextName, GlobalContextValidationRule } from '@objectiv/developer-tools';
 import {
   makeHttpContext,
   TrackerConsole,
@@ -19,6 +19,7 @@ import {
 export class HttpContextPlugin implements TrackerPluginInterface {
   readonly pluginName = `HttpContextPlugin`;
   validationRules: TrackerValidationRuleInterface[] = [];
+  initialized: boolean = false;
 
   /**
    * Generates an HttpContext and initializes validation rules.
@@ -41,6 +42,8 @@ export class HttpContextPlugin implements TrackerPluginInterface {
 
     tracker.global_contexts.push(httpContext);
 
+    this.initialized = true;
+
     TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
 
@@ -49,7 +52,7 @@ export class HttpContextPlugin implements TrackerPluginInterface {
    */
   validate(event: TrackerEvent): void {
     if (this.isUsable()) {
-      if (!this.validationRules.length) {
+      if (!this.initialized) {
         TrackerConsole.error(
           `｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`
         );

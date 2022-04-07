@@ -3,8 +3,8 @@
  */
 
 import { TrackerConsole, TrackerEvent, TrackerPlatform, TrackerValidationRuleInterface } from '@objectiv/tracker-core';
-import { LocationContextErrorMessages } from "../ContextErrorMessages";
-import { LocationContextErrorType } from "../ContextErrorType";
+import { LocationContextErrorMessages } from '../ContextErrorMessages';
+import { LocationContextErrorType } from '../ContextErrorType';
 import { LocationContextName } from '../ContextNames';
 import { ContextValidationRuleConfig } from './ContextValidationRuleConfig';
 

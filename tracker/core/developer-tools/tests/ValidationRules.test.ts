@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { TrackerConsole, TrackerEvent, TrackerPlatform } from "@objectiv/tracker-core";
+import { TrackerConsole, TrackerEvent, TrackerPlatform } from '@objectiv/tracker-core';
 import {
   GlobalContextName,
   GlobalContextValidationRule,

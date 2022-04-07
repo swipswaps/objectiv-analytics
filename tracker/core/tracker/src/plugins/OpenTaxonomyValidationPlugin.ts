@@ -23,6 +23,7 @@ import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterfac
 export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
   readonly pluginName = `OpenTaxonomyValidationPlugin`;
   validationRules: TrackerValidationRuleInterface[] = [];
+  initialized = false;
 
   /**
    * At initialization, we retrieve TrackerPlatform and initialize all Validation Rules.
@@ -43,6 +44,7 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
         position: 0,
       }),
     ];
+    this.initialized = true;
 
     TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
@@ -51,7 +53,7 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    * Performs Open Taxonomy related validation checks
    */
   validate(event: TrackerEvent): void {
-    if (!this.validationRules.length) {
+    if (!this.initialized) {
       TrackerConsole.error(`｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`);
       return;
     }

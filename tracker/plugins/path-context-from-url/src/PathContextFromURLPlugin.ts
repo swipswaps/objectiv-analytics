@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { GlobalContextName, GlobalContextValidationRule } from "@objectiv/developer-tools";
+import { GlobalContextName, GlobalContextValidationRule } from '@objectiv/developer-tools';
 import {
   ContextsConfig,
   makePathContext,
@@ -24,6 +24,7 @@ import {
 export class PathContextFromURLPlugin implements TrackerPluginInterface {
   readonly pluginName = `PathContextFromURLPlugin`;
   validationRules: TrackerValidationRuleInterface[] = [];
+  initialized: boolean = false;
 
   /**
    * Initializes validation rules.
@@ -37,6 +38,8 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
         once: true,
       }),
     ];
+
+    this.initialized = true;
 
     TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
@@ -56,7 +59,7 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
    */
   validate(event: TrackerEvent): void {
     if (this.isUsable()) {
-      if (!this.validationRules.length) {
+      if (!this.initialized) {
         TrackerConsole.error(
           `｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`
         );

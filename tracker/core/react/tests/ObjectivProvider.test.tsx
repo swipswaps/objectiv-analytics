@@ -6,10 +6,10 @@ import {
   GlobalContextName,
   GlobalContextValidationRule,
   LocationContextName,
-  LocationContextValidationRule
-} from "@objectiv/developer-tools";
+  LocationContextValidationRule,
+} from '@objectiv/developer-tools';
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { makeApplicationLoadedEvent, Tracker, TrackerConsole, TrackerPlatform, } from '@objectiv/tracker-core';
+import { makeApplicationLoadedEvent, Tracker, TrackerConsole, TrackerPlatform } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { ObjectivProvider, useTrackingContext } from '../src';
@@ -41,6 +41,7 @@ describe('ObjectivProvider', () => {
         plugins: [
           {
             pluginName: 'OpenTaxonomyValidationPlugin',
+            initialized: true,
             validationRules: [
               new GlobalContextValidationRule({
                 platform: TrackerPlatform.CORE,
