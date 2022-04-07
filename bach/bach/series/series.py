@@ -438,10 +438,12 @@ class Series(ABC):
             index_sorting=self._index_sorting
         )
 
-    def unstack(self,
-                level: int = -1,
-                fill_value: Optional[Union[int, float, str, UUID]] = None,
-                aggregation: str = 'max') -> 'DataFrame':
+    def unstack(
+        self,
+        level: Union[int, str] = -1,
+        fill_value: Optional[Union[int, float, str, UUID]] = None,
+        aggregation: str = 'max',
+    ) -> 'DataFrame':
         """
         Pivot a level of the index labels.
 
@@ -450,47 +452,19 @@ class Series(ABC):
 
         Series' index should be of at least two levels to unstack.
 
-        :param level: selects the level of the index that is unstacked. Currently only -1 supported.
+        :param level: selects the level of the index that is unstacked.
         :param fill_value: replace missing values resulting from unstacking. Should be of same type as the
             series that is unstacked.
         :param aggregation: method of aggregation, in case of duplicate index values. Supports all aggregation
             methods that :py:meth:`aggregate` supports.
+
         :returns: DataFrame
+
+        .. note::
+            This function queries the database.
         """
-        index_dict = self.index
-        if len(index_dict) <= 1:
-            raise NotImplementedError('index must be a multi level index to unstack')
-        if level != -1:
-            raise NotImplementedError('only last index can be unstacked')
-        if type(aggregation) != str:
-            raise TypeError('invalid aggregation method')
-
-        name_index_last, series_last = index_dict.popitem()
-        values = series_last.unique().to_numpy()
-        if None in values or numpy.nan in values:
-            raise ValueError("index contains empty values, cannot be unstacked")
-        name_series = self.name
-        remaining_indexes = list(index_dict.keys())
-        df = self.to_frame().reset_index()
-        df = df.groupby(remaining_indexes)
-
-        for column in values:
-            new_column_name = str(column)
-            new_const_series = const_to_series(self, column, new_column_name)
-            new_series = df.all_series[name_series].copy_override(
-                name=new_column_name,
-                expression=Expression.construct(f'case when {{}} = {{}} then {name_series} end',
-                                                df.all_series[name_index_last],
-                                                new_const_series)
-            )
-            new_series_aggregated = cast(
-                Series, new_series.aggregate(aggregation, group_by=df.group_by)
-            )
-            if fill_value is not None:
-                new_series_aggregated = new_series_aggregated.fillna(fill_value)
-            df[new_column_name] = new_series_aggregated
-
-        return df.drop(columns=[name_index_last, name_series])
+        result = self.to_frame().unstack(level, fill_value, aggregation)
+        return result.rename(columns={col: col.replace(f'__{self.name}', '') for col in result.data_columns})
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
@@ -582,7 +556,7 @@ class Series(ABC):
 
         mod_other_name = other.name
         if (
-            other.base_node == right.base_node
+            (other.base_node == right.base_node or not update_column_references)
             and set(df.all_series) & {f'{other.name}__other', f'{other.name}__data_column'}
         ):
             post_fix = '__other' if other.name not in self.index else '__data_column'

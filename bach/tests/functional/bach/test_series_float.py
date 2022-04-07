@@ -7,10 +7,10 @@ from unittest.mock import ANY
 
 from bach import SeriesFloat64
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
-from tests.functional.bach.test_series_numeric import _test_simple_arithmetic
+from tests.functional.bach.test_series_numeric import helper_test_simple_arithmetic
 
 
-def test_from_const():
+def test_from_const(engine):
     a = 123.45
     b = -123.45
     c = -0.0
@@ -40,9 +40,10 @@ def test_from_const():
     for row in db_values:
         assert math.isnan(row[5])
 
-def test_float_int_arithmetic():
-    _test_simple_arithmetic(20.01, 3)
+
+def test_float_int_arithmetic(engine):
+    helper_test_simple_arithmetic(engine=engine, a=20.01, b=3)
 
 
-def test_float_float_arithmetic():
-    _test_simple_arithmetic(20.01, 3.33)
+def test_float_float_arithmetic(engine):
+    helper_test_simple_arithmetic(engine=engine, a=20.01, b=3.33)

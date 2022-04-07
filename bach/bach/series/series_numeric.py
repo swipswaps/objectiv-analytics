@@ -224,26 +224,21 @@ class SeriesInt64(SeriesAbstractNumeric):
         return super()._arithmetic_operation(other, operation, fmt_str, other_dtypes, type_mapping)
 
     def __truediv__(self, other) -> 'Series':
-        # What we do below is essentially the same as: return self.astype('float64') / other
-        # But somehow that fails some test cases and the below code works. The generated sql for the 'nice'
-        # code above doesn't seem to make sense in the broken cases. TODO: look into this
-
-        db_dialect = DBDialect.from_dialect(self.engine.dialect)
-        float_db_type = SeriesFloat64.supported_db_dtype[db_dialect]
-        return self._arithmetic_operation(
-            other=other,
-            operation='div',
-            fmt_str=f'cast({{}} as {float_db_type}) / ({{}})',
-            dtype='float64'
-        )
+        return self.astype('float64') / other
 
     def __rshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) >> cast({} as int)',
-                                          other_dtypes=tuple(['int64']))
+        if is_postgres(self.engine):
+            # Postgres expects the argument to a bitshift to be a regular int, not bigint.
+            return self._arithmetic_operation(other, 'rshift', '({}) >> cast({} as int)',
+                                              other_dtypes=tuple(['int64']))
+        return self._arithmetic_operation(other, 'rshift', '({}) >> ({})', other_dtypes=tuple(['int64']))
 
     def __lshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
-                                          other_dtypes=tuple(['int64']))
+        if is_postgres(self.engine):
+            # Postgres expects the argument to a bitshift to be a regular int, not bigint.
+            return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
+                                              other_dtypes=tuple(['int64']))
+        return self._arithmetic_operation(other, 'lshift', '({}) << ({})', other_dtypes=tuple(['int64']))
 
     def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
         # sum() has the tendency to return float on bigint arguments. Cast it back.
