@@ -18,6 +18,7 @@ a Series object:
 * :py:meth:`DataFrame.to_numpy()` or :py:meth:`Series.to_numpy()`
 * The property accessors :py:attr:`DataFrame.values`, :py:attr:`Series.array` and
   :py:attr:`Series.value`
+* :py:meth:`DataFrame.unstack()` or :py:meth:`Series.unstack()`
 
 Typical usage would be to do all heavy lifting inside the database, and only query the aggregated/summarized
 output.
