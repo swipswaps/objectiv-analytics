@@ -11,6 +11,7 @@ from uuid import UUID
 
 import numpy
 import pandas
+from sqlalchemy.engine import Dialect
 from sqlalchemy.future import Engine
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
@@ -22,8 +23,8 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype
-from sql_models.constants import NotSet, not_set
+from bach.types import value_to_dtype, DtypeOrAlias
+from sql_models.constants import NotSet, not_set, DBDialect
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
@@ -72,6 +73,35 @@ class Series(ABC):
     represented by this Series subclass. The dtype must be unique among all Series subclasses.
     """
 
+    dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
+    """
+    INTERNAL: One or more aliases for the dtype.
+    For example a SeriesBoolean might have dtype 'bool', and as an alias the string 'boolean' and
+    the builtin `bool`. An alias can be used in a similar way as the real dtype, e.g. to cast data to a
+    certain type: `x.astype('boolean')` is the same as `x.astype('bool')`.
+
+    Subclasses can override this value to indicate what strings they consider aliases for their dtype.
+    """
+
+    supported_db_dtype: Mapping[DBDialect, str] = {}
+    """
+    INTERNAL: Per supported database, the database's data type that can be expressed using this Series type.
+    Example: {DBDialect.POSTGRES: 'double precision'} for a float in Postgres
+
+    Subclasses should override this value if they intend to be the default class to handle such types.
+    When creating a DataFrame from existing data in a database, this field will be used to
+    determine what Series to instantiate for a column.
+    """
+
+    supported_value_types: Tuple[Type, ...] = tuple()
+    """
+    INTERNAL: List of python types that can be converted to database values using
+    the :meth:`supported_value_to_literal()` and :meth:`supported_literal_to_expression()` methods.
+
+    Subclasses can override this value to indicate what types are supported
+    by :meth:`supported_value_to_literal()`.
+    """
+
     def __init__(self,
                  engine,
                  base_node: BachSqlModel,
@@ -111,9 +141,13 @@ class Series(ABC):
         :param index_sorting: list of bools indicating whether to sort ascending/descending on the different
             columns of the index. Empty list for no sorting on index.
         """
-        # Series is an abstract class, besides the abstractmethods, subclasses MUST override the 'dtype'
-        # class property. Unfortunately defining dtype as an "abstract-classmethod-property" makes it hard
-        # to understand for mypy, sphinx, and python. Therefore we check here that we are instantiating a
+        # Series is an abstract class, besides the abstractmethods subclasses must/may override some
+        #   properties:
+        #   * subclasses MUST override one class property: 'dtype',
+        #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype', and
+        #       'supported_value_types'.
+        # Unfortunately defining these properties as an "abstract-classmethod-property" makes it hard
+        # to understand for mypy, sphinx, and python. Therefore, we check here that we are instantiating a
         # proper subclass, instead of just relying on @abstractmethod.
         # related links:
         # https://github.com/python/mypy/issues/8532#issuecomment-600132991
@@ -147,19 +181,6 @@ class Series(ABC):
         self._index_sorting = index_sorting
 
     @property
-    @classmethod
-    def dtype_aliases(cls) -> Tuple[Union[Type, str], ...]:
-        """
-        INTERNAL: One or more aliases for the dtype.
-        For example a SeriesBoolean might have dtype 'bool', and as an alias the string 'boolean' and
-        the builtin `bool`. An alias can be used in a similar way as the real dtype, e.g. to cast data to a
-        certain type: `x.astype('boolean')` is the same as `x.astype('bool')`.
-
-        Subclasses can override this value to indicate what strings they consider aliases for their dtype.
-        """
-        return tuple()
-
-    @property
     def dtype_to_pandas(self) -> Optional[str]:
         """
         INTERNAL: The dtype of this Series in a pandas.Series. Defaults to None
@@ -167,55 +188,30 @@ class Series(ABC):
         """
         return None
 
-    @property
-    @classmethod
-    def supported_db_dtype(cls) -> Optional[str]:
-        """
-        INTERNAL: Database level data type, that can be expressed using this Series type.
-        Example: 'double precision' for a float in Postgres
-
-        Subclasses should override this value if they intend to be the default class to handle such types.
-        When creating a DataFrame from existing data in a database, this field will be used to
-        determine what Series to instantiate for a column.
-        """
-        return None
-
-    @property
-    @classmethod
-    def supported_value_types(cls) -> Tuple[Type, ...]:
-        """
-        INTERNAL: List of python types that can be converted to database values using
-        the :meth:`supported_value_to_literal()` and :meth:`supported_literal_to_expression()` methods.
-
-        Subclasses can override this value to indicate what types are supported
-        by :meth:`supported_value_to_literal()`.
-        """
-        return tuple()
-
     @classmethod
     @abstractmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         """
         INTERNAL: Given an expression representing a literal as returned by
         :meth:`supported_value_to_literal()`, this returns an Expression representing the actual value with
         the correct type.
 
-        Example for dtype `int64`:
-            supported_value_to_literal(123) will return an expression representing '123'
-            supported_literal_to_expression('123') should then turn that into 'cast(123 to bigint)'
+        Example for dtype `int64`, with Postgres Dialect (`pgd`):
+            supported_value_to_literal(pgd, 123) will return an expression representing '123'
+            supported_literal_to_expression(pgd, '123') should then turn that into 'cast(123 to bigint)'
         """
         raise NotImplementedError()
 
     @classmethod
     @abstractmethod
-    def supported_value_to_literal(cls, value: Any) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Any) -> Expression:
         """
         INTERNAL: Gives an expression for the sql-literal of the given value.
 
         Note that this is not always the same as the sql representation of the given value!
-        e.g. for the int64 value `123`, the literal we generate is `123` (excluding the quotes), which
-        is a smallint, not a bigint. We then add the cast to 'bigint', but this function _only_ returns the
-        literal not the cast.
+        e.g. for the int64 value `123`, the literal we generate on Postgres is `123` (excluding the quotes),
+        which is a smallint, not a bigint. We then add the cast to 'bigint', but this function _only_ returns
+        the literal not the cast.
 
         Implementations of this function are responsible for correctly quoting and escaping special
         characters in the given value. Either by using ExpressionTokens that allow unsafe values (e.g.
@@ -224,6 +220,7 @@ class Series(ABC):
 
         Implementations only need to be able to support the value specified by supported_value_types.
 
+        :param dialect: Database dialect
         :param value: All values of types listed by self.supported_value_types should be supported.
         :return: Expression of a sql-literal for the value
         """
@@ -231,11 +228,16 @@ class Series(ABC):
 
     @classmethod
     @abstractmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         """
         INTERNAL: Give the sql expression to convert the given expression, of the given source dtype to the
         dtype of this Series.
-        :return: sql expression
+
+        :param dialect: Database dialect
+        :param source_dtype: dtype of the expression parameter
+        :param expression: expression to cast
+        :return: a new expression that casts the given expression to the dialect's db type for the dtype of
+        this class
         """
         raise NotImplementedError()
 
@@ -316,7 +318,13 @@ class Series(ABC):
         )
 
     @classmethod
-    def value_to_expression(cls, value: Optional[Any]) -> Expression:
+    def get_db_dtype(cls, dialect: Dialect) -> str:
+        """ Given the db_dtype of this Series, for the given database dialect. """
+        db_dialect = DBDialect.from_dialect(dialect)
+        return cls.supported_db_dtype[db_dialect]
+
+    @classmethod
+    def value_to_expression(cls, dialect: Dialect, value: Optional[Any]) -> Expression:
         """
         INTERNAL: Give the expression for the given value.
 
@@ -325,17 +333,18 @@ class Series(ABC):
             1. If value is None a simple 'NULL' expression is returned.
             2. If value is not in supported_value_types raises an error.
 
+        :param dialect: Database dialect
+        :param value: value to convert to an expression
         :raises TypeError: if value is not an instance of cls.supported_value_types, and not None
         """
         # We should wrap this in a ConstValueExpression or something
         if value is None:
             return Expression.raw('NULL')
-        supported_types = cast(Tuple[Type, ...], cls.supported_value_types)  # help mypy
-        if not isinstance(value, supported_types):
-            raise TypeError(f'value should be one of {supported_types}'
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be one of {cls.supported_value_types}'
                             f', actual type: {type(value)}')
-        literal = cls.supported_value_to_literal(value)
-        return cls.supported_literal_to_expression(literal)
+        literal = cls.supported_value_to_literal(dialect=dialect, value=value)
+        return cls.supported_literal_to_expression(dialect=dialect, literal=literal)
 
     @classmethod
     def from_const(cls,
@@ -350,10 +359,11 @@ class Series(ABC):
         :param value:   The value that this constant Series will have
         :param name:    The name that it will be known by (only for representation)
         """
+        expression = ConstValueExpression(cls.value_to_expression(dialect=base.engine.dialect, value=value))
         result = cls.get_class_instance(
             base=base,
             name=name,
-            expression=ConstValueExpression(cls.value_to_expression(value)),
+            expression=expression,
             group_by=None,
         )
         return result
@@ -428,10 +438,12 @@ class Series(ABC):
             index_sorting=self._index_sorting
         )
 
-    def unstack(self,
-                level: int = -1,
-                fill_value: Optional[Union[int, float, str, UUID]] = None,
-                aggregation: str = 'max') -> 'DataFrame':
+    def unstack(
+        self,
+        level: Union[int, str] = -1,
+        fill_value: Optional[Union[int, float, str, UUID]] = None,
+        aggregation: str = 'max',
+    ) -> 'DataFrame':
         """
         Pivot a level of the index labels.
 
@@ -440,47 +452,19 @@ class Series(ABC):
 
         Series' index should be of at least two levels to unstack.
 
-        :param level: selects the level of the index that is unstacked. Currently only -1 supported.
+        :param level: selects the level of the index that is unstacked.
         :param fill_value: replace missing values resulting from unstacking. Should be of same type as the
             series that is unstacked.
         :param aggregation: method of aggregation, in case of duplicate index values. Supports all aggregation
             methods that :py:meth:`aggregate` supports.
+
         :returns: DataFrame
+
+        .. note::
+            This function queries the database.
         """
-        index_dict = self.index
-        if len(index_dict) <= 1:
-            raise NotImplementedError('index must be a multi level index to unstack')
-        if level != -1:
-            raise NotImplementedError('only last index can be unstacked')
-        if type(aggregation) != str:
-            raise TypeError('invalid aggregation method')
-
-        name_index_last, series_last = index_dict.popitem()
-        values = series_last.unique().to_numpy()
-        if None in values or numpy.nan in values:
-            raise ValueError("index contains empty values, cannot be unstacked")
-        name_series = self.name
-        remaining_indexes = list(index_dict.keys())
-        df = self.to_frame().reset_index()
-        df = df.groupby(remaining_indexes)
-
-        for column in values:
-            new_column_name = str(column)
-            new_const_series = const_to_series(self, column, new_column_name)
-            new_series = df.all_series[name_series].copy_override(
-                name=new_column_name,
-                expression=Expression.construct(f'case when {{}} = {{}} then {name_series} end',
-                                                df.all_series[name_index_last],
-                                                new_const_series)
-            )
-            new_series_aggregated = cast(
-                Series, new_series.aggregate(aggregation, group_by=df.group_by)
-            )
-            if fill_value is not None:
-                new_series_aggregated = new_series_aggregated.fillna(fill_value)
-            df[new_column_name] = new_series_aggregated
-
-        return df.drop(columns=[name_index_last, name_series])
+        result = self.to_frame().unstack(level, fill_value, aggregation)
+        return result.rename(columns={col: col.replace(f'__{self.name}', '') for col in result.data_columns})
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
@@ -572,7 +556,7 @@ class Series(ABC):
 
         mod_other_name = other.name
         if (
-            other.base_node == right.base_node
+            (other.base_node == right.base_node or not update_column_references)
             and set(df.all_series) & {f'{other.name}__other', f'{other.name}__data_column'}
         ):
             post_fix = '__other' if other.name not in self.index else '__data_column'
@@ -806,13 +790,17 @@ class Series(ABC):
 
         A Series will be returned with the correct type set, if the conversion is available. An appropriate
         Exception will be raised if impossible to convert.
+        :param dtype: dtype or a dtype alias
         """
         if dtype == self.dtype or dtype in self.dtype_aliases:
             return self
         series_type = get_series_type_from_dtype(dtype)
-        expression = series_type.dtype_to_expression(self.dtype, self.expression)
-        # get the real dtype, in case the provided dtype was an alias. mypy needs some help
-        new_dtype = cast(str, series_type.dtype)
+        expression = series_type.dtype_to_expression(
+            dialect=self.engine.dialect,
+            source_dtype=self.dtype,
+            expression=self.expression
+        )
+        new_dtype = series_type.dtype
         return self.copy_override_dtype(dtype=new_dtype).copy_override(expression=expression)
 
     def equals(self, other: Any, recursion: str = None) -> bool:
@@ -1427,7 +1415,7 @@ class Series(ABC):
         """
         # TODO Lag, lead etc. could check whether the window is setup correctly to include that value
         window = self._check_window(window)
-        default_expr = self.value_to_expression(default)
+        default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default)
         return self._derived_agg_func(
             window,
             Expression.construct(f'lag({{}}, {offset}, {{}})', self, default_expr),
@@ -1445,7 +1433,7 @@ class Series(ABC):
         Defaults to None
         """
         window = self._check_window(window)
-        default_expr = self.value_to_expression(default)
+        default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default)
         return self._derived_agg_func(
             window,
             Expression.construct(f'lead({{}}, {offset}, {{}})', self, default_expr),
@@ -1643,7 +1631,10 @@ def variable_series(base: Union[Series, DataFrame], value: Any, name: str) -> Se
     dtype = value_to_dtype(value)
     series_type = get_series_type_from_dtype(dtype)
     variable_placeholder = Expression.variable(dtype=dtype, name=name)
-    variable_expression = series_type.supported_literal_to_expression(variable_placeholder)
+    variable_expression = series_type.supported_literal_to_expression(
+        dialect=base.engine.dialect,
+        literal=variable_placeholder
+    )
     result = series_type.get_class_instance(
         base=base,
         name='__variable__',

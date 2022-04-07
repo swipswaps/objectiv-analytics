@@ -7,6 +7,7 @@ from sqlalchemy.engine import Engine
 
 from bach.types import get_dtype_from_db_dtype
 from bach.utils import escape_parameter_characters
+from sql_models.constants import DBDialect
 from sql_models.model import SqlModel, CustomSqlModelBuilder
 from sql_models.sql_generator import to_sql
 from sql_models.util import is_postgres, DatabaseNotSupportedException
@@ -31,9 +32,10 @@ def get_dtypes_from_model(engine: Engine, node: SqlModel) -> Dict[str, str]:
 
 def get_dtypes_from_table(engine: Engine, table_name: str) -> Dict[str, str]:
     """ Query database to get dtypes of the given table. """
+    # using `INFORMATION_SCHEMA.COLUMNS` in capitals, as that way it works on both Postgres and BigQuery
     sql = f"""
         select column_name, data_type
-        from information_schema.columns
+        from INFORMATION_SCHEMA.COLUMNS
         where table_name = '{table_name}'
         order by ordinal_position;
     """
@@ -46,9 +48,6 @@ def _get_dtypes_from_information_schema_query(engine: Engine, query: str) -> Dic
         sql = escape_parameter_characters(conn, query)
         res = conn.execute(sql)
         rows = res.fetchall()
-    if is_postgres(engine):
-        return {row[0]: get_dtype_from_db_dtype(row[1]) for row in rows}
-    # if is_bigquery(engine):
-    #     from bach.dialect_bq import dtype_structure
-    #     return {row[0]: get_dtype_from_db_engine_dtype(engine, dtype_structure(row[1])) for row in rows}
-    raise DatabaseNotSupportedException(engine)
+
+    db_dialect = DBDialect.from_engine(engine)
+    return {row[0]: get_dtype_from_db_dtype(db_dialect, row[1]) for row in rows}

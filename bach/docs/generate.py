@@ -42,7 +42,7 @@ index_page = 'intro'
 
 # these categories only get a toplevel entry in the sidebar
 # but no submenus for the headers
-skip_categories = ['Introduction', 'Core Concepts', 'Examples']
+skip_categories = ['Introduction']
 
 # replacement label to avoid duplicates
 category_index = 'Overview'
@@ -51,9 +51,25 @@ category_index = 'Overview'
 # subdirs / modules will be auto-added below
 patterns = [
     '^intro.html$',
-    '^core_concepts.html$',
-    '^examples.html$',
-    '^reference.html$'
+    '^example_notebooks.html$',
+    '^models.html$',
+    '^modelhub_basics.html$',
+    '^open_taxonomy.html$',
+    '^modelhub_api_reference.html$',
+    '^bach.html$',
+    '^feature_engineering.html$',
+    '^machine_learning.html$',
+    '^product_analytics.html$',
+    '^bach_core_concepts.html$',
+    '^bach_examples.html$',
+    '^bach_reference.html$',
+    "^bach_whatisbach.html$",
+    "^models_mapping.html$",
+    "^models_aggregation.html$",
+    "^bach_reference_dataframe.html$",
+    "^bach_reference_dataframe_by_function.html$",
+    "^bach_reference_series.html$",
+    "^bach_reference_series_by_function.html$",
 ]
 
 # list of special cases, where we have a subdir, with an introduction at toplevel
@@ -167,11 +183,11 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                 # this is the "index" page, so correct path
                 href = menu_item['href'].replace(index_page, '')
 
-            if level > 0 or len(menu_item['children']) == 0 or menu_item['text'] in skip_categories:
+            if (level > 0 and len(menu_item['children']) > 0) or menu_item['text'] in skip_categories:
                 # To avoid duplicates (because Docusaurus doesn't support categories with links),
                 # we only add the link, if:
                 # - we're not at top level
-                # - there are no children (so no category with the same name)
+                # - there is at least one child
                 # - the item is not in the skip_categories list
                 items = [{
                     'type': 'link',
@@ -184,11 +200,12 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                 'label': label,
                 'id': f'{module}/{href}'
             }]
+
         if len(menu_item['children']) > 0 and menu_item['text'] not in skip_categories and menu_item['href']:
             # this is a case where we have a duplicate (both children and an href)
             menu_item_children = []
             if level > -1:
-                print(f'moving parent {menu_item["text"]} into children')
+                # print(f'moving parent {menu_item["text"]} into children')
                 # get parent, and put in here, but only below top level
                 menu_item_children = items.copy()
                 if len(menu_item_children) > 1:
@@ -208,12 +225,44 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                 if menu_item_children[i]['label'] == category_index:
                     del menu_item_children[i]
                     break
-
-            items.append({
-                'type': 'category',
-                'label': label,
-                'items': menu_item_children
-            })
+            
+            first_child = menu_item_children[0]
+            if (first_child['label'] == category_index):
+                if (first_child['type'] == 'doc'):
+                    overview_id = first_child['id']
+                    del menu_item_children[0]
+                    items.append({
+                        'type': 'category',
+                        'label': label,
+                        'link': {
+                          'type': 'doc', 
+                          'id': overview_id
+                        },
+                        'items': menu_item_children
+                    })
+                # create a generated-index category if it's a link (so no content) and has more than one child
+                # NOTE: disabled for now, as we have content pages for all relevant ones, and prefer regular
+                #   category pages for the rest.
+                elif (first_child['type'] == 'link' and len(menu_item_children) > 1):
+                    # get its slug, and replace any first hashtag with a slash
+                    generated_index_slug = first_child['href'].replace('#', '/', 1)
+                    del menu_item_children[0]
+                    items.append({
+                        'type': 'category',
+                        'label': label,
+                        # 'link': {
+                        #   'type': 'generated-index',
+                        #   'title': label,
+                        #   'slug': generated_index_slug
+                        # },
+                        'items': menu_item_children
+                    })
+            else:
+                items.append({
+                    'type': 'category',
+                    'label': label,
+                    'items': menu_item_children
+                })
         if len(items) > 0:
             sb += items
     return sb
@@ -223,7 +272,10 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
 doc = html.parse(f'{html_dir}/index.html')
 
 menu_list = doc.xpath('//div[@class="toctree-wrapper compound"]/ul')
-menu = parse_ul_menu(menu_list)
+
+menu = []
+for ml in menu_list:
+    menu += list(parse_ul_menu(ml))
 
 sidebar = menu_list_to_sidebar(menu)
 
@@ -238,13 +290,14 @@ with open(html_path, 'w') as target_handle:
 
 # sort urls alphabetically, remove .html
 urls = glob.glob(f"{html_dir}/**/*.html", recursive=True)
+
 for url in urls:
     # this is the url to the original html fragment
     # it's an absolute url, docusaurus will take care of the rest
     real_url = url.replace(html_dir, "")
     page = path.basename(url).replace('.html', '')
 
-    print(f'{url} -> {real_url} {page}')
+    # print(f'{url} -> {real_url} {page}')
 
     match = False
     for pattern in patterns:
@@ -276,15 +329,15 @@ for url in urls:
     title = doc.xpath('//title/text()')[0]
 
     # here we get the body
-    # we look for <main role="main"....>
-    body_element: html.Element = doc.xpath('//main[@role="main"]/div')[0]
+    # we look for <main....>
+    body_element: html.Element = doc.xpath('//main/div')[0]
     body = etree.tostring(body_element).decode('utf-8')
 
     # try to determine description
-    description_elements = body_element.xpath('//main[@role="main"]/div/section//p')
+    description_elements = body_element.xpath('//main/div/section//p')
 
-    if len(description_elements) > 0:
-        description_element = description_elements[0].text
+    if(len(description_elements) > 0):
+        description_element = description_elements[0].text_content()
         words = description_element.replace('\n', ' ').split(' ')
 
         description = ''
@@ -296,6 +349,7 @@ for url in urls:
                 description += f' {word}'
             if len(description) > 500:
                 break
+
     else:
         # if we cannot find one, use title
         description = title
@@ -359,7 +413,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl'
 <SphinxPages url={{useBaseUrl('{module}/{real_url}')}} />
 """
 
-    print(f'writing to {mdx_path}')
+    # print(f'writing to {mdx_path}')
     with open(mdx_path, 'w') as target_handle:
         target_handle.write(mdx)
 

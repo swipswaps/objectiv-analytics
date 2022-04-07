@@ -1,13 +1,17 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Union, TYPE_CHECKING
+from typing import Union, TYPE_CHECKING, Optional
+
+from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression
+from sql_models.constants import DBDialect
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
+    from bach import DataFrame
 
 
 class StringOperation:
@@ -110,22 +114,50 @@ class SeriesString(Series):
 
     dtype = 'string'
     dtype_aliases = ('text', str)
-    supported_db_dtype = 'text'
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'text',
+        DBDialect.BIGQUERY: 'STRING'
+    }
     supported_value_types = (str, type(None))  # NoneType ends up as a string for now
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         return literal
 
     @classmethod
-    def supported_value_to_literal(cls, value: str) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: str) -> Expression:
         return Expression.string_value(value)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'string':
             return expression
-        return Expression.construct('cast(({}) as text)', expression)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
+
+    def get_dummies(
+        self,
+        prefix: Optional[str] = None,
+        prefix_sep: str = '_',
+        dummy_na: bool = False,
+        dtype: str = 'int64',
+    ) -> 'DataFrame':
+        """
+        Convert each unique category/value from the series into a dummy/indicator variable.
+
+        :param prefix: String to append to each new column name. By default, the prefix will be the name of
+            the caller.
+        :param prefix_sep: Separated between the prefix and label.
+        :param dummy_na: If true, it will include ``nan`` as a variable.
+        :param dtype: dtype of all new columns
+
+        :return: DataFrame
+
+        .. note::
+            Series should contain at least one index level.
+        """
+        return self.to_frame().get_dummies(
+            prefix=prefix, prefix_sep=prefix_sep, dummy_na=dummy_na, dtype=dtype,
+        )
 
     @property
     def str(self) -> StringOperation:
