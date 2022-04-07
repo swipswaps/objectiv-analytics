@@ -2,13 +2,16 @@
 Copyright 2021 Objectiv B.V.
 """
 from abc import ABC
-from typing import cast, Union, TYPE_CHECKING, Optional, List
+from typing import cast, Union, TYPE_CHECKING, Optional, List, Tuple
 
 import numpy
+from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression, AggregateFunctionExpression
 from bach.series.series import WrappedPartition
+from sql_models.constants import DBDialect
+from sql_models.util import is_postgres, is_bigquery, DatabaseNotSupportedException
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
@@ -188,34 +191,62 @@ class SeriesAbstractNumeric(Series, ABC):
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(partition, 'var_samp', skipna=skipna)
 
+    def scale(self, with_mean: bool = True, with_std: bool = True) -> 'Series':
+        """
+        Standardizes series based on mean and population standard deviation.
+
+        :param with_mean: if true, each value will be centered before scaling
+        :param with_std: if true, each value will be scaled to unit variance
+
+        :return: Series
+        """
+        return self.to_frame().scale(with_mean, with_std)[self.name]
+
+    def minmax_scale(self, feature_range: Tuple[int, int] = (0, 1)) -> 'Series':
+        """
+        Scales series based on a given range.
+
+        :param feature_range: ``tuple(min, max)`` desired range to use for scaling.
+        :return: Series
+        """
+        return self.to_frame().minmax_scale(feature_range)[self.name]
+
 
 class SeriesInt64(SeriesAbstractNumeric):
     dtype = 'int64'
     dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64, 'int32')
-    supported_db_dtype = 'bigint'
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'bigint',
+        DBDialect.BIGQUERY: 'INT64'
+    }
     supported_value_types = (int, numpy.int64, numpy.int32)
 
-    # Notes for supported_value_to_literal() and supported_literal_to_expression():
-    # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
-    # consistently get bigints, so always cast the result
-    # See the section on numeric constants in the Postgres documentation
-    # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+    @classmethod
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        if is_postgres(dialect):
+            # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
+            # consistently get bigints, so always cast the result
+            # See the section on numeric constants in the Postgres documentation
+            # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
+        if is_bigquery(dialect):
+            # BigQuery has only one integer type, so there is no confusion between 32-bit and 64-bit integers
+            # https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#integer_type
+            # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#integer_literals
+            return literal
+        raise DatabaseNotSupportedException(dialect)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as bigint)', literal)
-
-    @classmethod
-    def supported_value_to_literal(cls, value: int) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: int) -> Expression:
         return Expression.raw(str(value))
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'int64':
             return expression
         if source_dtype not in ['float64', 'bool', 'string']:
             raise ValueError(f'cannot convert {source_dtype} to int64')
-        return Expression.construct('cast({} as bigint)', expression)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def _arithmetic_operation(self, other, operation, fmt_str, other_dtypes=('int64', 'float64'), dtype=None):
         # Override this method, because we need to return a float if we interact with one.
@@ -226,15 +257,21 @@ class SeriesInt64(SeriesAbstractNumeric):
         return super()._arithmetic_operation(other, operation, fmt_str, other_dtypes, type_mapping)
 
     def __truediv__(self, other) -> 'Series':
-        return self._arithmetic_operation(other, 'div', 'cast({} as float) / ({})', dtype='float64')
+        return self.astype('float64') / other
 
     def __rshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) >> cast({} as int)',
-                                          other_dtypes=tuple(['int64']))
+        if is_postgres(self.engine):
+            # Postgres expects the argument to a bitshift to be a regular int, not bigint.
+            return self._arithmetic_operation(other, 'rshift', '({}) >> cast({} as int)',
+                                              other_dtypes=tuple(['int64']))
+        return self._arithmetic_operation(other, 'rshift', '({}) >> ({})', other_dtypes=tuple(['int64']))
 
     def __lshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
-                                          other_dtypes=tuple(['int64']))
+        if is_postgres(self.engine):
+            # Postgres expects the argument to a bitshift to be a regular int, not bigint.
+            return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
+                                              other_dtypes=tuple(['int64']))
+        return self._arithmetic_operation(other, 'lshift', '({}) << ({})', other_dtypes=tuple(['int64']))
 
     def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
         # sum() has the tendency to return float on bigint arguments. Cast it back.
@@ -250,10 +287,15 @@ class SeriesInt64(SeriesAbstractNumeric):
 class SeriesFloat64(SeriesAbstractNumeric):
     dtype = 'float64'
     dtype_aliases = ('float', 'double', 'f8', float, numpy.float64, 'double precision')
-    supported_db_dtype = 'double precision'
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'double precision',
+        DBDialect.BIGQUERY: 'FLOAT64'
+    }
     supported_value_types = (float, numpy.float64)
 
     # Notes for supported_value_to_literal() and supported_literal_to_expression():
+    #
+    # ### Postgres ###
     # Postgres will automatically parse any number with a decimal point as a number of type `numeric`,
     # which could be casted to float. However we specify the value always as a string, as there are some
     # values that cannot be expressed as a numeric literal directly (NaN, infinity, and -infinity), and
@@ -261,19 +303,26 @@ class SeriesFloat64(SeriesAbstractNumeric):
     # See the sections on numeric constants, and on fLoating-point types in the Postgres documentation
     # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
     # https://www.postgresql.org/docs/14/datatype-numeric.html#DATATYPE-FLOAT
+    #
+    # ### BigQuery ###
+    # BigQuery parses floating point literals as a float, no casts needed. However the special values (NaN,
+    # infinity, and -infinity) can only be specified as strings that are then cast. For simplicity, we
+    # always use a string literal that we then cast to float, just as we do for Postgres.
+    # https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#floating_point_types
+    # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#floating_point_literals
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct("cast({} as float)", literal)
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[float, numpy.float64]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[float, numpy.float64]) -> Expression:
         return Expression.string_value(str(value))
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'float64':
             return expression
         if source_dtype not in ['int64', 'string']:
             raise ValueError(f'cannot convert {source_dtype} to float64')
-        return Expression.construct('cast({} as float)', expression)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)

@@ -19,7 +19,7 @@ from bach.expression import Expression, SingleValueExpression, VariableToken, Ag
 from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype
-from bach.utils import escape_parameter_characters, FeatureRange
+from bach.utils import escape_parameter_characters
 from sql_models.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
@@ -1334,7 +1334,7 @@ class DataFrame:
 
             new_index = {idx: series for idx, series in df.index.items() if idx not in levels_to_remove}
 
-        df._data = {n: s.copy_override(index={}, index_sorting=[]) for n, s in series.items()}
+        df._data = {n: s.copy_override(index=new_index, index_sorting=[]) for n, s in series.items()}
         df._index = new_index
         return df
 
@@ -2820,7 +2820,7 @@ class DataFrame:
         axis: int = 0,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
         ascending: Union[bool, List[bool]] = True,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Fill any NULL value using a method or with a given value.
 
@@ -3019,7 +3019,43 @@ class DataFrame:
 
         :param with_mean: if true, each feature value will be centered before scaling
         :param with_std: if true, each feature value will be scaled to unit variance
+
         :return: DataFrame
+
+        Each transformation per feature is performed as follows:
+
+        .. testsetup:: scale
+           :skipif: engine is None
+
+           import pandas
+           data = {'index': ['a', 'b', 'c', 'd'], 'feature': [1, 2, 3, 4]}
+           pdf = pandas.DataFrame(data)
+           df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+           df = df.set_index('index')
+           agg_df = df.agg(['mean', 'std_pop'], numeric_only=True)
+
+           feature = df['feature']
+           mean_feature = agg_df['feature_mean']
+           std_feature = agg_df['feature_std_pop']
+           with_mean = True
+           with_std = True
+
+        .. doctest:: scale
+            :skipif: engine is None
+
+            >>> scaled_feature = feature.copy()
+            >>> if with_mean:
+            ...     scaled_feature -= mean_feature
+
+
+            >>> if with_std:
+            ...     scaled_feature /= std_feature
+
+        Where:
+            * ``feature`` is the series to be scaled
+            * ``mean_feature`` is the mean of ``feature``
+            * ``std_feature`` is the (population-based) stardard deviation of ``feature``
+
         """
         from bach.preprocessing.scalers import StandardScaler
         return StandardScaler(training_df=self, with_mean=with_mean, with_std=with_std).transform()
@@ -3064,6 +3100,152 @@ class DataFrame:
         """
         from bach.preprocessing.scalers import MinMaxScaler
         return MinMaxScaler(training_df=self, feature_range=feature_range).transform()
+
+    def unstack(
+        self, level: Union[str, int] = -1, fill_value: Optional[Scalar] = None, aggregation: str = 'max',
+    ) -> 'DataFrame':
+        """
+        Pivot a level of the index labels.
+
+        Returns a(n unsorted) DataFrame with the values of the unstacked index as columns. In case of
+        duplicate index values that are unstacked, `aggregation` is used to aggregate the values.
+
+        DataFrame's index should be of at least two levels to unstack.
+
+        :param level: selects the level of the index that is unstacked.
+        :param fill_value: replace missing values resulting from unstacking. Should be of same type as the
+            series that is unstacked.
+        :param aggregation: method of aggregation, in case of duplicate index values. Supports all aggregation
+            methods that :py:meth:`aggregate` supports.
+
+        :return: DataFrame
+
+        .. note::
+            This function queries the database.
+        """
+        if len(self.index) <= 1:
+            raise NotImplementedError('index must be a multi level index to unstack')
+
+        if isinstance(level, int) and level >= len(self.index):
+            raise IndexError(f'Too many levels. DataFrame/Series has only {len(self.index)} levels.')
+
+        if isinstance(level, str) and level not in self.index:
+            raise IndexError(f'"{level}" does not exist in DataFrame/Series index')
+
+        if type(aggregation) != str:
+            raise TypeError('invalid aggregation method')
+
+        level_index = level if isinstance(level, int) else self.index_columns.index(level)
+        index_to_unstack = self.index_columns[level_index]
+        values = self.index[index_to_unstack].unique().to_numpy()
+
+        if None in values or numpy.nan in values:
+            raise ValueError("index contains empty values, cannot be unstacked")
+
+        remaining_indexes = [idx_col for idx_col in self.index_columns if idx_col != index_to_unstack]
+        df = self.reset_index(level=index_to_unstack, drop=False)
+
+        new_columns = []
+        for column in values:
+            for curr_col in self.data_columns:
+                new_column_name = f'{column}__{curr_col}'
+                new_columns.append(new_column_name)
+
+                df[new_column_name] = None
+                # previous statement will change dtype to string because value is None
+                df[new_column_name] = df[new_column_name].astype(df[curr_col].dtype)
+                df.loc[df[index_to_unstack] == column, new_column_name] = df[curr_col]
+
+        df = df.groupby(remaining_indexes).aggregate(aggregation)
+        df = df.rename(columns={col: col.replace(f'_{aggregation}', '') for col in df.data_columns})
+
+        # materialization is needed since df might be sorted by columns that no longer exist
+        df = df.materialize('unstack')
+        df = df[new_columns]
+
+        return df.fillna(value=fill_value)
+
+    def get_dummies(
+        self,
+        prefix: Optional[Union[str, List[str], Dict[str, str]]] = None,
+        prefix_sep: str = '_',
+        dummy_na: bool = False,
+        columns: Optional[List[str]] = None,
+        dtype: str = 'int64',
+    ) -> 'DataFrame':
+        """
+        Convert each unique category/value from a string series into a dummy/indicator variable.
+
+        :param prefix: String to append to each new column name. By default, the prefix will be the name of
+            the series the category is originated from.
+        :param prefix_sep: Separated between the prefix and label.
+        :param dummy_na: If true, it will include ``nan`` as a variable.
+        :param columns: List of string series to be converted.
+        :param dtype: dtype of all new columns
+        :return: DataFrame
+
+        .. note::
+            DataFrame should contain at least one index level.
+        """
+        if not self.index:
+            raise IndexError('DataFrame/Series should have at least one index level.')
+
+        if columns:
+            columns_to_encode = columns
+        else:
+            columns_to_encode = [s.name for s in self.data.values() if s.dtype == 'string']
+
+        if not columns_to_encode:
+            return self.copy()
+
+        invalid_columns = [
+            col for col in columns_to_encode
+            if col not in self.data or self.data[col].dtype != 'string'
+        ]
+        if invalid_columns:
+            raise ValueError(f'{invalid_columns} are not valid columns.')
+
+        prefix_per_col = {}
+        if isinstance(prefix, dict):
+            prefix_per_col = prefix
+        elif prefix is not None:
+            prefix_per_col = {
+                col: prefix
+                for col, prefix in zip(columns_to_encode, (prefix if isinstance(prefix, list) else [prefix]))
+            }
+
+        categorical_series = []
+        from bach.series.series import const_to_series
+        df_cp = self.copy()
+
+        # prepare each series, add prefix to each value (variable identifiers)
+        for col in columns_to_encode:
+            if dummy_na:
+                df_cp.loc[df_cp[col].isnull(), col] = 'nan'
+
+            text_series = df_cp[col]
+            prefix_val = f'{prefix_per_col.get(col, col)}{prefix_sep}'
+            prefix_series = const_to_series(text_series, value=prefix_val, name=col)
+            text_series = prefix_series + text_series
+
+            categorical_series.append(text_series)
+
+        from bach.operations.concat import SeriesConcatOperation
+        # concat all categorical series into a single series, this way we avoid unstacking per each series
+        categorical_df = SeriesConcatOperation(categorical_series)().to_frame()
+        categorical_df = categorical_df.dropna()
+        categorical_df['values'] = 1
+        categorical_df = categorical_df.set_index(categorical_df.data_columns[0], append=True)
+        dummies_df = categorical_df['values'].unstack()
+
+        remaining_columns = [dc for dc in self.data_columns if dc not in columns_to_encode]
+        dummy_columns = dummies_df.data_columns
+
+        # merge the encoded variables with the rest of series, replace null values
+        encoded_df = self[remaining_columns].merge(dummies_df, how='left', left_index=True, right_index=True)
+        encoded_df = encoded_df.fillna(value=dict(zip(dummy_columns, [0] * len(dummy_columns))))
+        encoded_df[dummy_columns] = encoded_df[dummy_columns].astype(dtype)
+        return encoded_df
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

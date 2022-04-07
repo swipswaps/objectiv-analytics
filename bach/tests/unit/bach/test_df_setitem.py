@@ -6,9 +6,9 @@ import pytest
 from tests.unit.bach.util import get_fake_df_test_data
 
 
-def test_set_existing_index():
+def test_set_existing_index(dialect):
     # Test that we get an appropriate error when we try to set an index column
-    bt = get_fake_df_test_data()
+    bt = get_fake_df_test_data(dialect)
     # should work: new column
     bt['x'] = 1
     # should work: override existing column

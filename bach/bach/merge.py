@@ -585,7 +585,7 @@ def _resolve_merge_expression_references(
 
                 resolved_expr = _get_expression(df_series=df_series, label=nested_token.column_name)
                 resolved_expr = resolved_expr.resolve_column_references(dialect, table_alias)
-                new_tokens.append(resolved_expr)
+                resolved_nested_tokens.append(resolved_expr)
 
             new_tokens.extend(resolved_nested_tokens)
 

@@ -4,17 +4,17 @@ Copyright 2021 Objectiv B.V.
 from unittest.mock import ANY
 
 import pytest
-from sqlalchemy.dialects.postgresql.base import PGDialect
 
 from bach import SeriesUuid
 from sql_models.graph_operations import get_graph_nodes_info
-from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_test_data
+from sql_models.util import is_bigquery, is_postgres
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
 
 @pytest.mark.parametrize("inplace", [False, True])
-def test_materialize(inplace: bool):
-    dialect = PGDialect()  # TODO: BigQuery
-    bt = get_bt_with_test_data()[['city', 'founding']]
+def test_materialize(inplace: bool, pg_engine):
+    engine = pg_engine  # TODO: BigQuery
+    bt = get_df_with_test_data(engine)[['city', 'founding']]
     bt['city'] = bt['city'] + ' '
     bt['uuid'] = SeriesUuid.sql_gen_random_uuid(bt)
     bt['founding_str'] = bt['founding'].astype('string')
@@ -37,13 +37,21 @@ def test_materialize(inplace: bool):
     # The materialized DataFrame should result in the exact same data
     assert_equals_data(bt_materialized, expected_columns=expected_columns, expected_data=expected_data)
 
+    assert bt_materialized.is_materialized
     # The original DataFrame has a 'complex' expression for all data columns. The materialized df should
     # have an expression that's simply the name of the column for all data columns, as the complex expression
     # has been moved to the new underlying base_node.
-    for series in bt.data.values():
-        assert series.expression.to_sql(dialect) != f'"{series.name}"'
-    for series in bt_materialized.data.values():
-        assert series.expression.to_sql(dialect) == f'"{series.name}"'
+    for series_name in bt.data_columns:
+        if is_postgres(engine):
+            expected_to_sql = f'"{series_name}"'
+        elif is_bigquery(engine):
+            # TODO: This path is never taken, as we only test with Postgres dialect/engine.
+            # We use uuids in this test, which we need to support in Biguery before we can port this test.
+            expected_to_sql = f'`{series_name}`'
+        else:
+            raise Exception('we need to expand this test')
+        assert bt[series_name].expression.to_sql(engine.dialect) != expected_to_sql
+        assert bt_materialized[series_name].expression.to_sql(engine.dialect) == expected_to_sql
 
     # The materialized graph should have one extra node
     node_info_orig = get_graph_nodes_info(bt.get_current_node('node'))
@@ -54,9 +62,9 @@ def test_materialize(inplace: bool):
 
 
 @pytest.mark.parametrize("inplace", [False, True])
-def test_materialize_with_non_aggregation_series(inplace: bool):
+def test_materialize_with_non_aggregation_series(inplace: bool, engine):
     # A dataframe with a groupby set, but without all columns setup for aggregation should raise
-    bt = get_bt_with_test_data()[['municipality', 'founding', 'inhabitants']]
+    bt = get_df_with_test_data(engine)[['municipality', 'founding', 'inhabitants']]
     btg = bt.groupby('municipality')
     assert btg.group_by is not None
     with pytest.raises(ValueError, match="groupby set, but contains Series that have no aggregation func.*"
@@ -90,8 +98,9 @@ def test_materialize_with_non_aggregation_series(inplace: bool):
 
 
 @pytest.mark.parametrize("inplace", [False, True])
-def test_materialize_non_deterministic_expressions(inplace: bool):
-    bt = get_bt_with_test_data()[['city']]
+def test_materialize_non_deterministic_expressions(inplace: bool, pg_engine):
+    engine = pg_engine  # TODO: BigQuery
+    bt = get_df_with_test_data(engine)[['city']]
     bt['uuid1'] = SeriesUuid.sql_gen_random_uuid(bt)
     # now bt['uuid1'] has not been evaluated, so copying the column should copy the unevaluated expression
     bt['uuid2'] = bt['uuid1']
@@ -120,8 +129,8 @@ def test_materialize_non_deterministic_expressions(inplace: bool):
     assert_equals_data(bt, expected_columns=expected_columns, expected_data=expected_data)
 
 
-def test_is_materialized():
-    df_original = get_bt_with_test_data()
+def test_is_materialized(engine):
+    df_original = get_df_with_test_data(engine)
     assert df_original.is_materialized
     df = df_original.copy()
     assert df.is_materialized
