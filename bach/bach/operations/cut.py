@@ -69,7 +69,7 @@ class CutOperation:
                 fake_merge[self.RANGE_SERIES_NAME],
             ),
         )
-        mask = cast(SeriesBoolean, mask.copy_override_dtype('bool'))
+        mask = mask.copy_override_type(SeriesBoolean)
 
         df = left_df.merge(right_df, how=how, on=mask)
 
@@ -267,7 +267,7 @@ class QCutOperation:
                     fake_merge[self.RANGE_SERIES_NAME],
                 ),
             )
-            mask = cast(SeriesBoolean, mask.copy_override_dtype('bool'))
+            mask = mask.copy_override_type(SeriesBoolean)
             df = df.merge(quantile_ranges, how='left', on=mask)
 
         new_index = {self.series.name: df[self.series.name]}
