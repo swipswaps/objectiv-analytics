@@ -8,6 +8,7 @@ import { waitForPromise } from './helpers';
 import { ApplicationContextPlugin } from './plugins/ApplicationContextPlugin';
 import { OpenTaxonomyValidationPlugin } from './plugins/OpenTaxonomyValidationPlugin';
 import { TrackerConsole } from './TrackerConsole';
+import { TrackerDeveloperTools } from "./TrackerDeveloperToolsInterface";
 import { getLocationPath } from './TrackerElementLocations';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPluginInterface } from './TrackerPluginInterface';
@@ -69,6 +70,11 @@ export type TrackerConfig = ContextsConfig & {
    * Optional. Whether to track ApplicationContext automatically. Enabled by default.
    */
   trackApplicationContext?: boolean;
+
+  /**
+   * Optional. TrackerDeveloperTools instance to perform extra validation and logging during development.
+   */
+  developerTools?: TrackerDeveloperTools;
 };
 
 /**
@@ -132,6 +138,7 @@ export class Tracker implements TrackerInterface {
   readonly queue?: TrackerQueueInterface;
   readonly transport?: TrackerTransportInterface;
   readonly plugins: TrackerPlugins;
+  readonly developerTools?: TrackerDeveloperTools;
 
   // By default, trackers are active
   active: boolean = false;
@@ -154,6 +161,7 @@ export class Tracker implements TrackerInterface {
     this.trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
     this.queue = trackerConfig.queue;
     this.transport = trackerConfig.transport;
+    this.developerTools = trackerConfig.developerTools;
 
     // Process ContextConfigs
     let new_location_stack: AbstractLocationContext[] = trackerConfig.location_stack ?? [];
