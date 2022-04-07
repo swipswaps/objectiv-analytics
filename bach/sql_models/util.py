@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 import string
-from typing import Set, Union
+from typing import Set, Union, Optional
 
 from sqlalchemy.engine import Dialect, Engine
 
@@ -98,5 +98,9 @@ def is_bigquery(dialect_engine: Union[Dialect, Engine]) -> bool:
 
 
 class DatabaseNotSupportedException(Exception):
-    def __init__(self, dialect_engine: Union[Dialect, Engine]):
-        super().__init__(f'This function is not supported for database dialect "{dialect_engine.name}".')
+    def __init__(self, dialect_engine: Union[Dialect, Engine], message_override: Optional[str] = None):
+        if message_override is not None:
+            message = message_override
+        else:
+            message = f'This function is not supported for database dialect "{dialect_engine.name}".'
+        super().__init__(message)
