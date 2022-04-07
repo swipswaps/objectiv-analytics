@@ -51,7 +51,7 @@ def test_unstack_level() -> None:
         ],
     )
 
-    result2 = bt.unstack(level=0, fill_value=0)
+    result2 = bt.unstack(level='city', fill_value=0)
     new_cols2 = [
         'Drylts__founding',
         'Drylts__inhabitants',
@@ -75,3 +75,14 @@ def test_unstack_level() -> None:
     with pytest.raises(IndexError, match=r'Too many levels'):
         bt.unstack(level=3)
 
+    with pytest.raises(IndexError, match=r'does not exist in DataFrame/Series index'):
+        bt.unstack(level='random')
+
+
+def test_df_unstack_w_none():
+    bt = get_bt_with_test_data(full_data_set=True)
+    bt['municipality_none'] = bt[bt.skating_order < 10].municipality
+    stacked_bt = bt.groupby(['city', 'municipality_none']).inhabitants.sum()
+
+    with pytest.raises(Exception, match='index contains empty values, cannot be unstacked'):
+        stacked_bt.unstack()

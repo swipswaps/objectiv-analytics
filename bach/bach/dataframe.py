@@ -3000,7 +3000,7 @@ class DataFrame:
         return stacked_df.all_series['__stacked']
 
     def unstack(
-        self, level=-1, fill_value: Optional[Scalar] = None, aggregation: str = 'max',
+        self, level: Union[str, int] = -1, fill_value: Optional[Scalar] = None, aggregation: str = 'max',
     ) -> 'DataFrame':
         """
         Pivot a level of the index labels.
@@ -3017,17 +3017,24 @@ class DataFrame:
             methods that :py:meth:`aggregate` supports.
 
         :return: DataFrame
+
+        .. note::
+            This function queries the database.
         """
         if len(self.index) <= 1:
             raise NotImplementedError('index must be a multi level index to unstack')
 
-        if level >= len(self.index):
+        if isinstance(level, int) and level >= len(self.index):
             raise IndexError(f'Too many levels. DataFrame/Series has only {len(self.index)} levels.')
+
+        if isinstance(level, str) and level not in self.index:
+            raise IndexError(f'"{level}" does not exist in DataFrame/Series index')
 
         if type(aggregation) != str:
             raise TypeError('invalid aggregation method')
 
-        index_to_unstack = self.index_columns[level]
+        level_index = level if isinstance(level, int) else self.index_columns.index(level)
+        index_to_unstack = self.index_columns[level_index]
         values = self.index[index_to_unstack].unique().to_numpy()
 
         if None in values or numpy.nan in values:
@@ -3050,6 +3057,7 @@ class DataFrame:
         df = df.groupby(remaining_indexes).aggregate(aggregation)
         df = df.rename(columns={col: col.replace(f'_{aggregation}', '') for col in df.data_columns})
 
+        # materialization is needed since df might be sorted by columns that no longer exist
         df = df.materialize('unstack')
         df = df[new_columns]
 
