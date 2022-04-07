@@ -1578,10 +1578,10 @@ class DataFrame:
                              List[DataFrame._GroupBySingleType], None], by)
         group_by_columns = df._partition_by_series(by_mypy)
 
-        group_by_expressions = any(
+        has_group_by_expressions = any(
             gbc.expression != Expression.column_reference(gbc.name) for gbc in group_by_columns
         )
-        if is_bigquery(self.engine) and group_by_expressions:
+        if is_bigquery(self.engine) and has_group_by_expressions:
             # BigQuery allows grouping by an expression (other than just a column-reference), but then that
             # expression cannot be in the select (unless all columns that are in the expression are also
             # grouped on). However, we always include all expressions that are grouped on in the result, as
@@ -1592,11 +1592,13 @@ class DataFrame:
             #   e.g. df.groupby([df.x >= 0, df.x == 0])
             #   See https://github.com/objectiv/objectiv-analytics/issues/616
             df_new = df.copy()
-            gbc_names: List[str] = [gbc.name for gbc in group_by_columns]
+            gbc_names = []
             for gbc in group_by_columns:
+                gbc_names.append(gbc.name)
                 df_new[gbc.name] = gbc
+
             df_new = df_new.materialize(node_name='bq_materialize_before_groupby')
-            group_by_columns = [df_new[gbc_name] for gbc_name in gbc_names]
+            group_by_columns = df_new._partition_by_series(gbc_names)
             group_by = GroupBy(group_by_columns=group_by_columns)
             return DataFrame._groupby_to_frame(df_new, group_by)
 
