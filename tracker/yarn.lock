@@ -1505,7 +1505,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@objectiv/developer-tools@^0.0.18, @objectiv/developer-tools@workspace:core/developer-tools":
+"@objectiv/developer-tools@workspace:core/developer-tools":
   version: 0.0.0-use.local
   resolution: "@objectiv/developer-tools@workspace:core/developer-tools"
   dependencies:
@@ -1733,7 +1733,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-core@workspace:core/tracker"
   dependencies:
-    "@objectiv/developer-tools": ^0.0.18
     "@objectiv/schema": ^0.0.18
     "@objectiv/testing-tools": ^0.0.18
     "@types/jest": ^27.4.1

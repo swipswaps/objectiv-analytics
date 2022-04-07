@@ -50,6 +50,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
+    "@objectiv/developer-tools": "^0.0.18",
     "@objectiv/testing-tools": "^0.0.18",
     "@types/jest": "^27.4.1",
     "@types/uuid": "^8.3.4",
@@ -63,7 +64,6 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
-    "@objectiv/developer-tools": "^0.0.18",
     "@objectiv/schema": "^0.0.18",
     "uuid": "^8.3.2"
   }

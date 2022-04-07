@@ -2,12 +2,6 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import {
-  GlobalContextName,
-  GlobalContextValidationRule,
-  LocationContextName,
-  LocationContextValidationRule
-} from "@objectiv/developer-tools";
 import { isDevMode } from '../helpers';
 import { TrackerInterface } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
@@ -29,21 +23,31 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    * At initialization, we retrieve TrackerPlatform and initialize all Validation Rules.
    */
   initialize({ platform }: TrackerInterface) {
-    this.validationRules = [
-      new GlobalContextValidationRule({
-        platform,
-        logPrefix: this.pluginName,
-        contextName: GlobalContextName.ApplicationContext,
-        once: true,
-      }),
-      new LocationContextValidationRule({
-        platform,
-        logPrefix: this.pluginName,
-        contextName: LocationContextName.RootLocationContext,
-        once: true,
-        position: 0,
-      }),
-    ];
+    try {
+      const {
+        GlobalContextName,
+        GlobalContextValidationRule,
+        LocationContextName,
+        LocationContextValidationRule
+      } = require('@objectiv/developer-tools');
+      this.validationRules = [
+        new GlobalContextValidationRule({
+          platform,
+          logPrefix: this.pluginName,
+          contextName: GlobalContextName.ApplicationContext,
+          once: true,
+        }),
+        new LocationContextValidationRule({
+          platform,
+          logPrefix: this.pluginName,
+          contextName: LocationContextName.RootLocationContext,
+          once: true,
+          position: 0,
+        }),
+      ];
+    } catch {
+      TrackerConsole.debug(`%c｢objectiv:${this.pluginName}｣ Validation disabled.`, 'font-weight: bold');
+    }
     this.initialized = true;
 
     TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');

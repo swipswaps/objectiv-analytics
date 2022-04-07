@@ -48,6 +48,7 @@ describe('TrackingContextProvider', () => {
         plugins: [
           {
             pluginName: 'OpenTaxonomyValidationPlugin',
+            initialized: true,
             validationRules: [
               new GlobalContextValidationRule({
                 platform: TrackerPlatform.CORE,
