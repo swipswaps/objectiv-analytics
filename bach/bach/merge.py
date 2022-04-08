@@ -427,18 +427,28 @@ def _determine_series_per_source(
     right_node = cast(BachSqlModel, base.base_node.references['right_node'])
 
     expressions_to_parse: Dict[str, List[Expression]] = {}
+
+    merge_node = cast(MergeSqlModel, base.base_node)
+    merge_on = merge_node.merge_on
+
+    coalesced_series = [
+        left_on for left_on, right_on in zip(merge_on.left, merge_on.right) if left_on == right_on
+    ]
     for series_name, original_expr in base.base_node.column_expressions.items():
         if series_name not in series_to_unmerge:
             continue
 
-        if isinstance(original_expr, NonAtomicExpression) or not original_expr.has_table_column_references:
+        if series_name not in coalesced_series:
             expressions_to_parse[series_name] = [original_expr]
             continue
 
+        # removes first-level tokens from COALESCE expression
+        # I.e COALESCE(expr1, expr2)
+        # expression_to_parse[series] = [expr1, expr2]
         expressions_to_parse[series_name] = [
-            sub_expr if isinstance(sub_expr, Expression) else Expression([sub_expr])
+            sub_expr
             for sub_expr in original_expr.data
-            if isinstance(sub_expr, (Expression, TableColumnReferenceToken))
+            if isinstance(sub_expr, Expression)
         ]
 
     default_series = base.all_series[base.data_columns[0]]
@@ -514,9 +524,10 @@ def _get_merge_sql_model(
         columns_expr=columns_expr,
         join_type_expr=join_type_expr,
         on_clause=on_clause,
+        merge_on=merge_on,
         left_node=left.base_node,
         right_node=right.base_node,
-        variables=variables
+        variables=variables,
     )
 
 
@@ -606,8 +617,13 @@ def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
 
 
 class MergeSqlModel(BachSqlModel):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, merge_on: MergeOn, *args, **kwargs):
+        self._merge_on = merge_on
         super().__init__(*args,  **kwargs)
+
+    @property
+    def merge_on(self) -> MergeOn:
+        return self._merge_on
 
     @classmethod
     def get_instance(
@@ -618,6 +634,7 @@ class MergeSqlModel(BachSqlModel):
         columns_expr: Expression,
         join_type_expr: Expression,
         on_clause: Expression,
+        merge_on: MergeOn,
         left_node: BachSqlModel,
         right_node: BachSqlModel,
         variables: Dict['DtypeNamePair', Hashable],
@@ -658,4 +675,5 @@ class MergeSqlModel(BachSqlModel):
             materialization=Materialization.CTE,
             materialization_name=None,
             column_expressions=column_expressions,
+            merge_on=merge_on,
         )
