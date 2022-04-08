@@ -1,10 +1,11 @@
 import numpy
 
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
+from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
+    get_df_with_test_data
 
 
-def test_from_const():
-    bt = get_bt_with_test_data()[['city']]
+def test_from_const(engine):
+    bt = get_df_with_test_data(engine)[['city']]
     bt['t'] = True
     bt['f'] = False
     assert_equals_data(
@@ -16,16 +17,16 @@ def test_from_const():
     )
 
 
-def test_to_pandas():
-    bt = get_bt_with_test_data()
+def test_to_pandas(engine):
+    bt = get_df_with_test_data(engine)
     bt['t'] = True
     bt['f'] = False
     bt[['t', 'f']].to_pandas()
     numpy.testing.assert_array_equal(bt[['t', 'f']].to_numpy()[0], [True, False])
 
     
-def test_operations():
-    bt = get_bt_with_test_data()[['city']]
+def test_operations(engine):
+    bt = get_df_with_test_data(engine)[['city']]
     expected = []
     bt['t'] = True
     bt['f'] = False
@@ -71,8 +72,9 @@ def test_operations():
     )
 
 
-def test_min_max():
-    df = get_bt_with_test_data()[['founding']]
+def test_min_max(pg_engine):
+    # TODO: BigQuery
+    df = get_df_with_test_data(pg_engine)[['founding']]
     df['mixed'] = df['founding'] < 1400
     df['yes'] = True
     df['no'] = False

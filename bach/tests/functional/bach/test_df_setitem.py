@@ -25,10 +25,9 @@ def check_set_const(engine, constants: List[Any], expected_series: Type[Series],
         column_names.append(column_name)
         bt[column_name] = constant
 
-    if is_postgres(engine):
+    for column_name in column_names:
         # we don't have an easy way to get the database type in BigQuery, so only support that check for PG
-        for column_name in column_names:
-            assert_postgres_type(bt[column_name], expected_pg_db_type, expected_series)
+        assert_postgres_type(bt[column_name], expected_pg_db_type, expected_series)
 
     assert_equals_data(
         bt,
@@ -57,23 +56,11 @@ def test_set_const_int(engine):
 def test_set_const_float(engine):
     constants = [
         5.1,
-        0.0,
-        -5.1,
-        -0.0,
-        float('infinity'),
-        float('-infinity')
+        -5.1
     ]
     check_set_const(engine, constants, SeriesFloat64, 'double precision')
-
-    # Special case: test the float value 'Not a Number' (NaN). We cannot use check_set_const(), as that will
-    # check that the result contains NaN, and `NaN == NaN` gives `False`, and thus the test would incorrectly
-    # fail.
-    constant = float('NaN')
-    bt = get_df_with_test_data(engine)
-    bt['new_column'] = constant
-    result = run_query(engine=engine, sql=bt.view_sql())
-    for row in result:
-        assert math.isnan(row['new_column'])
+    # See also tests.functional.bach.test_series_float.test_from_const(), which tests some interesting
+    # special cases.
 
 
 def test_set_const_bool(engine):
