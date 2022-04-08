@@ -119,7 +119,6 @@ Numeric
     SeriesAbstractNumeric.sem
     SeriesAbstractNumeric.sum
     SeriesAbstractNumeric.std
-    SeriesAbstractNumeric.std_pop
     SeriesAbstractNumeric.var
     SeriesAbstractNumeric.scale
 

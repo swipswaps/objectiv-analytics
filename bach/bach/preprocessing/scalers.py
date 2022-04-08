@@ -94,7 +94,7 @@ class StandardScaler(BaseScaler):
             if self.with_mean:
                 merged[col] -= merged[f'{col}_mean']
             if self.with_std:
-                merged[col] /= merged[f'{col}_std_pop']
+                merged[col] /= merged[f'{col}_std']
 
         return merged[df_cp.data_columns]
 
@@ -109,7 +109,7 @@ class StandardScaler(BaseScaler):
             aggregations.append('mean')
 
         if self.with_std:
-            aggregations.append('std_pop')
+            aggregations.append('std')
 
-        agg_df = self.training_df.agg(func=list(aggregations), numeric_only=True)
+        agg_df = self.training_df.agg(func=list(aggregations), numeric_only=True, ddof=0)
         return agg_df
