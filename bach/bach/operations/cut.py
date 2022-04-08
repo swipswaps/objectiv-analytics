@@ -3,7 +3,7 @@ Copyright 2022 Objectiv B.V.
 """
 
 from typing import cast, List, Union
-from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64
+from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64, SeriesBoolean
 from bach.expression import Expression
 import numpy
 
@@ -63,22 +63,24 @@ class CutOperation:
         final_index_keys += [self.series.name]
 
         df = self.series.to_frame().reset_index(drop=self.ignore_index)
-        df[self.RANGE_SERIES_NAME] = df[self.series.name].copy_override(
-            expression=Expression.construct(
-                (
-                    f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME} \n'
-                    f'then {self.RANGE_SERIES_NAME} else null end'
-                ),
-                df[self.series.name],
-            ),
-            name=self.RANGE_SERIES_NAME,
-        )
-        if self.include_empty_bins:
-            # if we merge with df as left, range values will be null since left dataframe has priority
-            df = range_series.to_frame().merge(df, how='left')
 
-        else:
-            df = df.merge(range_series, how='inner')
+        left_df = df if not self.include_empty_bins else range_series.to_frame()
+        right_df = range_series.to_frame() if not self.include_empty_bins else df
+        how = 'inner' if not self.include_empty_bins else 'left'
+
+        # <@ (contains operator for ranges) is currently not supported
+        # therefore we need to create a raw expression for this
+        fake_merge = left_df.merge(right_df, how='cross')
+        mask = fake_merge[self.series.name].copy_override(
+            expression=Expression.construct(
+                f'cast({{}} as numeric) <@ {{}}',
+                fake_merge[self.series.name],
+                fake_merge[self.RANGE_SERIES_NAME],
+            ),
+        )
+        mask = mask.copy_override_type(SeriesBoolean)
+
+        df = left_df.merge(right_df, how=how, on=mask)
 
         df = df.set_index(keys=final_index_keys)
         return cast(SeriesFloat64, df[self.RANGE_SERIES_NAME])
@@ -264,18 +266,18 @@ class QCutOperation:
             df[self.RANGE_SERIES_NAME] = None
         else:
             quantile_ranges = self._get_quantile_ranges()
-            # currently is not possible to reference a column from another DataFrame
-            # and use the expression in the merge subquery
-            range_stmt = (
-                f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME}\n'
-                f'then {self.RANGE_SERIES_NAME} end'
+            # <@ (contains operator for ranges) is currently not supported
+            # therefore we need to create a raw expression for this
+            fake_merge = df.merge(quantile_ranges, how='cross')
+            mask = fake_merge[self.series.name].copy_override(
+                expression=Expression.construct(
+                    f'cast({{}} as numeric) <@ {{}}',
+                    fake_merge[self.series.name],
+                    fake_merge[self.RANGE_SERIES_NAME],
+                ),
             )
-            df[self.RANGE_SERIES_NAME] = df[self.series.name].copy_override(
-                expression=Expression.construct(range_stmt, df[self.series.name]),
-                name=self.RANGE_SERIES_NAME,
-            )
-
-            df = df.merge(quantile_ranges, how='left', on=self.RANGE_SERIES_NAME)
+            mask = mask.copy_override_type(SeriesBoolean)
+            df = df.merge(quantile_ranges, how='left', on=mask)
 
         new_index = {self.series.name: df[self.series.name]}
         return cast(SeriesFloat64, df[self.RANGE_SERIES_NAME].copy_override(index=new_index))

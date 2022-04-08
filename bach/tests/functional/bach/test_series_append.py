@@ -1,9 +1,9 @@
 from bach import Series
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
 
-def test_series_append_same_dtype() -> None:
-    bt = get_bt_with_test_data(full_data_set=False)[['city', 'skating_order']]
+def test_series_append_same_dtype(engine) -> None:
+    bt = get_df_with_test_data(engine, full_data_set=False)[['city', 'skating_order']]
     bt.skating_order = bt.skating_order.astype(str)
 
     result = bt.city.append(bt.skating_order)
@@ -23,8 +23,8 @@ def test_series_append_same_dtype() -> None:
     )
 
 
-def test_series_append_different_dtype() -> None:
-    bt = get_bt_with_test_data(full_data_set=False)[['city', 'inhabitants', 'founding']]
+def test_series_append_different_dtype(engine) -> None:
+    bt = get_df_with_test_data(engine, full_data_set=False)[['city', 'inhabitants', 'founding']]
     bt['founding'] = bt['founding'].astype('float64')
 
     result = bt.city.append(bt.founding)
@@ -77,8 +77,8 @@ def test_series_append_different_dtype() -> None:
     )
 
 
-def test_series_ignore_index() -> None:
-    bt = get_bt_with_test_data(full_data_set=False)[['city', 'skating_order']]
+def test_series_ignore_index(engine) -> None:
+    bt = get_df_with_test_data(engine, full_data_set=False)[['city', 'skating_order']]
     bt.skating_order = bt.skating_order.astype(str)
 
     result = bt.city.append(bt.skating_order, ignore_index=True)
@@ -98,8 +98,8 @@ def test_series_ignore_index() -> None:
     )
 
 
-def test_append_w_non_materialized_series() -> None:
-    bt = get_bt_with_test_data(full_data_set=False)[['city', 'skating_order']]
+def test_append_w_non_materialized_series(engine) -> None:
+    bt = get_df_with_test_data(engine, full_data_set=False)[['city', 'skating_order']]
 
     city_series = bt.city.unique()
     skating_order_series = bt.set_index('city').skating_order

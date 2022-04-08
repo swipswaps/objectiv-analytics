@@ -4,8 +4,9 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from bach import DataFrame, Series
+from sql_models.util import is_bigquery, is_postgres
 from tests.functional.bach.test_data_and_utils import assert_equals_data, df_to_list, \
-    get_df_with_test_data, get_bt_with_test_data
+    get_df_with_test_data
 
 
 def test_get_item_single(engine):
@@ -64,8 +65,9 @@ def test_get_item_multiple(engine):
     )
 
 
-def test_positional_slicing():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_positional_slicing(pg_engine):
+    # TODO: BigQuery
+    bt = get_df_with_test_data(pg_engine, full_data_set=True)
 
     class ReturnSlice:
         def __getitem__(self, key):
@@ -166,11 +168,18 @@ def test_get_item_mixed_groupby(engine):
         grouped[bt.founding < 1300]
 
     # check that it's illegal to mix different groupings in filters
-    with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries with non matching group_by"):
-        grouped[grouped_other_sum > 50000]
+    expected_message = "Can not apply aggregated BooleanSeries with non matching group_by"
+    if is_bigquery(engine):
+        # on bigquery we have materialized grouped_other. This results in a different error message
+        expected_message = "Cannot apply Boolean series with a different base_node to DataFrame"
+
+    with pytest.raises(ValueError, match=expected_message):
+            grouped[grouped_other_sum > 50000]
+
     # check the other way around for good measure
-    with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries with non matching group_by"):
+    with pytest.raises(ValueError, match=expected_message):
         grouped_other[grouped_sum > 50000]
+
     # or the combination of both, behold!
     with pytest.raises(ValueError, match="Cannot apply Boolean series with a different base_node to DataFrame"):
         # todo do internal merge, similar to setting with different base nodes
