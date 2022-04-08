@@ -570,6 +570,25 @@ def test_merge_on_conditions_w_on_data_columns() -> None:
     )
 
 
+def test_merge_on_conditions_renamed_column() -> None:
+    pdf1 = pd.DataFrame({
+        'A': ['b', 'a', 'c', 'd'],
+        'B': [100, 25, 250, 500],
+    })
+    pdf2 = pd.DataFrame({
+        'A': ['a', 'a', 'c', 'c', 'c'],
+        'B': [20, 5, 50, 20, 100],
+    })
+
+    df1 = get_from_df('merge_on_condition1', pdf1)
+    df2 = get_from_df('merge_on_condition2', pdf2)
+
+    df1 = df1.rename(columns={'B': 'C'})
+    on_condition = df1['C'] > df2['B']
+
+    result = df1.merge(df2, on=on_condition)
+
+
 def test_merge_on_conditions_w_index() -> None:
     pdf1 = pd.DataFrame({
         'A': ['a', 'b', 'c', 'd'],
