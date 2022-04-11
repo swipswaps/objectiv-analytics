@@ -120,7 +120,7 @@ def from_pandas_ephemeral(
     all_values_str = join_expressions(per_row_expr, join_str=',\n').to_sql(engine.dialect)
 
     if is_postgres(engine):
-        # We are building for sql of the form:
+        # We are building sql of the form:
         #     select * from (values
         #         ('row 1', cast(1234 as bigint), cast(-13.37 as double precision)),
         #         ('row 2', cast(1337 as bigint), cast(31.337 as double precision))
@@ -132,7 +132,7 @@ def from_pandas_ephemeral(
         column_names_str = column_names_expr.to_sql(engine.dialect)
         sql = f'select * from (values \n{all_values_str}\n) as t({column_names_str})\n'
     elif is_bigquery(engine):
-        # We are building for sql of the form:
+        # We are building sql of the form:
         #     select * from UNNEST([
         #         STRUCT<`a` STRING, `b` INT64, `c` FLOAT64>
         #         ('row 1', 1234, cast(-13.37 as FLOAT64))

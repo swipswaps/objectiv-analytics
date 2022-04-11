@@ -84,13 +84,12 @@ def test_from_pandas_ephemeral_basic(engine):
         materialization='cte',
         name='ephemeral data'
     )
-    print(bt.to_pandas())
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
 
 
 def test_from_pandas_ephemeral_injection(engine):
-    # We only support 'weird' Series name on Postgres. We must make sure tho that these 'weird' names are
-    # handled correctly tho!
+    # We only support 'weird' Series names on Postgres. We must make sure tho that these 'weird' names are
+    # handled correctly, which we test here.
     # On bigquery we cannot support 'weird' series names, because we map Series names directly to column
     # names and BigQuery only allows [a-zA-Z0-9_] in quoted column names. This behaviour for BigQuery is
     # tested in tests/unit/bach/test_df_from_pandas.py
