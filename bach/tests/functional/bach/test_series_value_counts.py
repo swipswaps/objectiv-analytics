@@ -120,4 +120,4 @@ def test_bins_error(engine) -> None:
 
 def test_method_error(engine) -> None:
     with pytest.raises(ValueError, match=r'"whatever" is not a valid method'):
-        get_df_with_railway_data(engine['inhabitants'].value_counts(bins=4, method='whatever')
+        get_df_with_railway_data(engine)['inhabitants'].value_counts(bins=4, method='whatever')
