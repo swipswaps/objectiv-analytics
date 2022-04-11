@@ -235,5 +235,18 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
         publisher.publish(topic_path, data)
 
 
-def write_data_to_kinesis(events: EventDataList) -> None:
-    pass
+def write_data_to_kinesis(events: EventDataList, config: SnowplowConfig,
+                         channel: str = 'good',
+                         event_errors: List[EventError] = None) -> None:
+    import boto3
+
+    stream_name = 'sp-raw-stream'
+    kinesis_client = boto3.client('kinesis')
+    for event in events:
+        payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
+        data = payload_to_thrift(payload)
+        print(f'Writing event {event["id"]} to kinesis -> {stream_name}')
+        kinesis_client.put_record(
+            StreamName=stream_name,
+            Data=data,
+            PartitionKey="partitionkey")

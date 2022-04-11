@@ -76,7 +76,11 @@ def write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> 
 
 def write_data_to_snowplow_if_configured(events: EventDataList, channel: str = 'good', event_errors: List[EventError] = None) -> None:
     config = get_collector_config().output.snowplow
-    if not config:
+
+    from objectiv_backend.snowplow.snowplow_helper import write_data_to_kinesis
+    write_data_to_kinesis(events=events, config=config, channel=channel, event_errors=event_errors)
+
+    if not config.gcp_project:
         return
 
     # only import if needed, avoids having to install GCP dependencies if it's not used
