@@ -2,7 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import DeveloperTools from '@objectiv/developer-tools';
+import '@objectiv/developer-tools';
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   makeApplicationContext,
@@ -16,7 +16,7 @@ import {
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
-const coreTracker = new Tracker({ applicationId: 'app-id', developerTools: DeveloperTools });
+const coreTracker = new Tracker({ applicationId: 'app-id' });
 
 describe('OpenTaxonomyValidationPlugin', () => {
   beforeEach(() => {

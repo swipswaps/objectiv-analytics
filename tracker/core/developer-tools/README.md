@@ -5,12 +5,12 @@ Validation and logging utilities to help pinpoint instrumentation issues while d
 ## Package installation
 
 ```sh
-yarn add @objectiv/developer-tools
+yarn add @objectiv/developer-tools --dev
 ```
 
 ### or
 ```sh
-npm install @objectiv/developer-tools
+npm install @objectiv/developer-tools --save-dev
 ```
 
 ## Usage

@@ -23,9 +23,9 @@ export class HttpContextPlugin implements TrackerPluginInterface {
   /**
    * Generates an HttpContext and initializes validation rules.
    */
-  initialize({ global_contexts, platform, developerTools }: TrackerInterface): void {
-    if (developerTools) {
-      const { GlobalContextName, GlobalContextValidationRule } = developerTools;
+  initialize({ global_contexts, platform }: TrackerInterface): void {
+    if (globalThis.objectiv?.developerTools) {
+      const { GlobalContextName, GlobalContextValidationRule } = globalThis.objectiv.developerTools;
       this.validationRules = [
         new GlobalContextValidationRule({
           platform,

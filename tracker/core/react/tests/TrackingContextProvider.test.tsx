@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import DeveloperTools, {
+import {
   GlobalContextName,
   GlobalContextValidationRule,
   LocationContextName,
@@ -34,7 +34,7 @@ describe('TrackingContextProvider', () => {
     jest.resetAllMocks();
   });
 
-  const tracker = new Tracker({ applicationId: 'app-id', developerTools: DeveloperTools });
+  const tracker = new Tracker({ applicationId: 'app-id' });
 
   const expectedState = {
     locationStack: [],
@@ -42,7 +42,6 @@ describe('TrackingContextProvider', () => {
       platform: TrackerPlatform.CORE,
       active: true,
       applicationId: 'app-id',
-      developerTools: DeveloperTools,
       global_contexts: [],
       location_stack: [],
       plugins: expect.objectContaining({
