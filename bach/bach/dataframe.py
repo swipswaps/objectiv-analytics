@@ -1861,25 +1861,6 @@ class DataFrame:
         """
         return self.to_pandas(limit=n)
 
-    @property
-    def values(self) -> numpy.ndarray:
-        """
-        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
-
-        .. warning::
-           We recommend using :meth:`DataFrame.to_numpy` instead.
-
-        :returns: Returns the values of the DataFrame as numpy.ndarray.
-
-        .. note::
-            This function queries the database.
-        """
-        warnings.warn(
-            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
-            category=DeprecationWarning,
-        )
-        return self.to_numpy()
-
     def to_numpy(self) -> numpy.ndarray:
         """
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.to_numpy`
