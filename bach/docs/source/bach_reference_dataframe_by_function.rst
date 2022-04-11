@@ -90,6 +90,7 @@ Reshaping, indexing, sorting & merging
     DataFrame.ffill
     DataFrame.bfill
     DataFrame.stack
+    DataFrame.unstack
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~

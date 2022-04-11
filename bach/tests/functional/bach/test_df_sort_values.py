@@ -1,8 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
-    df_to_list, get_df_with_test_data
+from tests.functional.bach.test_data_and_utils import assert_equals_data, df_to_list, get_df_with_test_data
 
 
 def test_sort_values_basic(engine):
@@ -19,8 +18,9 @@ def test_sort_values_basic(engine):
     )
 
 
-def test_sort_values_expression():
-    bt = get_bt_with_test_data()[['city', 'inhabitants']]
+def test_sort_values_expression(pg_engine):
+    # TODO: BigQuery
+    bt = get_df_with_test_data(pg_engine)[['city', 'inhabitants']]
     bt['city'] = bt['city'].str[2:]
     bt = bt.sort_values('city')
     assert_equals_data(

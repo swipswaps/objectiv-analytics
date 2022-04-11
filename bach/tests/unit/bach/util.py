@@ -1,6 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+from dataclasses import dataclass, field
 from typing import List, Dict, Union, cast, Optional, NamedTuple
 from sqlalchemy.dialects.postgresql.base import PGDialect
 from sqlalchemy.engine import Dialect, Engine
@@ -12,8 +13,15 @@ from bach.sql_model import BachSqlModel
 from sql_models.model import CustomSqlModelBuilder
 
 
-class FakeEngine(NamedTuple):
+@dataclass(frozen=True)
+class FakeEngine:
+    """ Helper class that serves as a mock for SqlAlchemy Engine objects """
     dialect: Dialect
+    name: str = field(init=False)
+    url: str = 'postgresql://user@host:5432/db'
+
+    def __post_init__(self):
+        super().__setattr__('name', self.dialect.name)  # set the 'frozen' attribute self.name
 
 
 def get_fake_df(

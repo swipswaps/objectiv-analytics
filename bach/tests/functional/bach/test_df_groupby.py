@@ -3,15 +3,17 @@ Copyright 2021 Objectiv B.V.
 """
 from decimal import Decimal
 
+import numpy
 import pytest
 
 from bach import Series, SeriesAbstractNumeric
 from bach.partitioning import GroupingList, GroupingSet, Rollup, Cube
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
+from sql_models.util import is_postgres
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
 
-def test_group_by_all():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_group_by_all(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby()
     result_bt = btg.nunique()
 
@@ -41,8 +43,8 @@ def test_group_by_all():
     }
 
 
-def test_group_by_single_syntax():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_group_by_single_syntax(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     result_bt_single_str = bt.groupby(['municipality']).count()
     result_bt_single_series = bt.groupby([bt.municipality]).count()
 
@@ -56,13 +58,13 @@ def test_group_by_single_syntax():
         assert_equals_data(
             r,
             expected_columns=['municipality', '_index_skating_order_count', 'skating_order_count', 'city_count', 'inhabitants_count', 'founding_count'],
-            order_by='skating_order_count',
+            order_by=['skating_order_count', 'municipality'],
             expected_data=[
-                ['Noardeast-Fryslân', 1, 1, 1, 1, 1],
-                ['Leeuwarden', 1, 1, 1, 1, 1],
-                ['Harlingen', 1, 1, 1, 1, 1],
-                ['Waadhoeke', 1, 1, 1, 1, 1],
                 ['De Friese Meren', 1, 1, 1, 1, 1],
+                ['Harlingen', 1, 1, 1, 1, 1],
+                ['Leeuwarden', 1, 1, 1, 1, 1],
+                ['Noardeast-Fryslân', 1, 1, 1, 1, 1],
+                ['Waadhoeke', 1, 1, 1, 1, 1],
                 ['Súdwest-Fryslân', 6, 6, 6, 6, 6],
             ]
         )
@@ -78,12 +80,12 @@ def test_group_by_single_syntax():
         }
 
 
-def test_group_by_multiple_syntax():
+def test_group_by_multiple_syntax(engine):
     # Test whether multiple columns are accepted in different forms
-    bt = get_bt_with_test_data(full_data_set=True)
+    bt = get_df_with_test_data(engine, full_data_set=True)
     result_bt_list = bt.groupby(['municipality', 'city']).count()
     result_bt_list_series = bt.groupby([bt.municipality, bt.city]).count()
-    result_bt_list_mixed1 =bt.groupby(['municipality', bt.city]).count()
+    result_bt_list_mixed1 = bt.groupby(['municipality', bt.city]).count()
     result_bt_list_mixed2 = bt.groupby([bt.municipality, 'city']).count()
 
     for r in [result_bt_list, result_bt_list_series, result_bt_list_series,
@@ -96,14 +98,19 @@ def test_group_by_multiple_syntax():
         assert_equals_data(
             r,
             expected_columns=['municipality', 'city', '_index_skating_order_count', 'skating_order_count', 'inhabitants_count', 'founding_count'],
-            order_by='skating_order_count',
+            order_by=['skating_order_count', 'municipality', 'city'],
             expected_data=[
-                ['Súdwest-Fryslân', 'Hylpen', 1, 1, 1, 1], ['Súdwest-Fryslân', 'Drylts', 1, 1, 1, 1],
-                ['Súdwest-Fryslân', 'Warkum', 1, 1, 1, 1], ['Harlingen', 'Harns', 1, 1, 1, 1],
-                ['Súdwest-Fryslân', 'Starum', 1, 1, 1, 1], ['Noardeast-Fryslân', 'Dokkum', 1, 1, 1, 1],
-                ['Leeuwarden', 'Ljouwert', 1, 1, 1, 1], ['De Friese Meren', 'Sleat', 1, 1, 1, 1],
-                ['Waadhoeke', 'Frjentsjer', 1, 1, 1, 1], ['Súdwest-Fryslân', 'Boalsert', 1, 1, 1, 1],
-                ['Súdwest-Fryslân', 'Snits', 1, 1, 1, 1]
+                ['De Friese Meren', 'Sleat', 1, 1, 1, 1],
+                ['Harlingen', 'Harns', 1, 1, 1, 1],
+                ['Leeuwarden', 'Ljouwert', 1, 1, 1, 1],
+                ['Noardeast-Fryslân', 'Dokkum', 1, 1, 1, 1],
+                ['Súdwest-Fryslân', 'Boalsert', 1, 1, 1, 1],
+                ['Súdwest-Fryslân', 'Drylts', 1, 1, 1, 1],
+                ['Súdwest-Fryslân', 'Hylpen', 1, 1, 1, 1],
+                ['Súdwest-Fryslân', 'Snits', 1, 1, 1, 1],
+                ['Súdwest-Fryslân', 'Starum', 1, 1, 1, 1],
+                ['Súdwest-Fryslân', 'Warkum', 1, 1, 1, 1],
+                ['Waadhoeke', 'Frjentsjer', 1, 1, 1, 1]
             ]
         )
         assert r.index_dtypes == {
@@ -118,13 +125,14 @@ def test_group_by_multiple_syntax():
         }
 
 
-def test_group_by_expression():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_group_by_expression(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby(bt['city'].str[:1])
     result_bt = btg.nunique()
 
-    # no materialization has taken place yet.
-    assert result_bt.base_node == bt.base_node
+    if is_postgres(engine):
+        # On Postgres assert that no materialization has taken place yet. On BigQuery we have to materialize
+        assert result_bt.base_node == bt.base_node
 
     for d in result_bt.data.values():
         assert not d.expression.is_single_value
@@ -151,9 +159,9 @@ def test_group_by_expression():
     }
 
 
-def test_group_by_series_selection():
+def test_group_by_series_selection(engine):
     # Test selection of series from an aggregated dataframe
-    bt = get_bt_with_test_data(full_data_set=True)
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby('municipality')
     btg_single_series_frame = btg[['inhabitants']]
     result_bt = btg_single_series_frame.count()
@@ -204,9 +212,10 @@ def test_group_by_series_selection():
         'founding_count': 'int64'
     }
 
-def test_dataframe_agg_all():
+
+def test_dataframe_agg_all(engine):
     # test agg syntax for single function on a Dataframe that has no group_by set, e.g. on all rows.
-    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants']]
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants']]
 
     result_bt = bt.nunique()
     result_bt_str = bt.agg('nunique')
@@ -238,9 +247,9 @@ def test_dataframe_agg_all():
         }
 
 
-def test_groupby_dataframe_agg():
+def test_groupby_dataframe_agg(engine):
     # test agg syntax for single function on a Dataframe that has group_by set
-    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants']]
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants']]
     btg = bt.groupby('municipality')
     result_bt = btg.nunique()
     result_bt_str = btg.agg('nunique')
@@ -255,6 +264,7 @@ def test_groupby_dataframe_agg():
 
         assert_equals_data(
             result_bt,
+            order_by=['municipality'],
             expected_columns=['municipality', '_index_skating_order_nunique', 'inhabitants_nunique'],
             expected_data=[
                 ['De Friese Meren', 1, 1], ['Harlingen', 1, 1], ['Leeuwarden', 1, 1],
@@ -270,8 +280,8 @@ def test_groupby_dataframe_agg():
         }
 
 
-def test_groupby_dataframe_agg_per_series_syntax():
-    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants', 'founding']]
+def test_groupby_dataframe_agg_per_series_syntax(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants', 'founding']]
     btg = bt.groupby('municipality')
     result_bt_str = btg.agg({'inhabitants': 'min', 'founding': 'max'})
     result_bt_func_bound = btg.agg({'inhabitants': bt.inhabitants.min, 'founding': bt.founding.max})
@@ -304,8 +314,8 @@ def test_groupby_dataframe_agg_per_series_syntax():
         }
 
 
-def test_groupby_agg_func_order() -> None:
-    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants', 'founding']]
+def test_groupby_agg_func_order(engine) -> None:
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants', 'founding']]
     btg = bt.groupby('municipality')
     result_bt = btg.agg({'founding': ['max', 'min'], 'inhabitants': 'min'})
     assert_equals_data(
@@ -323,8 +333,8 @@ def test_groupby_agg_func_order() -> None:
     )
 
 
-def test_groupby_dataframe_agg_multiple_per_series_syntax():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_groupby_dataframe_agg_multiple_per_series_syntax(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby('municipality')
     result_bt_list_str = btg.aggregate({'inhabitants': ['min', 'max']})
     result_bt_list_func_bound = btg.aggregate({'inhabitants': [bt.inhabitants.min, bt.inhabitants.max]})
@@ -357,8 +367,8 @@ def test_groupby_dataframe_agg_multiple_per_series_syntax():
         }
 
 
-def test_dataframe_agg_numeric_only():
-    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants']]
+def test_dataframe_agg_numeric_only(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants']]
     with pytest.raises(AttributeError):
         # contains non-numeric series that don't have 'min' implemented
         bt.agg('sum')
@@ -377,12 +387,13 @@ def test_dataframe_agg_numeric_only():
         }
 
 
-def test_cube_basics():
-    bt = get_bt_with_test_data(full_data_set=False)
+def test_cube_basics(pg_engine):
+    # TODO: BigQuery
+    bt = get_df_with_test_data(pg_engine, full_data_set=False)
     engine = bt.engine
 
     # instant stonks through variable naming
-    btc = bt.cube(['municipality','city'])
+    btc = bt.cube(['municipality', 'city'])
 
     assert(isinstance(btc.group_by, Cube))
     assert(btc.group_by.get_group_by_column_expression().to_sql(engine.dialect)
@@ -394,7 +405,7 @@ def test_cube_basics():
 
     assert_equals_data(
         result_bt,
-        order_by=['municipality','city'],
+        order_by=['municipality', 'city'],
         expected_columns=['municipality', 'city', 'inhabitants_sum'],
         expected_data=[
             ['Leeuwarden', 'Ljouwert', 93485],
@@ -410,11 +421,12 @@ def test_cube_basics():
     )
 
 
-def test_rollup_basics():
-    bt = get_bt_with_test_data(full_data_set=False)
+def test_rollup_basics(pg_engine):
+    # TODO: BigQuery
+    bt = get_df_with_test_data(pg_engine, full_data_set=False)
     engine = bt.engine
 
-    btr = bt.rollup(['municipality','city'])
+    btr = bt.rollup(['municipality', 'city'])
     assert(isinstance(btr.group_by, Rollup))
     assert(btr.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'rollup ("municipality", "city")')
@@ -425,7 +437,7 @@ def test_rollup_basics():
 
     assert_equals_data(
         result_bt,
-        order_by=['municipality','city'],
+        order_by=['municipality', 'city'],
         expected_columns=['municipality', 'city', 'inhabitants_sum'],
         expected_data=[
             ['Leeuwarden', 'Ljouwert', 93485],
@@ -438,9 +450,10 @@ def test_rollup_basics():
     )
 
 
-def test_grouping_list_basics():
+def test_grouping_list_basics(pg_engine):
+    # TODO: BigQuery
     # This is not the greatest test, but at least it tests the interface.
-    bt = get_bt_with_test_data(full_data_set=False)
+    bt = get_df_with_test_data(pg_engine, full_data_set=False)
     engine = bt.engine
     btl1 = bt.groupby([['municipality'], ['city']])
     btl2 = bt.groupby([['municipality'], 'city'])
@@ -470,9 +483,11 @@ def test_grouping_list_basics():
         ]
     )
 
-def test_grouping_set_basics():
+
+def test_grouping_set_basics(pg_engine):
+    # TODO: BigQuery
     # This is not the greatest test, but at least it tests the interface.
-    bt = get_bt_with_test_data(full_data_set=False)
+    bt = get_df_with_test_data(pg_engine, full_data_set=False)
     engine = bt.engine
     bts1 = bt.groupby((('municipality'), ('city')))
     bts2 = bt.groupby((('municipality'), 'city'))
@@ -494,7 +509,7 @@ def test_grouping_set_basics():
         result_bt,
         order_by=['municipality', 'city'],
         expected_columns=['municipality', 'city', 'inhabitants_sum'],
-        expected_data = [
+        expected_data=[
             ['Leeuwarden', None, 93485], ['Súdwest-Fryslân', None, 36575],
             [None, 'Drylts', 3055], [None, 'Ljouwert', 93485], [None, 'Snits', 33520]
         ]
@@ -512,7 +527,6 @@ def test_grouping_set_basics():
     assert(bts1.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'grouping sets (("municipality"), ())')
 
-
     result_bt = bts1[['inhabitants']].sum()
 
     assert_equals_data(
@@ -527,8 +541,8 @@ def test_grouping_set_basics():
     )
 
 
-def test_groupby_frame_split_series_aggregation():
-    bt = get_bt_with_test_data(full_data_set=False)[['municipality', 'inhabitants', 'founding']]
+def test_groupby_frame_split_series_aggregation(engine):
+    bt = get_df_with_test_data(engine, full_data_set=False)[['municipality', 'inhabitants', 'founding']]
     btg1 = bt.groupby(['municipality'])
 
     # Test whether all ways to get to a the same aggregated series yield the same result
@@ -564,8 +578,8 @@ def test_groupby_frame_split_series_aggregation():
     r6.to_pandas()  # still valid sql?
 
 
-def test_groupby_frame_split_recombine():
-    bt = get_bt_with_test_data(full_data_set=False)[['municipality', 'inhabitants', 'founding']]
+def test_groupby_frame_split_recombine(engine):
+    bt = get_df_with_test_data(engine, full_data_set=False)[['municipality', 'inhabitants', 'founding']]
     btg1 = bt.groupby(['municipality'])[['inhabitants', 'founding']]
     btg1a = btg1[['inhabitants']]
     btg1b = btg1['founding']
@@ -616,8 +630,8 @@ def test_groupby_frame_split_recombine():
         )
 
 
-def test_groupby_frame_split_recombine_aggregation_applied():
-    bt = get_bt_with_test_data(full_data_set=False)[['municipality', 'inhabitants', 'founding']]
+def test_groupby_frame_split_recombine_aggregation_applied(engine):
+    bt = get_df_with_test_data(engine, full_data_set=False)[['municipality', 'inhabitants', 'founding']]
     group1 = bt.groupby('municipality')
     subgroup = group1[['founding', 'inhabitants']]
     inhabitants_sum = subgroup['inhabitants'].sum()
@@ -631,7 +645,7 @@ def test_groupby_frame_split_recombine_aggregation_applied():
 
     # recombine
     founding_inhabitants_sum['founding_mean'] = founding_mean
-    assert founding_mean.base_node ==  bt.base_node
+    assert founding_mean.base_node == bt.base_node
 
     r1 = inhabitants_sum.to_frame()
     r1['founding_sum'] = group1['founding'].sum()
@@ -653,10 +667,10 @@ def test_groupby_frame_split_recombine_aggregation_applied():
         )
 
 
-def test_materialize_on_double_aggregation():
+def test_materialize_on_double_aggregation(engine):
     # When we use an aggregation function twice, we need to materialize the node in between, because it's not
     # possible to nest the aggregate function calls. I.e. you cannot do `avg(sum(x))`
-    bt = get_bt_with_test_data(full_data_set=True)
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby('municipality')[['founding']]
     btg_sum = btg.sum()
     assert bt.base_node == btg.base_node == btg_sum.base_node
@@ -671,22 +685,6 @@ def test_materialize_on_double_aggregation():
     btg_materialized_mean = btg_materialized.founding_sum.mean()
     # did not get materialized again
     assert btg_materialized_mean.base_node == btg_materialized.base_node
-    assert btg_materialized.founding_sum.mean().value == 2413.5
-
-
-def test_unmaterializable_groupby_boolean_functions():
-    # Windowing function are not allowed as boolean row selectors.
-    bt = get_bt_with_test_data(full_data_set=True)
-    btg_min_fnd = bt.groupby('municipality')['founding'].min()
-
-    assert btg_min_fnd.base_node == bt.base_node
-    assert btg_min_fnd.group_by != bt.group_by
-    assert not btg_min_fnd.expression.is_single_value
-
-    with pytest.raises(ValueError, match=r'dtypes of indexes to be merged should be the same'):
-        # todo pandas: Can only compare identically-labeled Series objects
-        bt[btg_min_fnd == bt.founding]
-
-    with pytest.raises(ValueError, match=r'dtypes of indexes to be merged should be the same'):
-        # todo pandas: Can only compare identically-labeled Series objects
-        bt[bt.founding == btg_min_fnd]
+    value = btg_materialized_mean.to_numpy()[0]
+    # avg() of BigQuery gives a slightly different result than Postgres or python, so use assert_almost_equal
+    numpy.testing.assert_almost_equal(value, 2413.5)

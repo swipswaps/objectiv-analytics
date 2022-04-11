@@ -8,7 +8,7 @@ import pytest
 from bach import DataFrame, SeriesString, SeriesInt64, Series
 from bach.expression import Expression
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
-    get_from_df, get_bt_with_railway_data
+    get_from_df, get_bt_with_railway_data, get_bt_with_food_data
 
 
 def test_series__getitem__():
@@ -493,16 +493,13 @@ def test_series_dropna() -> None:
 
 def test_series_unstack():
     bt = get_bt_with_test_data(full_data_set=True)
-    bt['municipality_none'] = bt[bt.skating_order < 10].municipality
-    stacked_bt = bt.groupby(['city', 'municipality_none']).inhabitants.sum()
-
-    with pytest.raises(Exception, match='index contains empty values, cannot be unstacked'):
-        stacked_bt.unstack()
 
     stacked_bt = bt.groupby(['city','municipality']).inhabitants.sum()
     unstacked_bt = stacked_bt.unstack()
 
-    expected_columns = ['De Friese Meren','Harlingen','Leeuwarden','Noardeast-Fryslân','Súdwest-Fryslân','Waadhoeke']
+    expected_columns = [
+        'De Friese Meren', 'Harlingen', 'Leeuwarden', 'Noardeast-Fryslân', 'Súdwest-Fryslân', 'Waadhoeke',
+    ]
     assert sorted(unstacked_bt.data_columns) == expected_columns
     unstacked_bt_sorted = unstacked_bt.copy_override(series={x: unstacked_bt[x] for x in expected_columns})
 
@@ -525,7 +522,7 @@ def test_series_unstack():
         order_by='city'
     )
 
-    stacked_bt = bt.groupby(['municipality','skating_order']).city.max()
+    stacked_bt = bt.groupby(['municipality', 'skating_order']).city.max()
     unstacked_bt = stacked_bt.unstack(fill_value='buh')
 
     expected_columns = ['1', '10', '11', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -715,3 +712,60 @@ def test__set_item_with_merge_different_dtypes() -> None:
 
     with pytest.raises(ValueError, match=r'dtypes of indexes to be merged'):
         bt['inhabitants'] + bt2['inhabitants']
+
+
+def test__set_item_with_merge_w_group_shared_name() -> None:
+    bt = get_bt_with_test_data(full_data_set=True)
+    mt = get_bt_with_food_data()
+    mt['inhabitants'] = mt.skating_order
+
+    max_bt_inh = bt.groupby('skating_order').inhabitants.max()
+
+    max_mt_inh = mt.groupby('skating_order').inhabitants.max()
+    min_mt_inh = mt.groupby('skating_order').inhabitants.min()
+
+    result1 = max_bt_inh / max_mt_inh
+    assert_equals_data(
+        result1,
+        expected_columns=['skating_order', 'inhabitants'],
+        expected_data=[
+            [1, 93485.],
+            [2, 16760.],
+            [3, None],
+            [4, 175.],
+            [5, None],
+            [6, None],
+            [7, None],
+            [8, None],
+            [9, None],
+            [10, None],
+            [11, None],
+        ],
+    )
+    result_expression = result1.expression.to_sql(result1.engine)
+    assert 'inhabitants__other' in result_expression
+
+    result2 = result1 - max_mt_inh
+    result_expression2 = result2.expression.to_sql(result2.engine)
+    assert_equals_data(
+        result2,
+        expected_columns=['skating_order', 'inhabitants'],
+        expected_data=[
+            [1, 93484.],
+            [2, 16758.],
+            [3, None],
+            [4, 171.],
+            [5, None],
+            [6, None],
+            [7, None],
+            [8, None],
+            [9, None],
+            [10, None],
+            [11, None],
+        ],
+    )
+    assert 'inhabitants__other' in result_expression2
+
+    grouped_df = mt.groupby('skating_order').agg(['min', 'max']).materialize()
+    result3 = max_bt_inh / grouped_df['inhabitants_max'] - grouped_df['inhabitants_min']
+    pd.testing.assert_series_equal(result2.sort_index().to_pandas(), result3.sort_index().to_pandas())
