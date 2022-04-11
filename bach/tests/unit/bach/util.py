@@ -27,10 +27,10 @@ class FakeEngine:
 
 
 def get_fake_df(
+    dialect: Dialect,
     index_names: List[str],
     data_names: List[str],
-    dtype: Union[str, Dict[str, str]] = 'int64',
-    dialect: Dialect = PGDialect()
+    dtype: Union[str, Dict[str, str]] = 'int64'
 ) -> DataFrame:
     engine = FakeEngine(dialect=dialect)
     columns = index_names + data_names
