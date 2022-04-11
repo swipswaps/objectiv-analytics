@@ -1,8 +1,11 @@
 from typing import NamedTuple
 
+import pytest
+
 from bach.utils import get_merged_series_dtype, is_valid_column_name
 
 
+@pytest.mark.db_independent
 def test_get_merged_series_dtype() -> None:
     assert get_merged_series_dtype({'string', 'int64'}) == 'string'
     assert get_merged_series_dtype({'int64'}) == 'int64'
