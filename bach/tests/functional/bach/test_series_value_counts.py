@@ -5,7 +5,7 @@ import pytest
 from psycopg2._range import NumericRange
 
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
-    get_bt_with_railway_data
+get_df_with_railway_data
 
 
 def test_value_counts_basic():
@@ -67,8 +67,8 @@ def test_value_counts_w_bins() -> None:
     )
 
 
-def test_value_counts_w_groupby() -> None:
-    bt = get_bt_with_railway_data()[['town', 'platforms', 'station_id']].reset_index(drop=True)
+def test_value_counts_w_groupby(engine) -> None:
+    bt = get_df_with_railway_data(engine)[['town', 'platforms', 'station_id']].reset_index(drop=True)
     result = bt.groupby(['town', 'platforms'])['station_id'].value_counts()
     assert_equals_data(
         result.to_frame().sort_index(),
@@ -100,6 +100,6 @@ def test_value_counts_w_groupby() -> None:
     )
 
 
-def test_bins_error() -> None:
+def test_bins_error(engine) -> None:
     with pytest.raises(ValueError, match='Cannot calculate bins for non numeric series.'):
-        get_bt_with_railway_data()['town'].value_counts(bins=4)
+        get_df_with_railway_data(engine)['town'].value_counts(bins=4)
