@@ -2,7 +2,6 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { GlobalContextName, GlobalContextValidationRule } from '@objectiv/developer-tools';
 import {
   makeHttpContext,
   TrackerConsole,
@@ -24,15 +23,18 @@ export class HttpContextPlugin implements TrackerPluginInterface {
   /**
    * Generates an HttpContext and initializes validation rules.
    */
-  initialize(tracker: TrackerInterface): void {
-    this.validationRules = [
-      new GlobalContextValidationRule({
-        platform: tracker.platform,
-        logPrefix: this.pluginName,
-        contextName: GlobalContextName.HttpContext,
-        once: true,
-      }),
-    ];
+  initialize({ global_contexts, platform, developerTools }: TrackerInterface): void {
+    if (developerTools) {
+      const { GlobalContextName, GlobalContextValidationRule } = developerTools;
+      this.validationRules = [
+        new GlobalContextValidationRule({
+          platform,
+          logPrefix: this.pluginName,
+          contextName: GlobalContextName.HttpContext,
+          once: true,
+        }),
+      ];
+    }
 
     const httpContext = makeHttpContext({
       id: 'http_context',
@@ -40,7 +42,7 @@ export class HttpContextPlugin implements TrackerPluginInterface {
       user_agent: navigator.userAgent ?? '',
     });
 
-    tracker.global_contexts.push(httpContext);
+    global_contexts.push(httpContext);
 
     this.initialized = true;
 

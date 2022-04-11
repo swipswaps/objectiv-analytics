@@ -2,6 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import DeveloperTools from '@objectiv/developer-tools';
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { ContextsConfig, makeHttpContext, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { HttpContextPlugin } from '../src';
@@ -94,6 +95,7 @@ describe('HttpContextPlugin', () => {
       applicationId: 'app-id',
       plugins: [new HttpContextPlugin()],
       trackApplicationContext: false,
+      developerTools: DeveloperTools
     });
 
     it('should TrackerConsole.error when calling `validate` before `initialize`', () => {

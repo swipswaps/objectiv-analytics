@@ -2,7 +2,6 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { GlobalContextName, GlobalContextValidationRule } from '@objectiv/developer-tools';
 import {
   ContextsConfig,
   makePathContext,
@@ -29,15 +28,18 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
   /**
    * Initializes validation rules.
    */
-  initialize({ platform }: TrackerInterface): void {
-    this.validationRules = [
-      new GlobalContextValidationRule({
-        platform,
-        logPrefix: this.pluginName,
-        contextName: GlobalContextName.PathContext,
-        once: true,
-      }),
-    ];
+  initialize({ platform, developerTools }: TrackerInterface): void {
+    if (developerTools) {
+      const { GlobalContextName, GlobalContextValidationRule } = developerTools;
+      this.validationRules = [
+        new GlobalContextValidationRule({
+          platform,
+          logPrefix: this.pluginName,
+          contextName: GlobalContextName.PathContext,
+          once: true,
+        }),
+      ];
+    }
 
     this.initialized = true;
 

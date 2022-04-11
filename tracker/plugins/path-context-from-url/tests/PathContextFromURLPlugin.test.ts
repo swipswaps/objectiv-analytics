@@ -2,6 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import DeveloperTools from '@objectiv/developer-tools';
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { ContextsConfig, makePathContext, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { PathContextFromURLPlugin } from '../src';
@@ -50,6 +51,7 @@ describe('PathContextFromURLPlugin', () => {
       applicationId: 'app-id',
       plugins: [new PathContextFromURLPlugin()],
       trackApplicationContext: false,
+      developerTools: DeveloperTools
     });
 
     it('should TrackerConsole.error when calling `validate` before `initialize`', () => {
