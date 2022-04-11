@@ -547,7 +547,6 @@ def test_series_unstack():
     bt = get_bt_with_test_data(full_data_set=False)
     bt['village'] = bt.city + ' village'
     unstacked_bt = bt.groupby(['skating_order', 'village']).inhabitants.sum().unstack()
-    # unstacked_bt = bt.set_index(['skating_order', 'village']).inhabitants.unstack()
 
     expected_columns = ['Drylts village', 'Ljouwert village', 'Snits village']
     assert sorted(unstacked_bt.data_columns) == expected_columns
@@ -562,6 +561,29 @@ def test_series_unstack():
             [3, 3055., None, None]
         ],
         order_by='skating_order'
+    )
+
+    # test unstack on boolean column
+    bt = get_bt_with_test_data(full_data_set=True)
+    bt['big_city'] = bt.inhabitants > 1000
+    unstacked_bt = bt.groupby(['municipality', 'big_city']).founding.min().unstack(fill_value=0)
+
+    expected_columns = ['False', 'True']
+    assert sorted(unstacked_bt.data_columns) == expected_columns
+    unstacked_bt_sorted = unstacked_bt.copy_override(series={x: unstacked_bt[x] for x in expected_columns})
+
+    assert_equals_data(
+        unstacked_bt_sorted,
+        expected_columns=['municipality'] + expected_columns,
+        expected_data=[
+            ['De Friese Meren', 1426, 0],
+            ['Harlingen', 0, 1234],
+            ['Leeuwarden', 0, 1285],
+            ['Noardeast-Fryslân', 0, 1298],
+            ['Súdwest-Fryslân', 1061, 1268],
+            ['Waadhoeke', 0, 1374]
+        ],
+        order_by='municipality'
     )
 
 

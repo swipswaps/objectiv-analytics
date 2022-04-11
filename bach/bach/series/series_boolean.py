@@ -12,6 +12,8 @@ from bach.series.series import WrappedPartition
 from sql_models.constants import DBDialect
 from sql_models.util import is_postgres
 
+import numpy
+
 
 class SeriesBoolean(Series, ABC):
     """
@@ -38,7 +40,7 @@ class SeriesBoolean(Series, ABC):
         DBDialect.POSTGRES: 'boolean',
         DBDialect.BIGQUERY: 'boolean',
     }
-    supported_value_types = (bool, )
+    supported_value_types = (bool, numpy.bool_)
 
     # Notes for supported_value_to_literal() and supported_literal_to_expression():
     # 'True' and 'False' are valid boolean literals in Postgres
