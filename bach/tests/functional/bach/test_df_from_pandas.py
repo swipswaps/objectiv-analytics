@@ -2,15 +2,17 @@
 Copyright 2021 Objectiv B.V.
 """
 import pytest
-import sqlalchemy
 
 from bach import DataFrame
-from tests.functional.bach.test_data_and_utils import get_pandas_df, TEST_DATA_CITIES, CITIES_COLUMNS, \
+from sql_models.util import is_bigquery, is_postgres
+from tests.functional.bach.test_data_and_utils import TEST_DATA_CITIES, CITIES_COLUMNS, \
     assert_equals_data
 import datetime
 from uuid import UUID
 import pandas as pd
 import numpy as np
+
+from tests.unit.bach.util import get_pandas_df
 
 EXPECTED_COLUMNS = [
     '_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding'
@@ -29,8 +31,6 @@ COLUMNS_INJECTION = ['Index', 'X"x"', '{test}', '{te{}{{s}}t}']
 # The expected data is what we put in, plus the index column, which equals the first column
 EXPECTED_COLUMNS_INJECTION = [f'_index_{COLUMNS_INJECTION[0]}'] + COLUMNS_INJECTION
 EXPECTED_DATA_INJECTION = [[row[0]] + row for row in TEST_DATA_INJECTION]
-
-get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
 
 TYPES_DATA = [
     [1, 1.324, True, datetime.datetime(2021, 5, 3, 11, 28, 36, 388), 'Ljouwert', datetime.date(2021, 5, 3),
@@ -75,35 +75,54 @@ def test_from_pandas_table_injection(pg_engine):
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
 
 
-def test_from_pandas_ephemeral_basic(pg_engine):
+def test_from_pandas_ephemeral_basic(engine):
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
     bt = DataFrame.from_pandas(
-        engine=pg_engine,
+        engine=engine,
         df=pdf,
         convert_objects=True,
         materialization='cte',
         name='ephemeral data'
     )
+    print(bt.to_pandas())
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
 
 
-def test_from_pandas_ephemeral_injection(pg_engine):
+def test_from_pandas_ephemeral_injection(engine):
+    # We only support 'weird' Series name on Postgres. We must make sure tho that these 'weird' names are
+    # handled correctly tho!
+    # On bigquery we cannot support 'weird' series names, because we map Series names directly to column
+    # names and BigQuery only allows [a-zA-Z0-9_] in quoted column names. This behaviour for BigQuery is
+    # tested in tests/unit/bach/test_df_from_pandas.py
     pdf = get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
-    bt = DataFrame.from_pandas(
-        engine=pg_engine,
-        df=pdf,
-        convert_objects=True,
-        materialization='cte',
-        name='ephemeral data'
-    )
-    assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
+
+    if is_postgres(engine):
+        bt = DataFrame.from_pandas(
+            engine=engine,
+            df=pdf,
+            convert_objects=True,
+            materialization='cte',
+            name='ephemeral data'
+        )
+        assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
+    elif is_bigquery(engine):
+        with pytest.raises(ValueError, match='Invalid column name'):
+            DataFrame.from_pandas(
+                engine=engine,
+                df=pdf,
+                convert_objects=True,
+                materialization='cte',
+                name='ephemeral data'
+            )
+    else:
+        raise Exception(f'Test does not support {engine.dialect}')
 
 
 def test_from_pandas_non_happy_path(pg_engine):
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
     with pytest.raises(TypeError):
         # if convert_objects is false, we'll get an error, because pdf's dtype for 'city' and 'municipality'
-        # is 'object
+        # is 'object'
         DataFrame.from_pandas(
             engine=pg_engine,
             df=pdf,

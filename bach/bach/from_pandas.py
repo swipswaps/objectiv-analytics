@@ -4,13 +4,14 @@ Copyright 2021 Objectiv B.V.
 from typing import Tuple, Dict
 
 import pandas
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, Dialect
 
 from bach import DataFrame, get_series_type_from_dtype
 from bach.types import value_to_dtype
 from bach.expression import Expression, join_expressions
+from bach.utils import is_valid_column_name
 from sql_models.model import CustomSqlModelBuilder
-from sql_models.util import quote_identifier
+from sql_models.util import quote_identifier, DatabaseNotSupportedException, is_postgres, is_bigquery
 
 
 def from_pandas(engine: Engine,
@@ -58,7 +59,12 @@ def from_pandas_store_table(engine: Engine,
         * append: Insert new values to the existing table.
     """
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-    df_copy, index_dtypes, all_dtypes = _from_pd_shared(df, convert_objects, cte=False)
+    df_copy, index_dtypes, all_dtypes = _from_pd_shared(
+        dialect=engine.dialect,
+        df=df,
+        convert_objects=convert_objects,
+        cte=False
+    )
 
     conn = engine.connect()
     df_copy.to_sql(name=table_name, con=conn, if_exists=if_exists, index=False)
@@ -76,7 +82,7 @@ def from_pandas_ephemeral(
 ) -> DataFrame:
     """
     Instantiate a new DataFrame based on the content of a Pandas DataFrame. The data will be represented
-    using a `select * from values()` query.
+    using a `select * from values()` query, or something similar depending on the database dialect.
 
     Warning: This method is only suited for small quantities of data.
     For anything over a dozen kilobytes of data it is recommended to store the data in a table in
@@ -90,7 +96,12 @@ def from_pandas_ephemeral(
         pd.convert_dtypes() method where possible.
     """
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-    df_copy, index_dtypes, all_dtypes = _from_pd_shared(df, convert_objects, cte=True)
+    df_copy, index_dtypes, all_dtypes = _from_pd_shared(
+        dialect=engine.dialect,
+        df=df,
+        convert_objects=convert_objects,
+        cte=True
+    )
 
     column_series_type = [get_series_type_from_dtype(dtype) for dtype in all_dtypes.values()]
 
@@ -108,12 +119,34 @@ def from_pandas_ephemeral(
         per_row_expr.append(row_expr)
     all_values_str = join_expressions(per_row_expr, join_str=',\n').to_sql(engine.dialect)
 
-    column_names_expr = join_expressions(
-        [Expression.raw(quote_identifier(engine.dialect, column_name)) for column_name in all_dtypes.keys()]
-    )
-    column_names_str = column_names_expr.to_sql(engine.dialect)
-
-    sql = f'select * from (values \n{all_values_str}\n) as t({column_names_str})\n'
+    if is_postgres(engine):
+        # We are building for sql of the form:
+        #     select * from (values
+        #         ('row 1', cast(1234 as bigint), cast(-13.37 as double precision)),
+        #         ('row 2', cast(1337 as bigint), cast(31.337 as double precision))
+        #     ) as t("a", "b", "c")
+        column_names_expr = join_expressions(
+            [Expression.raw(quote_identifier(engine.dialect, column_name)) for column_name in
+             all_dtypes.keys()]
+        )
+        column_names_str = column_names_expr.to_sql(engine.dialect)
+        sql = f'select * from (values \n{all_values_str}\n) as t({column_names_str})\n'
+    elif is_bigquery(engine):
+        # We are building for sql of the form:
+        #     select * from UNNEST([
+        #         STRUCT<`a` STRING, `b` INT64, `c` FLOAT64>
+        #         ('row 1', 1234, cast(-13.37 as FLOAT64))
+        #         ('row 2', 1337, cast(31.337 as FLOAT64))
+        #     ])
+        sql_column_name_types = []
+        for col_name, dtype in all_dtypes.items():
+            db_col_name = quote_identifier(dialect=engine.dialect, name=col_name)
+            db_dtype = get_series_type_from_dtype(dtype).get_db_dtype(dialect=engine.dialect)
+            sql_column_name_types.append(f'{db_col_name} {db_dtype}')
+        sql_struct = f'STRUCT<{", ".join(sql_column_name_types)}>'
+        sql = f'select * from UNNEST([{sql_struct} \n{all_values_str}\n])\n'
+    else:
+        raise DatabaseNotSupportedException(engine)
 
     model_builder = CustomSqlModelBuilder(sql=sql, name=name)
     sql_model = model_builder()
@@ -122,24 +155,52 @@ def from_pandas_ephemeral(
     return DataFrame.from_model(engine=engine, model=sql_model, index=index, all_dtypes=all_dtypes)
 
 
+def _assert_column_names_valid(dialect: Dialect, df: pandas.DataFrame):
+    """
+    Performs three checks on the columns (not on the indices) of the DataFrame:
+    1) All Series must have a string as name
+    2) No duplicated Series names
+    3) All Series names are valid column names in the given sql dialect
+    Will raise a ValueError if any of the checks fails
+    """
+    names = list(df.columns)
+    not_strings = [name for name in names if not isinstance(name, str)]
+    if not_strings:
+        raise ValueError(f'Not all columns names are strings. Non-string names: {not_strings}')
+    if len(set(names)) != len(names):
+        raise ValueError(f'Duplicate column names in: {names}')
+
+    invalid_column_names = [name for name in names if not is_valid_column_name(dialect=dialect, name=name)]
+    if invalid_column_names:
+        raise ValueError(f'Invalid column names: {invalid_column_names} for SQL dialect {dialect} ')
+
+
 def _from_pd_shared(
+        dialect: Dialect,
         df: pandas.DataFrame,
         convert_objects: bool,
         cte: bool
 ) -> Tuple[pandas.DataFrame, Dict[str, str], Dict[str, str]]:
     """
-    Pre-processes the given Pandas DataFrame:
+    Pre-processes the given Pandas DataFrame, and do some checks. This results in a new DataFrame and two
+    dictionaries with meta data. The returned DataFrame contains all processed data in the data columns, this
+    includes any columns that were originally indices. The index_dtypes dict will indicate which of the data
+    columns should be indexes.
+
+    Pre-processing/checks:
     1)  Add index if missing
     2a) Convert string columns to string dtype (if convert_objects)
     2b) Set content of columns of dtype other than `supported_pandas_dtypes` to supported types
         (if convert_objects & cte)
     3)  Check that the dtypes are supported
     4)  extract index_dtypes and dtypes dictionaries
+    5) Check: all column names (after previous steps) are set, unique, and are valid column names for the
+        given sql dialect.
 
     :return: Tuple:
-        * Modified copy of Pandas DataFrame
-        * index_dtypes dict
-        * all_dtypes dict. containing index dtypes and data dtypes
+        * Modified copy of Pandas DataFrame.
+        * index_dtypes dict. Mapping of index names to the dtype.
+        * all_dtypes dict. Mapping of all columns names to dtypes, includes data and index columns.
     """
     index = []
 
@@ -150,9 +211,6 @@ def _from_pd_shared(
             name = f'_index_{name}'
 
         index.append(name)
-
-    if len(set(index)) != len(index):
-        raise KeyError("index with duplicate names not supported")
 
     df_copy = df.copy()
     df_copy.index.set_names(index, inplace=True)
@@ -184,6 +242,8 @@ def _from_pd_shared(
             dtype = value_to_dtype(df_copy[column][0])
 
         all_dtypes[str(column)] = dtype
+
+    _assert_column_names_valid(dialect=dialect, df=df_copy)
 
     index_dtypes = {index_name: all_dtypes[index_name] for index_name in index}
     return df_copy, index_dtypes, all_dtypes
