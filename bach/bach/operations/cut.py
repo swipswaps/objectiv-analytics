@@ -22,6 +22,7 @@ class CutOperation:
     series: a numerical series to be segmented into bins
     bins: number of equal-width bins the series will be divided into.
     right: indicates if bin ranges should include the rightmost edge (lower bound).
+    ignore_index: if true, original index will be dropped
     include_empty_bins: if true, it will return bins that contain no values in series.
     method: Method to use for calculating ranges. Supported values:
        - "pandas": Yields same intervals as ``pandas.cut`` by applying lower/upper boundary adjustments
@@ -39,6 +40,7 @@ class CutOperation:
     bins: int
     right: bool
     include_empty_bins: bool
+    ignore_index: bool
     method: CutMethod
 
     RANGE_SERIES_NAME = 'range'
@@ -48,12 +50,14 @@ class CutOperation:
         series: SeriesAbstractNumeric,
         bins: int,
         right: bool = True,
+        ignore_index: bool = True,
         include_empty_bins: bool = False,
         method: str = 'pandas',
     ) -> None:
         self.series = series
         self.bins = bins
         self.right = right
+        self.ignore_index = ignore_index
         self.include_empty_bins = include_empty_bins
         self.method = CutMethod(method)
 
@@ -68,7 +72,12 @@ class CutOperation:
         bucket_properties_df = self._calculate_bucket_properties()
         range_series = self._calculate_bucket_ranges(bucket_properties_df)
 
-        df = self.series.to_frame().reset_index(drop=True)
+        final_index_keys = []
+        if not self.ignore_index:
+            final_index_keys = list(self.series.index.keys())
+        final_index_keys += [self.series.name]
+
+        df = self.series.to_frame().reset_index(drop=self.ignore_index)
 
         left_df = df if not self.include_empty_bins else range_series.to_frame()
         right_df = range_series.to_frame() if not self.include_empty_bins else df
@@ -88,7 +97,7 @@ class CutOperation:
 
         df = left_df.merge(right_df, how=how, on=mask)
 
-        df = df.set_index(keys=self.series.name)
+        df = df.set_index(keys=final_index_keys)
         return cast(SeriesFloat64, df[self.RANGE_SERIES_NAME])
 
     @property
