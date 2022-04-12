@@ -249,4 +249,4 @@ def write_data_to_kinesis(events: EventDataList, config: SnowplowConfig,
         kinesis_client.put_record(
             StreamName=stream_name,
             Data=data,
-            PartitionKey="partitionkey")
+            PartitionKey="load_tstamp")
