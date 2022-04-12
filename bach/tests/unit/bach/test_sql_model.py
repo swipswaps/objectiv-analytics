@@ -1,11 +1,14 @@
 """
 Copyright 2022 Objectiv B.V.
 """
+import pytest
+
 from bach.expression import Expression
 from bach.sql_model import BachSqlModel
 from sql_models.model import CustomSqlModelBuilder, Materialization
 
 
+@pytest.mark.db_independent
 def test_bach_sql_model_copy():
     # test that if we call a function that should return a copy on a BachSqlModel instance, that we get
     # a BachSqlModel instance again.
