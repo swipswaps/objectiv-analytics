@@ -1,6 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import re
 import string
 from typing import Set, Union, Optional
 
@@ -70,7 +71,7 @@ def quote_identifier(dialect: Dialect, name: str) -> str:
     raise DatabaseNotSupportedException(dialect)
 
 
-def quote_string(value: str) -> str:
+def quote_string(dialect_engine: Union[Dialect, Engine], value: str) -> str:
     """
     Add single quotes around the value and escape any quotes in the value.
 
@@ -78,13 +79,22 @@ def quote_string(value: str) -> str:
     See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
 
     Examples:
-    >>> quote_string("test")
+    >>> from sqlalchemy.dialects.postgresql.base import PGDialect
+    >>> quote_string(PGDialect(), "test")
     "'test'"
-    >>> quote_string("te'st")
+    >>> quote_string(PGDialect(), "te'st")
     "'te''st'"
-    >>> quote_string("'te''st'")
+    >>> quote_string(PGDialect(), "'te''st'")
     "'''te''''st'''"
     """
+
+    if is_bigquery(dialect_engine):
+        # raw string,
+        # Quoted or triple-quoted literals that have the raw string literal prefix (r or R)
+        # are interpreted as raw/regex strings.
+        # See https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#string_and_bytes_literals
+        return f'r"""{value}"""'
+
     replaced_chars = value.replace("'", "''")
     return f"'{replaced_chars}'"
 

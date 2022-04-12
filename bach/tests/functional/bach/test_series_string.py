@@ -8,14 +8,14 @@ from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, ass
     get_df_with_test_data
 
 
-def test_from_const(pg_engine):
+def test_from_const(engine):
     # TODO: BigQuery
     a = 'a string'
     b = 'a string\'"\'\' "" \\ with quotes'
     c = None
     d = '\'\'!@&*(HJD☢%'
 
-    bt = get_df_with_test_data(pg_engine)[['city']]
+    bt = get_df_with_test_data(engine)[['city']]
     bt['a'] = a
     bt['b'] = b
     bt['c'] = SeriesString.from_const(base=bt, value=c, name='temp')
