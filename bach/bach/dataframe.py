@@ -25,7 +25,7 @@ from sql_models.graph_operations import update_placeholders_in_graph, get_all_pl
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
 from sql_models.sql_generator import to_sql
-from sql_models.util import quote_identifier
+from sql_models.util import quote_identifier, is_bigquery, DatabaseNotSupportedException, is_postgres
 
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
@@ -1521,8 +1521,6 @@ class DataFrame:
         new_series = {s.name: s.copy_override(group_by=group_by, index=group_by.index, index_sorting=[])
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
         return df.copy_override(
-            engine=df.engine,
-            base_node=df.base_node,
             index=group_by.index,
             series=new_series,
             group_by=group_by,
@@ -1558,26 +1556,73 @@ class DataFrame:
         from bach.partitioning import GroupBy, GroupingList, GroupingSet
 
         df = self
-        if self._group_by:
+        if df._group_by:
             # We need to materialize this node first, we can't stack aggregations (yet)
-            df = self.materialize(node_name='nested_groupby')
+            df = df.materialize(node_name='nested_groupby')
 
         group_by: GroupBy
         if isinstance(by, tuple):
+            if not is_postgres(self.engine):
+                raise DatabaseNotSupportedException(
+                    self.engine,
+                    f'GroupingSets are not supported for this SQL dialect. Only grouping by one or more '
+                    f'Series is supported. To use this functionality: specify a Series, a list of Series, a '
+                    f'Series name, or a list of Series names. Dialect: {self.engine.name}')
             # by is a list containing at least one other list. We're creating a grouping set
             # aka "Yo dawg, I heard you like GroupBys, ..."
             group_by = GroupingSet(
                 [GroupBy(group_by_columns=df._partition_by_series(b)) for b in by]
             )
-        elif isinstance(by, list) and len([b for b in by if isinstance(b, (tuple, list))]) > 0:
+            return DataFrame._groupby_to_frame(df, group_by)
+
+        if isinstance(by, list) and len([b for b in by if isinstance(b, (tuple, list))]) > 0:
+            if not is_postgres(self.engine):
+                raise DatabaseNotSupportedException(
+                    self.engine,
+                    f'GroupingLists are not supported for this SQL dialect. Only grouping by one or more '
+                    f'Series is supported. To use this functionality: specify a Series, a list of Series, a '
+                    f'Series name, or a list of Series names. Dialect: {self.engine.name}')
             group_by = GroupingList(
                 [GroupBy(group_by_columns=df._partition_by_series(b)) for b in by])
-        else:
-            by_mypy = cast(Union[str, 'Series',
-                                 List[DataFrame._GroupBySingleType], None], by)
-            group_by = GroupBy(group_by_columns=df._partition_by_series(by_mypy))
+            return DataFrame._groupby_to_frame(df, group_by)
 
-        return DataFrame._groupby_to_frame(df, group_by)
+        # This is the normal group-by case
+        by_mypy = cast(Union[str, 'Series',
+                             List[DataFrame._GroupBySingleType], None], by)
+        group_by_columns = df._partition_by_series(by_mypy)
+
+        has_group_by_expressions = any(
+            gbc.expression != Expression.column_reference(gbc.name) for gbc in group_by_columns
+        )
+        if not (is_bigquery(self.engine) and has_group_by_expressions):
+            # normal path
+            group_by = GroupBy(group_by_columns=group_by_columns)
+            return DataFrame._groupby_to_frame(df, group_by)
+
+        # Remaining case, handled by the code below:
+        #  * a regular groupby on one or more columns and/or expressions
+        #  * is_bigquery(self.engine) is True
+        #  * has_group_by_expressions is True, i.e. at least one of the `by` is an expression
+        #
+        # BigQuery allows grouping by an expression (other than just a column-reference), but then that
+        # expression cannot be in the select (unless all columns that are in the expression are also
+        # grouped on). However, we always include all expressions that are grouped on in the result, as
+        # that is the new index. So this presents a problem.
+        # To prevent problems with this we add the group-by expressions to the frame, materialize them,
+        # and then create the group-by.
+        # TODO: situations with more than one expression that refers the same column (for all databases)
+        #   e.g. df.groupby([df.x >= 0, df.x == 0])
+        #   See https://github.com/objectiv/objectiv-analytics/issues/616
+        df_new = df.copy()
+        gbc_names = []
+        for gbc in group_by_columns:
+            gbc_names.append(gbc.name)
+            df_new[gbc.name] = gbc
+
+        df_new = df_new.materialize(node_name='bq_materialize_before_groupby')
+        group_by_columns = df_new._partition_by_series(gbc_names)
+        group_by = GroupBy(group_by_columns=group_by_columns)
+        return DataFrame._groupby_to_frame(df_new, group_by)
 
     def window(self, **frame_args) -> 'DataFrame':
         """
@@ -2408,6 +2453,20 @@ class DataFrame:
         return self._aggregate_func('std', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
+    def std_pop(self, axis=1, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
+        """
+        Returns the population standard deviation of each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param ddof: Delta Degrees of Freedom. Only 1 is supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
+        return self._aggregate_func('std_pop', axis, level, numeric_only,
+                                    skipna=skipna, ddof=ddof, **kwargs)
+
     def sum(self, axis=1, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
         """
         Returns the sum of all values in each column.
@@ -3011,6 +3070,53 @@ class DataFrame:
         stacked_df = stacked_df.dropna() if dropna else stacked_df
 
         return stacked_df.all_series['__stacked']
+
+    def scale(self, with_mean: bool = True, with_std: bool = True) -> 'DataFrame':
+        """
+        Standardizes all numeric series based on mean and population standard deviation.
+
+        :param with_mean: if true, each feature value will be centered before scaling
+        :param with_std: if true, each feature value will be scaled to unit variance
+
+        :return: DataFrame
+
+        Each transformation per feature is performed as follows:
+
+        .. testsetup:: scale
+           :skipif: engine is None
+
+           import pandas
+           data = {'index': ['a', 'b', 'c', 'd'], 'feature': [1, 2, 3, 4]}
+           pdf = pandas.DataFrame(data)
+           df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+           df = df.set_index('index')
+           agg_df = df.agg(['mean', 'std_pop'], numeric_only=True)
+
+           feature = df['feature']
+           mean_feature = agg_df['feature_mean']
+           std_feature = agg_df['feature_std_pop']
+           with_mean = True
+           with_std = True
+
+        .. doctest:: scale
+            :skipif: engine is None
+
+            >>> scaled_feature = feature.copy()
+            >>> if with_mean:
+            ...     scaled_feature -= mean_feature
+
+
+            >>> if with_std:
+            ...     scaled_feature /= std_feature
+
+        Where:
+            * ``feature`` is the series to be scaled
+            * ``mean_feature`` is the mean of ``feature``
+            * ``std_feature`` is the (population-based) stardard deviation of ``feature``
+
+        """
+        from bach.preprocessing.scalers import StandardScaler
+        return StandardScaler(training_df=self, with_mean=with_mean, with_std=with_std).transform()
 
     def unstack(
         self, level: Union[str, int] = -1, fill_value: Optional[Scalar] = None, aggregation: str = 'max',

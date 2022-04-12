@@ -251,3 +251,32 @@ def test_series_qcut() -> None:
             np.testing.assert_almost_equal(exp.left, float(res.lower), decimal=2)
             np.testing.assert_almost_equal(exp.right, float(res.upper), decimal=2)
 
+
+def test_series_scale() -> None:
+    inhabitants = get_bt_with_test_data(full_data_set=True)['inhabitants']
+    result = inhabitants.scale()
+
+    inhbt_values = inhabitants.to_numpy()
+    inhbt_avg = np.mean(inhbt_values)
+    inhbt_std = np.var(inhbt_values)
+    inhbt_scale = inhbt_std ** 0.5
+
+    expected_data_w_mean_std = [
+        [1, (93485 - inhbt_avg) / inhbt_scale],
+        [2, (33520 - inhbt_avg) / inhbt_scale],
+        [3, (3055 - inhbt_avg) / inhbt_scale],
+        [4, (700 - inhbt_avg) / inhbt_scale],
+        [5, (960 - inhbt_avg) / inhbt_scale],
+        [6, (870 - inhbt_avg) / inhbt_scale],
+        [7, (4440 - inhbt_avg) / inhbt_scale],
+        [8, (10120 - inhbt_avg) / inhbt_scale],
+        [9, (14740 - inhbt_avg) / inhbt_scale],
+        [10, (12760 - inhbt_avg) / inhbt_scale],
+        [11, (12675 - inhbt_avg) / inhbt_scale],
+    ]
+    assert_equals_data(
+        result.to_frame(),
+        expected_columns=['_index_skating_order', 'inhabitants'],
+        expected_data=expected_data_w_mean_std,
+        round_decimals=True,
+    )

@@ -84,8 +84,3 @@ only when one of the above mentioned data-transfer functions is called.
 The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
 DataFrames see https://pandas.pydata.org/docs/reference/frame.html
 
-
-<<<<<<< HEAD
-=======
-
->>>>>>> ba0a4c977946c1db5900898f1d353f8dcd371ded

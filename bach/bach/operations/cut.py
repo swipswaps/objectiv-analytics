@@ -40,6 +40,7 @@ class CutOperation:
     bins: int
     right: bool
     include_empty_bins: bool
+    ignore_index: bool
     method: CutMethod
     ignore_index: bool
 

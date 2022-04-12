@@ -3,16 +3,17 @@ Copyright 2021 Objectiv B.V.
 """
 from decimal import Decimal
 
+import numpy
 import pytest
 
 from bach import Series, SeriesAbstractNumeric
 from bach.partitioning import GroupingList, GroupingSet, Rollup, Cube
+from sql_models.util import is_postgres
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
 
-def test_group_by_all(pg_engine):
-    # TODO: BigQuery
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)
+def test_group_by_all(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby()
     result_bt = btg.nunique()
 
@@ -79,10 +80,9 @@ def test_group_by_single_syntax(engine):
         }
 
 
-def test_group_by_multiple_syntax(pg_engine):
-    # TODO: BigQuery
+def test_group_by_multiple_syntax(engine):
     # Test whether multiple columns are accepted in different forms
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)
+    bt = get_df_with_test_data(engine, full_data_set=True)
     result_bt_list = bt.groupby(['municipality', 'city']).count()
     result_bt_list_series = bt.groupby([bt.municipality, bt.city]).count()
     result_bt_list_mixed1 = bt.groupby(['municipality', bt.city]).count()
@@ -125,14 +125,14 @@ def test_group_by_multiple_syntax(pg_engine):
         }
 
 
-def test_group_by_expression(pg_engine):
-    # TODO: BigQuery
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)
+def test_group_by_expression(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby(bt['city'].str[:1])
     result_bt = btg.nunique()
 
-    # no materialization has taken place yet.
-    assert result_bt.base_node == bt.base_node
+    if is_postgres(engine):
+        # On Postgres assert that no materialization has taken place yet. On BigQuery we have to materialize
+        assert result_bt.base_node == bt.base_node
 
     for d in result_bt.data.values():
         assert not d.expression.is_single_value
@@ -213,10 +213,9 @@ def test_group_by_series_selection(engine):
     }
 
 
-def test_dataframe_agg_all(pg_engine):
-    # TODO: BigQuery
+def test_dataframe_agg_all(engine):
     # test agg syntax for single function on a Dataframe that has no group_by set, e.g. on all rows.
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)[['municipality', 'inhabitants']]
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants']]
 
     result_bt = bt.nunique()
     result_bt_str = bt.agg('nunique')
@@ -368,9 +367,8 @@ def test_groupby_dataframe_agg_multiple_per_series_syntax(engine):
         }
 
 
-def test_dataframe_agg_numeric_only(pg_engine):
-    # TODO: BigQuery
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)[['municipality', 'inhabitants']]
+def test_dataframe_agg_numeric_only(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)[['municipality', 'inhabitants']]
     with pytest.raises(AttributeError):
         # contains non-numeric series that don't have 'min' implemented
         bt.agg('sum')
@@ -669,11 +667,10 @@ def test_groupby_frame_split_recombine_aggregation_applied(engine):
         )
 
 
-def test_materialize_on_double_aggregation(pg_engine):
-    # TODO: BigQuery
+def test_materialize_on_double_aggregation(engine):
     # When we use an aggregation function twice, we need to materialize the node in between, because it's not
     # possible to nest the aggregate function calls. I.e. you cannot do `avg(sum(x))`
-    bt = get_df_with_test_data(pg_engine, full_data_set=True)
+    bt = get_df_with_test_data(engine, full_data_set=True)
     btg = bt.groupby('municipality')[['founding']]
     btg_sum = btg.sum()
     assert bt.base_node == btg.base_node == btg_sum.base_node
@@ -688,4 +685,6 @@ def test_materialize_on_double_aggregation(pg_engine):
     btg_materialized_mean = btg_materialized.founding_sum.mean()
     # did not get materialized again
     assert btg_materialized_mean.base_node == btg_materialized.base_node
-    assert btg_materialized.founding_sum.mean().value == 2413.5
+    value = btg_materialized_mean.to_numpy()[0]
+    # avg() of BigQuery gives a slightly different result than Postgres or python, so use assert_almost_equal
+    numpy.testing.assert_almost_equal(value, 2413.5)

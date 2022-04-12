@@ -13,24 +13,24 @@ from sql_models.util import is_bigquery, is_postgres
 from tests.unit.bach.util import get_fake_df
 
 
-def test__determine_merge_on_simple_df_df_happy():
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd'])
+def test__determine_merge_on_simple_df_df_happy(dialect):
+    left = get_fake_df(dialect, ['a'], ['b', 'c'])
+    right = get_fake_df(dialect, ['a'], ['c', 'd'])
     assert call__determine_merge_on(left, right) == MergeOn(['c'], ['c'], [])
 
 
-def test__determine_merge_on_simple_df_df_non_happy():
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['d', 'e'])
+def test__determine_merge_on_simple_df_df_non_happy(dialect):
+    left = get_fake_df(dialect, ['a'], ['b', 'c'])
+    right = get_fake_df(dialect, ['a'], ['d', 'e'])
     with pytest.raises(ValueError):
         # TODO: should we match on index in this case? That seems to make sense
         # there are no columns in left and right with the same name
         call__determine_merge_on(left, right)
 
 
-def test__determine_merge_on_on_df_df_happy():
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd'])
+def test__determine_merge_on_on_df_df_happy(dialect):
+    left = get_fake_df(dialect, ['a'], ['b', 'c'])
+    right = get_fake_df(dialect, ['a'], ['c', 'd'])
     assert call__determine_merge_on(left, right, on='c') == MergeOn(['c'], ['c'], [])
     assert call__determine_merge_on(left, right, on=['c']) == MergeOn(['c'], ['c'], [])
     assert call__determine_merge_on(left, right, on='a') == MergeOn(['a'], ['a'], [])
@@ -38,9 +38,9 @@ def test__determine_merge_on_on_df_df_happy():
     assert call__determine_merge_on(left, right, on=['a', 'c']) == MergeOn(['a', 'c'], ['a', 'c'], [])
 
 
-def test__determine_merge_on_on_df_df_non_happy():
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd'])
+def test__determine_merge_on_on_df_df_non_happy(dialect):
+    left = get_fake_df(dialect, ['a'], ['b', 'c'])
+    right = get_fake_df(dialect, ['a'], ['c', 'd'])
     with pytest.raises(ValueError):
         # 'x' does not exist in either of the dfs
         call__determine_merge_on(left, right, on='x')
@@ -55,9 +55,9 @@ def test__determine_merge_on_on_df_df_non_happy():
         call__determine_merge_on(left, right, How.cross, on='c')
 
 
-def test__determine_merge_on_left_on_right_on_df_df_happy():
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd'])
+def test__determine_merge_on_left_on_right_on_df_df_happy(dialect):
+    left = get_fake_df(dialect, ['a'], ['b', 'c'])
+    right = get_fake_df(dialect, ['a'], ['c', 'd'])
     assert call__determine_merge_on(left, right, left_on='c', right_on='c') == MergeOn(['c'], ['c'], [])
     assert call__determine_merge_on(left, right, left_on=['c'], right_on='c') == MergeOn(['c'], ['c'], [])
     assert call__determine_merge_on(left, right, left_on='c', right_on=['c']) == MergeOn(['c'], ['c'], [])
@@ -70,9 +70,9 @@ def test__determine_merge_on_left_on_right_on_df_df_happy():
            == MergeOn(['a', 'b'], ['a', 'd'], [])
 
 
-def test__determine_merge_on_left_on_right_on_df_df_non_happy():
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd'])
+def test__determine_merge_on_left_on_right_on_df_df_non_happy(dialect):
+    left = get_fake_df(dialect, ['a'], ['b', 'c'])
+    right = get_fake_df(dialect, ['a'], ['c', 'd'])
     # Should always specify both left_on and right_on and not 'on' at the same time.
     with pytest.raises(ValueError):
         call__determine_merge_on(left, right, left_on='c')
@@ -96,18 +96,18 @@ def test__determine_merge_on_left_on_right_on_df_df_non_happy():
         call__determine_merge_on(left, right, How.cross, left_on='c', right_on='c')
 
 
-def test__determine_merge_index_on_df_df_happy():
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd'])
+def test__determine_merge_index_on_df_df_happy(dialect):
+    left = get_fake_df(dialect, ['a'], ['b', 'c'])
+    right = get_fake_df(dialect, ['a'], ['c', 'd'])
     assert call__determine_merge_on(left, right, left_on='c', right_index=True) == MergeOn(['c'], ['a'], [])
     assert call__determine_merge_on(left, right, left_index=True, right_on='c') == MergeOn(['a'], ['c'], [])
     assert call__determine_merge_on(left, right, left_index=True, right_index=True) == \
            MergeOn(['a'], ['a'], [])
 
 
-def test__determine_merge_df_serie_happy():
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd'])['c']
+def test__determine_merge_df_serie_happy(dialect):
+    left = get_fake_df(dialect, ['a'], ['b', 'c'])
+    right = get_fake_df(dialect, ['a'], ['c', 'd'])['c']
     assert call__determine_merge_on(left, right) == MergeOn(['c'], ['c'], [])
     assert call__determine_merge_on(left, right, on='c') == MergeOn(['c'], ['c'], [])
     assert call__determine_merge_on(left, right, left_on='c', right_on='c') == MergeOn(['c'], ['c'], [])
@@ -119,8 +119,8 @@ def test__determine_merge_df_serie_happy():
 
 
 def test__determine_merge_on_w_conditional(dialect) -> None:
-    left = get_fake_df(['a'], ['b', 'c'], dialect=dialect)
-    right = get_fake_df(['a'], ['c', 'd'], dialect=dialect).materialize()['c']
+    left = get_fake_df(dialect, ['a'], ['b', 'c'])
+    right = get_fake_df(dialect, ['a'], ['c', 'd']).materialize()['c']
     series_bool = left['c'] == right
 
     assert call__determine_merge_on(left, right, on=[series_bool]) == MergeOn([], [], [series_bool])
@@ -130,9 +130,8 @@ def test__determine_merge_on_w_conditional(dialect) -> None:
 
 
 def test__determine_result_columns(dialect):
-    dialect = PGDialect()  # TODO: BigQuery
-    left = get_fake_df(['a'], ['b', 'c'], 'int64')
-    right = get_fake_df(['a'], ['c', 'd'], 'float64')
+    left = get_fake_df(dialect, ['a'], ['b', 'c'], 'int64')
+    right = get_fake_df(dialect, ['a'], ['c', 'd'], 'float64')
 
     result = _determine_result_columns(dialect, left, right, MergeOn(['a'], ['a'], []), ('_x', '_y'))
     assert result == (
@@ -202,24 +201,24 @@ def test__determine_result_columns(dialect):
 def test__determine_result_columns_non_happy_path(dialect):
     # With pandas the following works, there will just be two b_x and two b_y columns, but we cannot
     # generate sql that has the same column name multiple times, so we raise an error
-    left = get_fake_df(['a'], ['b', 'b_x'], 'int64')
-    right = get_fake_df(['a'], ['b', 'b_y'], 'float64')
+    left = get_fake_df(dialect, ['a'], ['b', 'b_x'], 'int64')
+    right = get_fake_df(dialect, ['a'], ['b', 'b_y'], 'float64')
     with pytest.raises(ValueError):
         _determine_result_columns(dialect, left, right, MergeOn(['a'], ['a'], []), ('_x', '_y'))
 
 
-def test_merge_non_happy_path_how():
-    left = get_fake_df(['a'], ['b', 'b_x'], 'int64')
-    right = get_fake_df(['a'], ['b', 'b_y'], 'float64')
+def test_merge_non_happy_path_how(dialect):
+    left = get_fake_df(dialect, ['a'], ['b', 'b_x'], 'int64')
+    right = get_fake_df(dialect, ['a'], ['b', 'b_y'], 'float64')
     with pytest.raises(ValueError, match='how'):
         merge(left, right, 'wrong how',
               on=None, left_on=None, right_on=None, left_index=True, right_index=True,
               suffixes=('_x', '_y'))
 
 
-def test_verify_on_conflicts() -> None:
-    left = get_fake_df(['a'], ['b'], 'int64')
-    right = get_fake_df(['a'], ['b'], 'float64')
+def test_verify_on_conflicts(dialect) -> None:
+    left = get_fake_df(dialect, ['a'], ['b'], 'int64')
+    right = get_fake_df(dialect, ['a'], ['b'], 'float64')
     with pytest.raises(ValueError, match=r'if how == "cross"'):
         _verify_on_conflicts(
             left,
@@ -284,8 +283,8 @@ def test_verify_on_conflicts() -> None:
 
 
 def test_verify_on_conflicts_conditional(dialect) -> None:
-    left = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
-    right = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+    left = get_fake_df(dialect, ['a'], ['b'], 'float64')
+    right = get_fake_df(dialect, ['a'], ['b'], 'float64')
     bool_series = left['b'] == left['b']
 
     with pytest.raises(ValueError, match=r'valid only when left.base_node != right.base_node.'):
@@ -318,7 +317,7 @@ def test_verify_on_conflicts_conditional(dialect) -> None:
             right_index=False,
         )
 
-    other_df = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+    other_df = get_fake_df(dialect, ['a'], ['b'], 'float64')
     other_df = other_df.materialize(node_name='other')
     bool_series = left['b'] > right['b'] + other_df['b']
 
@@ -336,9 +335,9 @@ def test_verify_on_conflicts_conditional(dialect) -> None:
 
 
 def test__resolve_merge_expression_reference(dialect) -> None:
-    left = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+    left = get_fake_df(dialect, ['a'], ['b'], 'float64')
     left = left.materialize()
-    right = get_fake_df(['a'], ['b'], 'float64', dialect=dialect)
+    right = get_fake_df(dialect, ['a'], ['b'], 'float64')
 
     bool_series = left['b'].astype(int) == right['b'].astype(int)
     result = _resolve_merge_expression_references(dialect, left, right, MergeOn([], [], [bool_series]))

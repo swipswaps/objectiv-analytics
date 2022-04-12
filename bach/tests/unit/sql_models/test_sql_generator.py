@@ -6,6 +6,7 @@ from sqlalchemy.dialects.postgresql.base import PGDialect
 
 from sql_models.model import SqlModelBuilder, CustomSqlModelBuilder
 from sql_models.sql_generator import to_sql
+from sql_models.util import is_bigquery
 from tests.unit.sql_models.test_graph_operations import get_simple_test_graph
 from tests.unit.sql_models.util import assert_roughly_equal_sql
 
@@ -32,9 +33,13 @@ def test_format_injection_single_model(dialect):
     assert result == "select '{{{y}' from x"
 
 
-def test_format_injection_composed_models():
-    # TODO: bigquery
-    dialect = PGDialect()
+def test_format_injection_composed_models(dialect):
+    def dialect_expected(expected_sql: str) -> str:
+        # replace the expected identifier quoatations if we are dealing with BigQuery dialect
+        if is_bigquery(dialect):
+            return expected_sql.replace('"', '`')
+        return expected_sql
+
     # Make sure that (parts of) format strings in the properties of a model don't mess up the sql generation.
     mb = CustomSqlModelBuilder('select {a} from x')
     model = mb(a="'{{y}}'")
@@ -42,16 +47,19 @@ def test_format_injection_composed_models():
     result = to_sql(dialect=dialect, model=mb(a='y', x=model))
     expected = 'with "CustomSqlModel___1415e9e145b7bdd712c6fadaac5a6483" as (select \'{{y}}\' from x)\n' \
                'select y from "CustomSqlModel___1415e9e145b7bdd712c6fadaac5a6483"'
+    expected = dialect_expected(expected)
     assert result == expected
 
     result = to_sql(dialect=dialect, model=mb(a="'{y}'", x=model))
     expected = 'with "CustomSqlModel___1415e9e145b7bdd712c6fadaac5a6483" as (select \'{{y}}\' from x)\n' \
                "select '{y}' from \"CustomSqlModel___1415e9e145b7bdd712c6fadaac5a6483\""
+    expected = dialect_expected(expected)
     assert result == expected
 
     result = to_sql(dialect=dialect, model=mb(a="'{{y}}'", x=model))
     expected = 'with "CustomSqlModel___1415e9e145b7bdd712c6fadaac5a6483" as (select \'{{y}}\' from x)\n' \
                "select '{{y}}' from \"CustomSqlModel___1415e9e145b7bdd712c6fadaac5a6483\""
+    expected = dialect_expected(expected)
     assert result == expected
 
 
