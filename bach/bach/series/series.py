@@ -11,8 +11,7 @@ from uuid import UUID
 
 import numpy
 import pandas
-from sqlalchemy.engine import Dialect
-from sqlalchemy.future import Engine
+from sqlalchemy.engine import Dialect, Engine
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 
@@ -24,6 +23,7 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 from bach.sql_model import BachSqlModel
 
 from bach.types import value_to_dtype, DtypeOrAlias
+from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 
 if TYPE_CHECKING:
@@ -103,7 +103,7 @@ class Series(ABC):
     """
 
     def __init__(self,
-                 engine,
+                 engine: Engine,
                  base_node: BachSqlModel,
                  index: Dict[str, 'Series'],
                  name: str,
@@ -170,6 +170,8 @@ class Series(ABC):
         if index_sorting and len(index_sorting) != len(index):
             raise ValueError(f'Length of index_sorting ({len(index_sorting)}) should match '
                              f'length of index ({len(index)}).')
+        if not is_valid_column_name(dialect=engine.dialect, name=name):
+            raise ValueError(f'Column name "{name}" is not valid for SQL dialect {engine.dialect}')
 
         self._engine = engine
         self._base_node = base_node
@@ -1548,6 +1550,7 @@ class Series(ABC):
         sort: bool = True,
         ascending: bool = False,
         bins: Optional[int] = None,
+        method: str = 'pandas',
     ) -> 'Series':
         """
         Returns a series containing counts per unique value
@@ -1557,6 +1560,13 @@ class Series(ABC):
         :param ascending: sorts values in ascending order if true.
         :param bins: works only with numeric series, groups values into the request amount of bins
             and counts values based on each range.
+        :param method: Method to use for calculating bin ranges.
+            Supported values:
+
+                - "pandas" (default): Performs bound adjustments based on Pandas implementation.
+
+                - "bach": No bound adjustments are performed. Instead, first interval includes both
+                  lower and upper bounds.
 
         :return: a series containing all counts per unique row.
         """
@@ -1567,9 +1577,12 @@ class Series(ABC):
         if not bins:
             return self.to_frame().value_counts(normalize=normalize, sort=sort, ascending=ascending)
 
-        from bach.operations.cut import CutOperation
+        from bach.operations.cut import CutOperation, CutMethod
+        if not any(method == valid_method.value for valid_method in CutMethod):
+            raise ValueError(f'"{method}" is not a valid method.')
+
         assert isinstance(self, SeriesAbstractNumeric)
-        bins_series = CutOperation(series=self, bins=bins, include_empty_bins=True)()
+        bins_series = CutOperation(series=self, bins=bins, include_empty_bins=True, method=method)()
 
         bins_df = bins_series.to_frame()
         bins_w_values_df = bins_df[bins_series.index[self.name].notnull()]

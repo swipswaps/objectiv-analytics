@@ -18,16 +18,17 @@ class FakeEngine:
     """ Helper class that serves as a mock for SqlAlchemy Engine objects """
     dialect: Dialect
     name: str = field(init=False)
+    url: str = 'postgresql://user@host:5432/db'
 
     def __post_init__(self):
         super().__setattr__('name', self.dialect.name)  # set the 'frozen' attribute self.name
 
 
 def get_fake_df(
+    dialect: Dialect,
     index_names: List[str],
     data_names: List[str],
-    dtype: Union[str, Dict[str, str]] = 'int64',
-    dialect: Dialect = PGDialect()
+    dtype: Union[str, Dict[str, str]] = 'int64'
 ) -> DataFrame:
     engine = FakeEngine(dialect=dialect)
     columns = index_names + data_names
