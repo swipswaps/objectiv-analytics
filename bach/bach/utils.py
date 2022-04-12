@@ -1,7 +1,9 @@
+import re
 from typing import NamedTuple, Dict, List, Set
-from sqlalchemy.engine import Connection
+from sqlalchemy.engine import Connection, Dialect
 
 from bach.expression import Expression
+from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
 
 class ResultSeries(NamedTuple):
@@ -44,3 +46,29 @@ def escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
     # When we support more databases we'll need to do something smarter, see
     # https://www.python.org/dev/peps/pep-0249/#paramstyle
     return raw_sql.replace('%', '%%')
+
+
+def is_valid_column_name(dialect: Dialect, name: str) -> bool:
+    if is_postgres(dialect):
+        # Identifiers longer than 63 characters are not necessarily wrong, but they will be truncated which
+        # could lead to identifier collisions, so we just disallow it.
+        # source: https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+        return len(name) < 64
+    if is_bigquery(dialect):
+        # sources:
+        #  https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#column_names
+        #  https://cloud.google.com/bigquery/docs/schemas#column_names
+        regex = '^[a-zA-Z_][a-zA-Z0-9_]*$'
+        reserved_prefixes = [
+            '_TABLE_',
+            '_FILE_',
+            '_PARTITION',
+            '_ROW_TIMESTAMP',
+            '__ROOT__',
+            '_COLIDENTIFIER'
+        ]
+        len_ok = len(name) <= 300
+        pattern_ok = bool(re.match(pattern=regex, string=name))
+        prefix_ok = not any(name.startswith(prefix) for prefix in reserved_prefixes)
+        return len_ok and pattern_ok and prefix_ok
+    raise DatabaseNotSupportedException(dialect)

@@ -37,7 +37,7 @@ def test_construct(dialect):
 
 
 def test_construct_series(dialect):
-    df = get_fake_df(['i'], ['a', 'b'])
+    df = get_fake_df(dialect, ['i'], ['a', 'b'])
     result1 = Expression.construct('cast({} as text)', df.a)
     assert result1 == Expression([
         RawToken('cast('),
@@ -78,7 +78,7 @@ def test_string(dialect):
 
 
 def test_combined(dialect):
-    df = get_fake_df(['i'], ['duration', 'irrelevant'])
+    df = get_fake_df(dialect, ['i'], ['duration', 'irrelevant'])
     expr1 = Expression.column_reference('year')
     expr2 = Expression.construct('cast({} as bigint)', df.duration)
     expr_sum = Expression.construct('{} + {}', expr1, expr2)
@@ -114,8 +114,8 @@ def test_non_atomic(dialect):
     assert NonAtomicExpression.construct('{} & {}', na1, e2).to_sql(dialect) == '(a or ~c) & ~a or b'
 
 
-def test_is_constant():
-    df = get_fake_df(['i'], ['duration', 'irrelevant'])
+def test_is_constant(dialect):
+    df = get_fake_df(dialect, ['i'], ['duration', 'irrelevant'])
     notconst1 = Expression.column_reference('year')
     notconst2 = Expression.construct('cast({} as bigint)', df.duration)
     assert not notconst1.is_constant
@@ -157,8 +157,8 @@ def test_is_constant():
     assert not WindowFunctionExpression.construct('agg({}, {}, {})', const1, const2, const3).is_constant
 
 
-def test_is_single_value():
-    df = get_fake_df(['i'], ['duration', 'irrelevant'])
+def test_is_single_value(dialect):
+    df = get_fake_df(dialect, ['i'], ['duration', 'irrelevant'])
     notsingle1 = Expression.column_reference('year')
     notsingle2 = Expression.construct('cast({} as bigint)', df.duration)
     assert not notsingle1.is_single_value
@@ -220,6 +220,7 @@ def test_table_column_reference(dialect) -> None:
         assert expr.to_sql(dialect, 'tab') == '`random`.`city`'
 
 
+@pytest.mark.db_independent
 def test_remove_table_column_references() -> None:
     expr = Expression.table_column_reference('random', 'city')
 
@@ -235,6 +236,7 @@ def test_remove_table_column_references() -> None:
     assert result_expr == Expression.column_reference('city')
 
 
+@pytest.mark.db_independent
 def test_remove_table_column_references_error() -> None:
     expr = Expression(
         [Expression.table_column_reference('random', 'city'), Expression.table_column_reference('random2', 'city')],
@@ -244,6 +246,7 @@ def test_remove_table_column_references_error() -> None:
         expr.remove_table_column_references()
 
 
+@pytest.mark.db_independent
 def test_has_table_column_reference() -> None:
     expr = Expression.table_column_reference('random', 'city')
     assert expr.has_table_column_references

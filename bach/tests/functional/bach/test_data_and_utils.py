@@ -7,6 +7,7 @@ This file does not contain any test, but having the file's name start with `test
 as a test file. This makes pytest rewrite the asserts to give clearer errors.
 """
 import os
+from decimal import Decimal
 from typing import List, Union, Type, Dict, Any
 
 import pandas
@@ -216,11 +217,13 @@ def df_to_list(df):
 
 
 def assert_equals_data(
-        bt: Union[DataFrame, Series],
-        expected_columns: List[str],
-        expected_data: List[list],
-        order_by: Union[str, List[str]] = None,
-        use_to_pandas: bool = False,
+    bt: Union[DataFrame, Series],
+    expected_columns: List[str],
+    expected_data: List[list],
+    order_by: Union[str, List[str]] = None,
+    use_to_pandas: bool = False,
+    round_decimals: bool = False,
+    decimal=4,
 ) -> List[List[Any]]:
     """
     Execute the sql of ButTuhDataFrame/Series's view_sql(), with the given order_by, and make sure the
@@ -251,7 +254,15 @@ def assert_equals_data(
     assert column_names == expected_columns
     for i, df_row in enumerate(db_values):
         expected_row = expected_data[i]
-        assert df_row == expected_row, f'row {i} is not equal: {expected_row} != {df_row}'
+        for j, val in enumerate(df_row):
+            if not round_decimals:
+                assert df_row == expected_row, f'row {i} is not equal: {expected_row} != {df_row}'
+                continue
+
+            if isinstance(val, (float, Decimal)):
+                assert round(Decimal(val), decimal) == round(Decimal(expected_row[j]), decimal)
+            else:
+                assert val == expected_row[j]
     return db_values
 
 
@@ -288,13 +299,21 @@ def assert_postgres_type(
     """
     Check that the given Series has the expected data type in the Postgres database, and that it has the
     expected Series type after being read back from the database.
+
+    This uses series.engine as the connection.
+    NOTE: If series.engine is not a Postgres engine, then this function simply returns without doing any
+    asserts!
+
     :param series: Series object to check the type of
     :param expected_db_type: one of the types listed on https://www.postgresql.org/docs/current/datatype.html
     :param expected_series_type: Subclass of Series
     """
+    engine = series.engine
+    if not is_postgres(engine):
+        return
     sql = series.to_frame().view_sql()
     sql = f'with check_type as ({sql}) select pg_typeof("{series.name}") from check_type limit 1'
-    db_rows = run_query(sqlalchemy.create_engine(DB_PG_TEST_URL), sql)
+    db_rows = run_query(engine=engine, sql=sql)
     db_values = [list(row) for row in db_rows]
     db_type = db_values[0][0]
     if expected_db_type:

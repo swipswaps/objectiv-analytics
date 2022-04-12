@@ -96,7 +96,7 @@ class SeriesAbstractNumeric(Series, ABC):
     # def skew(self, partition: WrappedPartition = None, skipna: bool = True):
     #     raise NotImplementedError("skew currently not implemented")
 
-    def sem(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
+    def sem(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None, **kwargs):
         """
         Get the unbiased standard error of the mean.
         Normalized by N-1 by default.
@@ -115,20 +115,24 @@ class SeriesAbstractNumeric(Series, ABC):
             skipna=skipna
         )
 
-    def std(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
+    def std(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None, **kwargs):
         """
-        Get the sample standard deviation of the input values
+        Get the standard deviation of the input values
         Normalized by N-1 by default.
 
         :param partition: The partition or window to apply
         :param skipna: Exclude NA/NULL values
-        :param ddof: Delta degrees of freedom. he divisor used in calculations is N - ddof,
+        :param ddof: Delta degrees of freedom. The divisor used in calculations is N - ddof,
             where N represents the number of elements
         """
-        self._ddof_unsupported(ddof)
+        if ddof is not None and ddof not in (0, 1):
+            raise NotImplementedError(f"ddof == {ddof} currently not implemented")
+
+        if ddof == 0:
+            return self._derived_agg_func(partition, 'stddev_pop', skipna=skipna)
         return self._derived_agg_func(partition, 'stddev_samp', skipna=skipna)
 
-    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
+    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None, **kwargs):
         """
         Get the sum of the input values.
 
@@ -138,7 +142,7 @@ class SeriesAbstractNumeric(Series, ABC):
         """
         return self._derived_agg_func(partition, 'sum', skipna=skipna, min_count=min_count)
 
-    def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'SeriesFloat64':
+    def mean(self, partition: WrappedPartition = None, skipna: bool = True, **kwargs) -> 'SeriesFloat64':
         """
         Get the mean/average of the input values.
 
@@ -151,7 +155,7 @@ class SeriesAbstractNumeric(Series, ABC):
         )
 
     def quantile(
-        self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5,
+        self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5, **kwargs
     ) -> 'SeriesFloat64':
         """
         When q is a float or len(q) == 1, the resultant series index will remain
@@ -165,7 +169,7 @@ class SeriesAbstractNumeric(Series, ABC):
         result = calculate_quantiles(self, partition=partition, q=q)
         return cast('SeriesFloat64', result)
 
-    def var(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
+    def var(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None, **kwargs):
         """
         Get the sample variance of the input values (square of the sample standard deviation)
         Normalized by N-1 by default.
@@ -177,6 +181,17 @@ class SeriesAbstractNumeric(Series, ABC):
         """
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(partition, 'var_samp', skipna=skipna)
+
+    def scale(self, with_mean: bool = True, with_std: bool = True) -> 'Series':
+        """
+        Standardizes series based on mean and population standard deviation.
+
+        :param with_mean: if true, each value will be centered before scaling
+        :param with_std: if true, each value will be scaled to unit variance
+
+        :return: Series
+        """
+        return self.to_frame().scale(with_mean, with_std)[self.name]
 
 
 class SeriesInt64(SeriesAbstractNumeric):
@@ -224,28 +239,23 @@ class SeriesInt64(SeriesAbstractNumeric):
         return super()._arithmetic_operation(other, operation, fmt_str, other_dtypes, type_mapping)
 
     def __truediv__(self, other) -> 'Series':
-        # What we do below is essentially the same as: return self.astype('float64') / other
-        # But somehow that fails some test cases and the below code works. The generated sql for the 'nice'
-        # code above doesn't seem to make sense in the broken cases. TODO: look into this
-
-        db_dialect = DBDialect.from_dialect(self.engine.dialect)
-        float_db_type = SeriesFloat64.supported_db_dtype[db_dialect]
-        return self._arithmetic_operation(
-            other=other,
-            operation='div',
-            fmt_str=f'cast({{}} as {float_db_type}) / ({{}})',
-            dtype='float64'
-        )
+        return self.astype('float64') / other
 
     def __rshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) >> cast({} as int)',
-                                          other_dtypes=tuple(['int64']))
+        if is_postgres(self.engine):
+            # Postgres expects the argument to a bitshift to be a regular int, not bigint.
+            return self._arithmetic_operation(other, 'rshift', '({}) >> cast({} as int)',
+                                              other_dtypes=tuple(['int64']))
+        return self._arithmetic_operation(other, 'rshift', '({}) >> ({})', other_dtypes=tuple(['int64']))
 
     def __lshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
-                                          other_dtypes=tuple(['int64']))
+        if is_postgres(self.engine):
+            # Postgres expects the argument to a bitshift to be a regular int, not bigint.
+            return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
+                                              other_dtypes=tuple(['int64']))
+        return self._arithmetic_operation(other, 'lshift', '({}) << ({})', other_dtypes=tuple(['int64']))
 
-    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
+    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None, **kwargs):
         # sum() has the tendency to return float on bigint arguments. Cast it back.
         series = super().sum(partition, skipna, min_count)
         return series.copy_override(

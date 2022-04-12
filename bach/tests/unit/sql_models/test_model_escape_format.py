@@ -1,8 +1,11 @@
 """
 Copyright 2022 Objectiv B.V.
 """
+import pytest
+
 from sql_models.model import escape_format_string
 
+pytestmark = [pytest.mark.db_independent]  # mark all tests here as database independent.
 
 def assert_escape_compare_value(value):
     """ helper for test__escape_value. Assert that the escaped value, after formatting equals the original"""
