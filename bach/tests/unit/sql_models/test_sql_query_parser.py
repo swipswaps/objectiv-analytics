@@ -3,8 +3,15 @@ Copyright 2021 Objectiv B.V.
 """
 from typing import List
 
+import pytest
+
 from sql_models.sql_query_parser import raw_sql_to_selects, CteTuple
 from tests.unit.sql_models.util import assert_roughly_equal_sql
+
+
+# mark all tests here as database independent. Perhaps in the future we'll have DB specific parsing, but
+# currently having generic parsing is enough
+pytestmark = [pytest.mark.db_independent]
 
 
 def test_parse_select():

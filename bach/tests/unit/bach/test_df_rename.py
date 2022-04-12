@@ -95,7 +95,7 @@ def test_rename_ignore_errors(dialect):
 
 
 def test_rename_fail_on_duplicate_columns(dialect):
-    bt = get_fake_df(['i', 'ii'], ['a', 'b'])
+    bt = get_fake_df(dialect, ['i', 'ii'], ['a', 'b'])
 
     with pytest.raises(ValueError, match='column name already exists'):
         bt.rename(columns={'a': 'b'})
@@ -105,3 +105,10 @@ def test_rename_fail_on_duplicate_columns(dialect):
         bt.rename(columns={'a': 'c', 'b': 'c'})
     with pytest.raises(ValueError, match='column name already exists'):
         bt.rename(columns={'a': 'i'})
+
+
+def test_rename_invalid_column_name(dialect):
+    bt = get_fake_df(dialect, ['i'], ['a', 'b'])
+    too_long_name = 'test' * 100
+    with pytest.raises(ValueError, match='Column name ".*" is not valid for SQL dialect'):
+        bt.rename(columns={'a': too_long_name})

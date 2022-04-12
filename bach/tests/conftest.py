@@ -12,6 +12,8 @@ import os
 from typing import NamedTuple, Optional
 
 import pytest
+from _pytest.python import Metafunc, Function
+from _pytest.config.argparsing import Parser
 import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, Dialect
@@ -29,13 +31,24 @@ def pg_engine() -> Engine:
     return sqlalchemy.create_engine(DB_PG_TEST_URL)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: Parser):
+    # Add options for parameterizing multi-database tests for testing either Postgres, Bigquery, or both.
+    # The actual parameterizing happens in pytest_generate_tests(), based on the paramters that the user
+    # provides
+
+    # This function will automatically be called by pytest at the start of a test run, see:
+    # https://docs.pytest.org/en/6.2.x/reference.html#initialization-hooks
     parser.addoption('--postgres', action='store_true', help='run the functional tests for Postgres')
     parser.addoption('--big-query', action='store_true', help='run the functional tests for BigQuery')
     parser.addoption('--all', action='store_true', help='run the functional tests for BigQuery')
 
 
-def pytest_generate_tests(metafunc):
+def pytest_generate_tests(metafunc: Metafunc):
+    # Paramaterize the 'engine' and 'dialect' parameters of tests based on the options specified by the
+    # user (see pytest_addoption() for options).
+
+    # This function will automatically be called by pytest while it is creating the list of tests to run,
+    # see: https://docs.pytest.org/en/6.2.x/reference.html#collection-hooks
     need_engine = 'engine' in metafunc.fixturenames
     if metafunc.config.getoption("all"):
         engine_dialects = [
@@ -58,6 +71,28 @@ def pytest_generate_tests(metafunc):
         engines = [ed.engine for ed in engine_dialects]
         metafunc.parametrize("engine", engines)
 
+
+def pytest_runtest_setup(item: Function):
+    # Here we check that tests that are marked as `db_independent`, that they do not have a `dialect` or
+    # `engine` parameter.
+    #
+    #  ### Background ###
+    #  We broadly want two categories of tests:
+    #  1. tests that are database independent.
+    #  2. tests that we want to run against all supported databases.
+    #
+    # These categories shouldn't overlap. We use the `db_independent` mark to track category one, and we can
+    # distinguish tests from category two by their 'dialect' and 'engine' parameters. This way we can verify
+    # that all tests are clearly marked as being in either category.
+
+    # This function will automatically be called by pytest before running a specific test function. See:
+    # https://docs.pytest.org/en/6.2.x/reference.html#test-running-runtest-hooks
+    fixture_names = item.fixturenames
+    is_db_independent_test = any(mark.name == 'db_independent' for mark in item.own_markers)
+    is_multi_db_test = 'dialect' in fixture_names or 'engine' in fixture_names
+    if is_db_independent_test and is_multi_db_test:
+        raise Exception('Test has both the `db_independent` mark as well as either the `dialect` or '
+                        '`engine` parameter. Test can not be both database independent and multi-database.')
 
 # Below: helper functions for pytest_generate_tests
 

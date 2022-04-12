@@ -91,6 +91,7 @@ Reshaping, indexing, sorting & merging
     DataFrame.bfill
     DataFrame.stack
     DataFrame.unstack
+    DataFrame.scale
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -136,3 +137,10 @@ Numeric
     DataFrame.sum
     DataFrame.std
     DataFrame.var
+
+Visualization
+++++++++++++++
+.. autosummary::
+    :toctree: DataFrame
+
+    DataFrame.plot
