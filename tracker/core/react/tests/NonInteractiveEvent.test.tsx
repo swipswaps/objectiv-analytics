@@ -2,15 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeNonInteractiveEvent, Tracker } from '@objectiv/tracker-core';
+import { makeContentContext, makeNonInteractiveEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import {
-  makeContentContext,
-  TrackingContextProvider,
-  trackNonInteractiveEvent,
-  useNonInteractiveEventTracker,
-} from '../src';
+import { TrackingContextProvider, trackNonInteractiveEvent, useNonInteractiveEventTracker } from '../src';
 
 describe('NonInteractiveEvent', () => {
   beforeEach(() => {
