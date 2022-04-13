@@ -48,7 +48,7 @@ def helper_test_simple_arithmetic(engine: Engine, a: Union[int, float], b: Union
 
 def test_round():
     values = [1.9, 3.0, 4.123, 6.425124, 2.00000000001, 2.1, np.nan, 7.]
-    pdf = pd.DataFrame(data=values)
+    pdf = pd.DataFrame(data={'0': values})
     bt = get_from_df('test_round', pdf)
     bt['const'] = 14.12345
     assert bt.const.expression.is_constant
@@ -56,34 +56,34 @@ def test_round():
     for i in 0, 3, 5, 9:
         assert bt.const.round(i).expression.is_constant
         assert not bt['0'].round(i).expression.is_constant
-        np.testing.assert_equal(pdf[0].round(i).to_numpy(), bt['0'].round(i).to_numpy())
-        np.testing.assert_equal(pdf[0].round(decimals=i).to_numpy(), bt['0'].round(decimals=i).to_numpy())
+        np.testing.assert_equal(pdf['0'].round(i).to_numpy(), bt['0'].round(i).to_numpy())
+        np.testing.assert_equal(pdf['0'].round(decimals=i).to_numpy(), bt['0'].round(decimals=i).to_numpy())
 
 
 def test_round_integer():
     values = [1, 3, 4, 6, 2, 2, 6, 7]
-    pdf = pd.DataFrame(data=values)
+    pdf = pd.DataFrame(data={'0': values})
     bt = get_from_df('test_round', pdf)
 
     for i in 0, 3, 5, 9:
         result = bt['0'].round(i).sort_values().to_pandas()
-        expected = pdf[0].round(i).sort_values()
+        expected = pdf['0'].round(i).sort_values()
         pd.testing.assert_series_equal(expected, result, check_names=False, check_index=False)
 
         result2 = bt['0'].round(decimals=i).sort_values().to_pandas()
-        expected2 = pdf[0].round(decimals=i).sort_values()
+        expected2 = pdf['0'].round(decimals=i).sort_values()
         pd.testing.assert_series_equal(expected2, result2, check_names=False, check_index=False)
 
 
 def test_aggregations_simple_tests():
     values = [1, 3, 4, 6, 2, 2, np.nan, 7, 8]
-    pdf = pd.DataFrame(data=values)
+    pdf = pd.DataFrame(data={'0': values})
     bt = get_from_df('test_aggregations_simple_tests', pdf)
 
     numeric_agg = ['sum', 'mean']
     stats_agg = ['sem', 'std', 'var']
     for agg in numeric_agg + stats_agg:
-        pd_agg = pdf[0].agg(agg)
+        pd_agg = pdf['0'].agg(agg)
         bt_agg = bt['0'].agg(agg)
         assert bt_agg.expression.has_aggregate_function
         assert not bt_agg.expression.is_constant
@@ -92,11 +92,11 @@ def test_aggregations_simple_tests():
 
 
 def test_aggregations_sum_mincount():
-    pdf = pd.DataFrame(data=[1, np.nan, 7, 8])
+    pdf = pd.DataFrame(data={'0': [1, np.nan, 7, 8]})
     bt = get_from_df('test_aggregations_sum_mincount', pdf)
 
     for i in [5, 4, 3]:
-        pd_agg = pdf.sum(min_count=i)[0]
+        pd_agg = pdf.sum(min_count=i)['0']
         bt_agg = bt.sum(min_count=i)['0_sum']
 
         # since sum is wrapped in a CASE WHEN, we need to make sure that these are still valid:
