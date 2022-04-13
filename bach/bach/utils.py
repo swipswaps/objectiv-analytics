@@ -6,6 +6,11 @@ from bach.expression import Expression
 from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
 
+class FeatureRange(NamedTuple):
+    min: int
+    max: int
+
+
 class ResultSeries(NamedTuple):
     name: str
     expression: 'Expression'
