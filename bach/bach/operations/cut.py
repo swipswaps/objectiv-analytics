@@ -42,7 +42,6 @@ class CutOperation:
     include_empty_bins: bool
     ignore_index: bool
     method: CutMethod
-    ignore_index: bool
 
     RANGE_SERIES_NAME = 'range'
 
