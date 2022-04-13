@@ -4,11 +4,6 @@ from sqlalchemy.engine import Connection
 from bach.expression import Expression
 
 
-class FeatureRange(NamedTuple):
-    min: int
-    max: int
-
-
 class ResultSeries(NamedTuple):
     name: str
     expression: 'Expression'

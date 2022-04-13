@@ -1,4 +1,4 @@
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 import numpy as np
@@ -98,64 +98,5 @@ def test_standard_scale() -> None:
         result_w_mean,
         expected_columns=['_index_skating_order', 'city', 'skating_order', 'inhabitants', 'founding'],
         expected_data=expected_data_w_mean,
-        round_decimals=True,
-    )
-
-
-def test_min_max_scale() -> None:
-    numerical_cols = ['skating_order', 'inhabitants', 'founding']
-    all_cols = ['city'] + numerical_cols
-    bt = get_bt_with_test_data(full_data_set=True)[all_cols]
-    pdf = bt.to_pandas()
-
-    min_so = 1
-    max_so = 11
-    diff_so = max_so - min_so
-
-    min_inh = 700
-    max_inh = 93485
-    diff_inh = max_inh - min_inh
-
-    min_fnd = 1061
-    max_fnd = 1456
-    diff_fnd = max_fnd - min_fnd
-
-    expected_default = MinMaxScaler().fit_transform(pdf[numerical_cols])
-    result_default = bt.minmax_scale().sort_index()
-
-    np.testing.assert_almost_equal(expected_default, result_default[numerical_cols].to_numpy(), decimal=4)
-
-    expected_data_default = [
-        [1, 'Ljouwert', (1 - min_so) / diff_so, (93485 - min_inh) / diff_inh, (1285 - min_fnd) / diff_fnd],
-        [2, 'Snits', (2 - min_so) / diff_so, (33520 - min_inh) / diff_inh, (1456 - min_fnd) / diff_fnd],
-        [3, 'Drylts', (3 - min_so) / diff_so, (3055 - min_inh) / diff_inh, (1268 - min_fnd) / diff_fnd],
-        [4, 'Sleat', (4 - min_so) / diff_so, (700 - min_inh) / diff_inh, (1426 - min_fnd) / diff_fnd],
-        [5, 'Starum', (5 - min_so) / diff_so, (960 - min_inh) / diff_inh, (1061 - min_fnd) / diff_fnd],
-        [6, 'Hylpen', (6 - min_so) / diff_so, (870 - min_inh) / diff_inh, (1225 - min_fnd) / diff_fnd],
-        [7, 'Warkum', (7 - min_so) / diff_so, (4440 - min_inh) / diff_inh, (1399 - min_fnd) / diff_fnd],
-        [8, 'Boalsert', (8 - min_so) / diff_so, (10120 - min_inh) / diff_inh, (1455 - min_fnd) / diff_fnd],
-        [9, 'Harns', (9 - min_so) / diff_so, (14740 - min_inh) / diff_inh, (1234 - min_fnd) / diff_fnd],
-        [10, 'Frjentsjer', (10 - min_so) / diff_so, (12760 - min_inh) / diff_inh, (1374 - min_fnd) / diff_fnd],
-        [11, 'Dokkum', (11 - min_so) / diff_so, (12675 - min_inh) / diff_inh, (1298 - min_fnd) / diff_fnd],
-    ]
-    assert_equals_data(
-        result_default,
-        expected_columns=['_index_skating_order', 'city', 'skating_order', 'inhabitants', 'founding'],
-        expected_data=expected_data_default,
-        round_decimals=True,
-    )
-
-    expected_w_fr = MinMaxScaler(feature_range=(2, 4)).fit_transform(pdf[numerical_cols])
-    result_w_fr = bt.minmax_scale(feature_range=(2, 4)).sort_index()
-    np.testing.assert_almost_equal(expected_w_fr, result_w_fr[numerical_cols].to_numpy(), decimal=4)
-
-    expected_data_fr = []
-    for row in expected_data_default:
-        expected_data_fr.append([val if idx < 2 else val * 2 + 2 for idx, val in enumerate(row)])
-
-    assert_equals_data(
-        result_w_fr,
-        expected_columns=['_index_skating_order', 'city', 'skating_order', 'inhabitants', 'founding'],
-        expected_data=expected_data_fr,
         round_decimals=True,
     )

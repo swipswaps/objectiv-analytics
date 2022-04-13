@@ -121,7 +121,6 @@ Numeric
     SeriesAbstractNumeric.std
     SeriesAbstractNumeric.var
     SeriesAbstractNumeric.scale
-    SeriesAbstractNumeric.minmax_scale
 
 Window
 ++++++

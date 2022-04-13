@@ -280,32 +280,3 @@ def test_series_scale() -> None:
         expected_data=expected_data_w_mean_std,
         round_decimals=True,
     )
-
-
-def test_series_minmax_scale() -> None:
-    inhabitants = get_bt_with_test_data(full_data_set=True)['inhabitants']
-    result = inhabitants.minmax_scale()
-
-    min_inh = 700
-    max_inh = 93485
-    diff_inh = max_inh - min_inh
-
-    expected_data_default = [
-        [1, (93485 - min_inh) / diff_inh],
-        [2, (33520 - min_inh) / diff_inh],
-        [3, (3055 - min_inh) / diff_inh],
-        [4, (700 - min_inh) / diff_inh],
-        [5, (960 - min_inh) / diff_inh],
-        [6, (870 - min_inh) / diff_inh],
-        [7, (4440 - min_inh) / diff_inh],
-        [8, (10120 - min_inh) / diff_inh],
-        [9, (14740 - min_inh) / diff_inh],
-        [10, (12760 - min_inh) / diff_inh],
-        [11, (12675 - min_inh) / diff_inh],
-    ]
-    assert_equals_data(
-        result.to_frame(),
-        expected_columns=['_index_skating_order', 'inhabitants'],
-        expected_data=expected_data_default,
-        round_decimals=True,
-    )
