@@ -8,6 +8,7 @@ import {
   LocationContextValidationRule,
   Tracker,
   TrackerConsole,
+  TrackerPlatform,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
@@ -29,6 +30,7 @@ describe('TrackerProvider', () => {
 
   const expectedState = {
     tracker: {
+      platform: TrackerPlatform.CORE,
       active: true,
       applicationId: 'app-id',
       global_contexts: [],
