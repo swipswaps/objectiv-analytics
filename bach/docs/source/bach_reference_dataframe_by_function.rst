@@ -137,3 +137,10 @@ Numeric
     DataFrame.sum
     DataFrame.std
     DataFrame.var
+
+Visualization
+++++++++++++++
+.. autosummary::
+    :toctree: DataFrame
+
+    DataFrame.plot
