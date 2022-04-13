@@ -1533,6 +1533,7 @@ class Series(ABC):
         sort: bool = True,
         ascending: bool = False,
         bins: Optional[int] = None,
+        method: str = 'pandas',
     ) -> 'Series':
         """
         Returns a series containing counts per unique value
@@ -1542,6 +1543,13 @@ class Series(ABC):
         :param ascending: sorts values in ascending order if true.
         :param bins: works only with numeric series, groups values into the request amount of bins
             and counts values based on each range.
+        :param method: Method to use for calculating bin ranges.
+            Supported values:
+
+                - "pandas" (default): Performs bound adjustments based on Pandas implementation.
+
+                - "bach": No bound adjustments are performed. Instead, first interval includes both
+                  lower and upper bounds.
 
         :return: a series containing all counts per unique row.
         """
@@ -1552,9 +1560,12 @@ class Series(ABC):
         if not bins:
             return self.to_frame().value_counts(normalize=normalize, sort=sort, ascending=ascending)
 
-        from bach.operations.cut import CutOperation
+        from bach.operations.cut import CutOperation, CutMethod
+        if not any(method == valid_method.value for valid_method in CutMethod):
+            raise ValueError(f'"{method}" is not a valid method.')
+
         assert isinstance(self, SeriesAbstractNumeric)
-        bins_series = CutOperation(series=self, bins=bins, include_empty_bins=True)()
+        bins_series = CutOperation(series=self, bins=bins, include_empty_bins=True, method=method)()
 
         bins_df = bins_series.to_frame()
         bins_w_values_df = bins_df[bins_series.index[self.name].notnull()]

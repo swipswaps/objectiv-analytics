@@ -6,54 +6,9 @@ from sqlalchemy.engine import Dialect
 
 from bach import Series
 from bach.expression import Expression
-from bach.types import register_dtype, get_series_type_from_dtype, value_to_dtype, TypeRegistry
+from bach.types import TypeRegistry
 from sql_models.constants import DBDialect
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
-
-
-def test_custom_type_register(monkeypatch):
-    # make sure monkeypatch the type-registry, as it should be restored after this test finishes.
-    monkeypatch.setattr('bach.types._registry', TypeRegistry())
-
-    class TestStringType(Series):
-        """ Test class for custom types. """
-        dtype = 'test_type'
-        dtype_aliases = ('test_type_1337', )
-        supported_db_dtype = {DBDialect.POSTGRES: 'test_type'}
-        supported_value_types = (str, int)
-
-    # 'test_type' should not yet exist as dtype
-    # and 'string' should be the dtype for a string value
-    with pytest.raises(Exception):
-        get_series_type_from_dtype('test_type')
-    assert value_to_dtype('a string') == 'string'
-
-    # now recreate TestStringType, but with registration decorator
-    @register_dtype()
-    class TestStringType(Series):
-        """ Test class for custom types. """
-        dtype = 'test_type'
-        dtype_aliases = ('test_type_1337',)
-        supported_db_dtype = {DBDialect.POSTGRES: 'test_type'}
-        supported_value_types = (str, int)
-
-    assert get_series_type_from_dtype('test_type') is TestStringType
-    assert value_to_dtype('a string') == 'string'
-    monkeypatch.setattr('bach.types._registry', TypeRegistry())
-
-    # now recreate TestStringType, and with registration decorator as default type for strings, and ints
-    @register_dtype([str, int], override_registered_types=True)
-    class TestStringType(Series):
-        """ Test class for custom types. """
-        dtype = 'test_type'
-        dtype_aliases = ('test_type_1337',)
-        supported_db_dtype = {DBDialect.POSTGRES: 'test_type'}
-        supported_value_types = (str, int)
-
-    assert get_series_type_from_dtype('test_type') is TestStringType
-    assert value_to_dtype('a string') == 'test_type'
-    assert value_to_dtype(123) == 'test_type'
-    assert value_to_dtype(123.45) == 'float64'
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
 
 class ReversedStringType(Series):
@@ -61,7 +16,8 @@ class ReversedStringType(Series):
     dtype = 'reversed_string'
     dtype_aliases = ('reversed_text', 'backwards_string')
     supported_db_dtype = {
-        DBDialect.POSTGRES: 'text'
+        DBDialect.POSTGRES: 'text',
+        DBDialect.BIGQUERY: 'string',
     }
     supported_value_types = (str,)
 
@@ -80,16 +36,16 @@ class ReversedStringType(Series):
         elif source_dtype == 'String':
             return Expression.construct('reverse({})', expression)
         else:
-            return Expression.construct('reverse(cast({} as text))', expression)
+            return Expression.construct(f'reverse(cast({{}} as {cls.get_db_dtype(dialect)}))', expression)
 
 
-def test_custom_type(monkeypatch):
+def test_custom_type(monkeypatch, engine):
     # make sure monkeypatch the type-registry, as it should be restored after this test finishes.
     monkeypatch.setattr('bach.types._registry', TypeRegistry())
     # import after monkeypatching
     from bach.types import _registry
 
-    bt = get_bt_with_test_data()
+    bt = get_df_with_test_data(engine)
     bt_city = bt[['city']]
     with pytest.raises(Exception):
         # 'reversed_string' has not be registerd yet

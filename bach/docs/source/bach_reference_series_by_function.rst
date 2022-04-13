@@ -119,6 +119,7 @@ Numeric
     SeriesAbstractNumeric.sum
     SeriesAbstractNumeric.std
     SeriesAbstractNumeric.var
+    SeriesAbstractNumeric.scale
 
 Window
 ++++++
