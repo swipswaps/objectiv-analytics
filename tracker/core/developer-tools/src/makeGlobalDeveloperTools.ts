@@ -2,8 +2,8 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { TrackerDeveloperTools } from '@objectiv/tracker-core';
 import { GlobalContextName, LocationContextName } from './ContextNames';
+import { TrackerDeveloperTools } from './TrackerDeveloperToolsInterface';
 import { GlobalContextValidationRule } from './validationRules/GlobalContextValidationRule';
 import { LocationContextValidationRule } from './validationRules/LocationContextValidationRule';
 
