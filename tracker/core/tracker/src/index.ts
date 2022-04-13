@@ -2,6 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { TrackerDeveloperTools } from '@objectiv/developer-tools';
+
 export * from './plugins/ApplicationContextPlugin';
 export * from './plugins/OpenTaxonomyValidationPlugin';
 
@@ -31,3 +33,11 @@ export * from './TrackerTransportRetryAttempt';
 export * from './TrackerTransportSwitch';
 export * from './TrackerValidationRuleInterface';
 export * from './TrackerValidationLifecycleInterface';
+
+declare global {
+  var objectiv:
+    | undefined
+    | {
+    developerTools?: TrackerDeveloperTools;
+  };
+}

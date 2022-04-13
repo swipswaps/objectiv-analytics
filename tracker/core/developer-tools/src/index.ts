@@ -3,7 +3,6 @@
  */
 
 import { makeGlobalDeveloperTools } from './makeGlobalDeveloperTools';
-import { TrackerDeveloperTools } from './TrackerDeveloperToolsInterface';
 
 export * from './validationRules/ContextValidationRuleConfig';
 export * from './validationRules/GlobalContextValidationRule';
@@ -20,10 +19,3 @@ const developerTools = makeGlobalDeveloperTools();
 
 export default developerTools;
 
-declare global {
-  var objectiv:
-    | undefined
-    | {
-        developerTools?: TrackerDeveloperTools;
-      };
-}
