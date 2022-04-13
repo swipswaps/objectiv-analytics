@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import itertools
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, cast, NamedTuple, Sequence
+from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, cast, NamedTuple, Sequence, Mapping
 
 from sqlalchemy.engine import Dialect
 
@@ -14,7 +14,8 @@ from bach.dataframe import DtypeNamePair
 from bach.expression import Expression, join_expressions, TableColumnReferenceToken, \
     NonAtomicExpression, ExpressionToken, ColumnReferenceToken
 from bach.utils import ResultSeries, get_result_series_dtype_mapping
-from sql_models.model import Materialization, CustomSqlModelBuilder, SqlModel
+from sql_models.constants import NotSet, not_set
+from sql_models.model import Materialization, CustomSqlModelBuilder, SqlModel, SqlModelSpec
 from bach.sql_model import BachSqlModel, construct_references
 
 
@@ -683,4 +684,31 @@ class MergeSqlModel(BachSqlModel):
             materialization_name=None,
             column_expressions=column_expressions,
             merge_on=merge_on,
+        )
+
+    def copy_override(
+        self: 'MergeSqlModel',
+        *,
+        model_spec: SqlModelSpec = None,
+        placeholders: Mapping[str, Hashable] = None,
+        references: Mapping[str, 'SqlModel'] = None,
+        materialization: Materialization = None,
+        materialization_name: Union[Optional[str], NotSet] = not_set,
+        column_expressions: Dict[str, Expression] = None,
+        merge_on: MergeOn = None
+    ) -> 'MergeSqlModel':
+        """
+        Similar to super class's implementation, but adds optional 'merge_on' parameter
+        """
+        materialization_name_value = (
+            self.materialization_name if materialization_name is not_set else materialization_name
+        )
+        return self.__class__(
+            model_spec=self.model_spec if model_spec is None else model_spec,
+            placeholders=self.placeholders if placeholders is None else placeholders,
+            references=self.references if references is None else references,
+            materialization=self.materialization if materialization is None else materialization,
+            materialization_name=materialization_name_value,
+            column_expressions=self.column_expressions if column_expressions is None else column_expressions,
+            merge_on=self.merge_on if merge_on is None else merge_on
         )
