@@ -9,31 +9,31 @@ from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, ass
 
 
 def test_from_const(engine):
-    # TODO: BigQuery
     a = 'a string'
     b = 'a string\'"\'\' "" \\ with quotes'
     c = None
     d = '\'\'!@&*(HJD☢%'
+    e = 'test"""test'
 
     bt = get_df_with_test_data(engine)[['city']]
     bt['a'] = a
     bt['b'] = b
     bt['c'] = SeriesString.from_const(base=bt, value=c, name='temp')
     bt['d'] = SeriesString.from_const(base=bt, value=d, name='temp')
+    bt['e'] = e
     assert_equals_data(
         bt,
-        expected_columns=['_index_skating_order', 'city', 'a', 'b', 'c', 'd'],
+        expected_columns=['_index_skating_order', 'city', 'a', 'b', 'c', 'd', 'e'],
         expected_data=[
-            [1, 'Ljouwert', a, b, c, d],
-            [2, 'Snits', a, b, c, d],
-            [3, 'Drylts', a, b, c, d]
+            [1, 'Ljouwert', a, b, c, d, e],
+            [2, 'Snits', a, b, c, d, e],
+            [3, 'Drylts', a, b, c, d, e]
         ]
     )
 
 
 def test_string_slice(engine):
     bt = get_df_with_test_data(engine)[['city']]
-    # TODO: this test passes on BigQuery, but is very slow
 
     slices = [
         # single values, keep small because we don't want to go out of range

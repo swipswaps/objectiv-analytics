@@ -89,11 +89,11 @@ def quote_string(dialect_engine: Union[Dialect, Engine], value: str) -> str:
     """
 
     if is_bigquery(dialect_engine):
-        # raw string,
-        # Quoted or triple-quoted literals that have the raw string literal prefix (r or R)
-        # are interpreted as raw/regex strings.
+        # Triple-quoted string, double-quotes are escaped in order to avoid conflicts
         # See https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#string_and_bytes_literals
-        return f'r"""{value}"""'
+        replaced_chars = value.replace('\\', r'\\')
+        replaced_chars = replaced_chars.replace('"', r'\"')
+        return f'"""{replaced_chars}"""'
 
     replaced_chars = value.replace("'", "''")
     return f"'{replaced_chars}'"

@@ -51,9 +51,9 @@ def test_quote_string(dialect):
 
     elif is_bigquery(dialect):
         # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#string_and_bytes_literals
-        assert quote_string(dialect, "test") == 'r"""test"""'
-        assert quote_string(dialect, "te'st") == 'r"""te\'st"""'
-        assert quote_string(dialect, "'te''st'") == 'r"""\'te\'\'st\'"""'
+        assert quote_string(dialect, "test") == '"""test"""'
+        assert quote_string(dialect, "te'st") == '"""te\'st"""'
+        assert quote_string(dialect, "'te''st'") == '"""\'te\'\'st\'"""'
     else:
         # if we add more dialects, we should not forget to extend this test
         raise Exception()

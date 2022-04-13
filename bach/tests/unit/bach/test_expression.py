@@ -72,8 +72,8 @@ def test_string(dialect):
     assert expr == Expression([StringValueToken('a string')])
 
     if is_bigquery(dialect):
-        assert expr.to_sql(dialect) == 'r"""a string"""'
-        assert expr.to_sql(dialect, 'tab') == 'r"""a string"""'
+        assert expr.to_sql(dialect) == '"""a string"""'
+        assert expr.to_sql(dialect, 'tab') == '"""a string"""'
     else:
         assert expr.to_sql(dialect) == "'a string'"
         assert expr.to_sql(dialect, 'tab') == "'a string'"
@@ -82,7 +82,7 @@ def test_string(dialect):
     assert expr == Expression([StringValueToken('a string \' with quotes\'\' in it')])
 
     if is_bigquery(dialect):
-        assert expr.to_sql(dialect) == 'r"""a string \' with quotes\'\' in it"""'
+        assert expr.to_sql(dialect) == '"""a string \' with quotes\'\' in it"""'
     else:
         assert expr.to_sql(dialect) == "'a string '' with quotes'''' in it'"
 
