@@ -20,7 +20,7 @@ from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype
 from bach.utils import escape_parameter_characters
-from sql_models.constants import NotSet, not_set
+from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
@@ -1851,12 +1851,18 @@ class DataFrame:
         """
         with self.engine.connect() as conn:
             sql = self.view_sql(limit=limit)
-            dtype = {name: series.dtype_to_pandas for name, series in self.all_series.items()
-                     if series.dtype_to_pandas is not None}
 
             # read_sql_query expects a parameterized query, so we need to escape the parameter characters
             sql = escape_parameter_characters(conn, sql)
-            pandas_df = pandas.read_sql_query(sql, conn).astype(dtype)
+            pandas_df = pandas.read_sql_query(sql, conn)
+
+            # post process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
+            # the strings that the query gives us into UUID objects
+            db_dialect = DBDialect.from_engine(self.engine)
+            for name, series in self.data.items():
+                result_processor = series.query_result_processor.get(db_dialect)
+                if result_processor:
+                    pandas_df[name] = pandas_df[name].apply(result_processor)
 
             if len(self._index):
                 return pandas_df.set_index(list(self._index.keys()))

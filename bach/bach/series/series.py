@@ -102,6 +102,16 @@ class Series(ABC):
     by :meth:`supported_value_to_literal()`.
     """
 
+    query_result_processor: Mapping[DBDialect, Optional[Callable[[Any], Any]]] = {}
+    """
+    INTERNAL: Optional function to process data of this type that the database returns.
+    If defined for a given DBDialect, we use the function in :meth:`DataFrame.to_pandas()` by applying it to
+    columns of the resulting pandas DataFrame, before returning that DataFrame.
+
+    Example usage: UUIDs in BigQuery are represented as strings, we use a query-result-processor to convert
+    these strings to UUID objects in to_pandas().
+    """
+
     def __init__(self,
                  engine: Engine,
                  base_node: BachSqlModel,
@@ -144,8 +154,8 @@ class Series(ABC):
         # Series is an abstract class, besides the abstractmethods subclasses must/may override some
         #   properties:
         #   * subclasses MUST override one class property: 'dtype',
-        #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype', and
-        #       'supported_value_types'.
+        #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype',
+        #       'supported_value_types', and 'query_result_processor'
         # Unfortunately defining these properties as an "abstract-classmethod-property" makes it hard
         # to understand for mypy, sphinx, and python. Therefore, we check here that we are instantiating a
         # proper subclass, instead of just relying on @abstractmethod.
@@ -181,14 +191,6 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
-
-    @property
-    def dtype_to_pandas(self) -> Optional[str]:
-        """
-        INTERNAL: The dtype of this Series in a pandas.Series. Defaults to None
-        Override to cast specifically, and set to None to let pandas choose.
-        """
-        return None
 
     @classmethod
     @abstractmethod
