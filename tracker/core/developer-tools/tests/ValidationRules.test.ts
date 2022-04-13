@@ -3,12 +3,12 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { TrackerConsole, TrackerEvent, TrackerPlatform } from '@objectiv/tracker-core';
 import {
+  GlobalContextName,
   GlobalContextValidationRule,
+  LocationContextName,
   LocationContextValidationRule,
-  TrackerConsole,
-  TrackerEvent,
-  TrackerPlatform,
 } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
@@ -18,7 +18,7 @@ describe('Validation Rules', () => {
     it('Should TrackerConsole.error if given contextName is missing', () => {
       const testGlobalContextValidationRule = new GlobalContextValidationRule({
         platform: TrackerPlatform.CORE,
-        contextName: 'Context',
+        contextName: GlobalContextName.PathContext,
       });
 
       jest.resetAllMocks();
@@ -27,8 +27,8 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Context is missing from Global Contexts of PressEvent.\n' +
-          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/Context.',
+        '%c｢objectiv｣ Error: PathContext is missing from Global Contexts of PressEvent.\n' +
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.',
         'color:red'
       );
     });
@@ -36,7 +36,7 @@ describe('Validation Rules', () => {
     it('Should prefix TrackerConsole.error messages with logPrefix', () => {
       const testGlobalContextValidationRule = new GlobalContextValidationRule({
         platform: TrackerPlatform.CORE,
-        contextName: 'Context',
+        contextName: GlobalContextName.PathContext,
         logPrefix: 'TestPrefix',
       });
 
@@ -46,8 +46,8 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:TestPrefix｣ Error: Context is missing from Global Contexts of PressEvent.\n' +
-          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/Context.',
+        '%c｢objectiv:TestPrefix｣ Error: PathContext is missing from Global Contexts of PressEvent.\n' +
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.',
         'color:red'
       );
     });
@@ -55,7 +55,7 @@ describe('Validation Rules', () => {
     it('Should TrackerConsole.error if given contextName is present more than once', () => {
       const testGlobalContextValidationRule = new GlobalContextValidationRule({
         platform: TrackerPlatform.CORE,
-        contextName: 'Context',
+        contextName: GlobalContextName.PathContext,
         once: true,
       });
 
@@ -65,16 +65,16 @@ describe('Validation Rules', () => {
         new TrackerEvent({
           _type: 'PressEvent',
           global_contexts: [
-            { __global_context: true, _type: 'Context', id: 'test' },
-            { __global_context: true, _type: 'Context', id: 'test' },
+            { __global_context: true, _type: GlobalContextName.PathContext, id: 'test' },
+            { __global_context: true, _type: GlobalContextName.PathContext, id: 'test' },
           ],
         })
       );
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Only one Context should be present in Global Contexts of PressEvent.\n' +
-          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/Context.',
+        '%c｢objectiv｣ Error: Only one PathContext should be present in Global Contexts of PressEvent.\n' +
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.',
         'color:red'
       );
     });
@@ -84,7 +84,7 @@ describe('Validation Rules', () => {
     it('Should TrackerConsole.error if given contextName is missing', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
         platform: TrackerPlatform.CORE,
-        contextName: 'Context',
+        contextName: LocationContextName.ContentContext,
       });
 
       jest.resetAllMocks();
@@ -93,8 +93,8 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Context is missing from Location Stack of PressEvent.\n' +
-          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/Context.',
+        '%c｢objectiv｣ Error: ContentContext is missing from Location Stack of PressEvent.\n' +
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/ContentContext.',
         'color:red'
       );
     });
@@ -102,7 +102,7 @@ describe('Validation Rules', () => {
     it('Should prefix TrackerConsole.error messages with logPrefix', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
         platform: TrackerPlatform.CORE,
-        contextName: 'Context',
+        contextName: LocationContextName.ContentContext,
         logPrefix: 'TestPrefix',
       });
 
@@ -112,8 +112,8 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:TestPrefix｣ Error: Context is missing from Location Stack of PressEvent.\n' +
-          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/Context.',
+        '%c｢objectiv:TestPrefix｣ Error: ContentContext is missing from Location Stack of PressEvent.\n' +
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/ContentContext.',
         'color:red'
       );
     });
@@ -121,7 +121,7 @@ describe('Validation Rules', () => {
     it('Should TrackerConsole.error if given contextName is present more than once', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
         platform: TrackerPlatform.CORE,
-        contextName: 'Context',
+        contextName: LocationContextName.ContentContext,
         once: true,
       });
 
@@ -131,16 +131,16 @@ describe('Validation Rules', () => {
         new TrackerEvent({
           _type: 'PressEvent',
           location_stack: [
-            { __location_context: true, _type: 'Context', id: 'test' },
-            { __location_context: true, _type: 'Context', id: 'test' },
+            { __location_context: true, _type: LocationContextName.ContentContext, id: 'test' },
+            { __location_context: true, _type: LocationContextName.ContentContext, id: 'test' },
           ],
         })
       );
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Only one Context should be present in Location Stack of PressEvent.\n' +
-          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/Context.',
+        '%c｢objectiv｣ Error: Only one ContentContext should be present in Location Stack of PressEvent.\n' +
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/ContentContext.',
         'color:red'
       );
     });
@@ -148,7 +148,7 @@ describe('Validation Rules', () => {
     it('Should TrackerConsole.error if given contextName is present in the wrong position', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
         platform: TrackerPlatform.CORE,
-        contextName: 'Context',
+        contextName: LocationContextName.ContentContext,
         once: true,
         position: 0,
       });
@@ -159,16 +159,16 @@ describe('Validation Rules', () => {
         new TrackerEvent({
           _type: 'PressEvent',
           location_stack: [
-            { __location_context: true, _type: 'OtherContext', id: 'test' },
-            { __location_context: true, _type: 'Context', id: 'test' },
+            { __location_context: true, _type: LocationContextName.RootLocationContext, id: 'test' },
+            { __location_context: true, _type: LocationContextName.ContentContext, id: 'test' },
           ],
         })
       );
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Context is in the wrong position of the Location Stack of PressEvent.\n' +
-          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/Context.',
+        '%c｢objectiv｣ Error: ContentContext is in the wrong position of the Location Stack of PressEvent.\n' +
+          'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/ContentContext.',
         'color:red'
       );
     });

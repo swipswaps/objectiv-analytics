@@ -3,7 +3,6 @@
  */
 
 import {
-  GlobalContextValidationRule,
   makeHttpContext,
   TrackerConsole,
   TrackerEvent,
@@ -19,27 +18,33 @@ import {
 export class HttpContextPlugin implements TrackerPluginInterface {
   readonly pluginName = `HttpContextPlugin`;
   validationRules: TrackerValidationRuleInterface[] = [];
+  initialized: boolean = false;
 
   /**
    * Generates an HttpContext and initializes validation rules.
    */
-  initialize(tracker: TrackerInterface): void {
-    this.validationRules = [
-      new GlobalContextValidationRule({
-        platform: tracker.platform,
-        logPrefix: this.pluginName,
-        contextName: 'HttpContext',
-        once: true,
-      }),
-    ];
+  initialize({ global_contexts, platform }: TrackerInterface): void {
+    if (globalThis.objectiv?.developerTools) {
+      const { GlobalContextName, GlobalContextValidationRule } = globalThis.objectiv.developerTools;
+      this.validationRules = [
+        new GlobalContextValidationRule({
+          platform,
+          logPrefix: this.pluginName,
+          contextName: GlobalContextName.HttpContext,
+          once: true,
+        }),
+      ];
+    }
 
     const httpContext = makeHttpContext({
       id: 'http_context',
       referrer: document.referrer ?? '',
-      user_agent: navigator.userAgent ?? ''
+      user_agent: navigator.userAgent ?? '',
     });
 
-    tracker.global_contexts.push(httpContext);
+    global_contexts.push(httpContext);
+
+    this.initialized = true;
 
     TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
@@ -49,7 +54,7 @@ export class HttpContextPlugin implements TrackerPluginInterface {
    */
   validate(event: TrackerEvent): void {
     if (this.isUsable()) {
-      if (!this.validationRules.length) {
+      if (!this.initialized) {
         TrackerConsole.error(
           `｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`
         );

@@ -2,15 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { TrackerDeveloperTools } from '@objectiv/developer-tools';
+
 export * from './plugins/ApplicationContextPlugin';
 export * from './plugins/OpenTaxonomyValidationPlugin';
-
-export * from './validationRules/ContextErrorMessages';
-export * from './validationRules/ContextValidationRuleConfig';
-export * from './validationRules/GlobalContextValidationRule';
-export * from './validationRules/LocationContextValidationRule';
-export * from './validationRules/logContextValidationRuleError';
-export * from './validationRules/makeValidationRuleErrorMessage';
 
 export * from './cleanObjectFromInternalProperties';
 export * from './Context';
@@ -38,3 +33,11 @@ export * from './TrackerTransportRetryAttempt';
 export * from './TrackerTransportSwitch';
 export * from './TrackerValidationRuleInterface';
 export * from './TrackerValidationLifecycleInterface';
+
+declare global {
+  var objectiv:
+    | undefined
+    | {
+    developerTools?: TrackerDeveloperTools;
+  };
+}

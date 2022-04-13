@@ -4,7 +4,6 @@
 
 import {
   ContextsConfig,
-  GlobalContextValidationRule,
   makePathContext,
   TrackerConsole,
   TrackerEvent,
@@ -24,19 +23,25 @@ import {
 export class PathContextFromURLPlugin implements TrackerPluginInterface {
   readonly pluginName = `PathContextFromURLPlugin`;
   validationRules: TrackerValidationRuleInterface[] = [];
+  initialized: boolean = false;
 
   /**
    * Initializes validation rules.
    */
   initialize({ platform }: TrackerInterface): void {
-    this.validationRules = [
-      new GlobalContextValidationRule({
-        platform,
-        logPrefix: this.pluginName,
-        contextName: 'PathContext',
-        once: true,
-      }),
-    ];
+    if (globalThis.objectiv?.developerTools) {
+      const { GlobalContextName, GlobalContextValidationRule } = globalThis.objectiv.developerTools;
+      this.validationRules = [
+        new GlobalContextValidationRule({
+          platform,
+          logPrefix: this.pluginName,
+          contextName: GlobalContextName.PathContext,
+          once: true,
+        }),
+      ];
+    }
+
+    this.initialized = true;
 
     TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
@@ -56,7 +61,7 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
    */
   validate(event: TrackerEvent): void {
     if (this.isUsable()) {
-      if (!this.validationRules.length) {
+      if (!this.initialized) {
         TrackerConsole.error(
           `｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`
         );

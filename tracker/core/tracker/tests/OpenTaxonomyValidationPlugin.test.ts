@@ -2,6 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import '@objectiv/developer-tools';
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   makeApplicationContext,

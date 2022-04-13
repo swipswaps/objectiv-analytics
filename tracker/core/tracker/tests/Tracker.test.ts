@@ -5,13 +5,10 @@
 import { LogTransport, MockConsoleImplementation, UnusableTransport } from '@objectiv/testing-tools';
 import {
   ContextsConfig,
-  GlobalContextValidationRule,
-  LocationContextValidationRule,
   Tracker,
   TrackerConfig,
   TrackerConsole,
   TrackerEvent,
-  TrackerPlatform,
   TrackerPluginInterface,
   TrackerQueue,
   TrackerQueueMemoryStore,
@@ -34,21 +31,8 @@ describe('Tracker', () => {
     expect(testTracker.plugins.plugins).toEqual([
       {
         pluginName: 'OpenTaxonomyValidationPlugin',
-        validationRules: [
-          new GlobalContextValidationRule({
-            platform: TrackerPlatform.CORE,
-            logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'ApplicationContext',
-            once: true,
-          }),
-          new LocationContextValidationRule({
-            platform: TrackerPlatform.CORE,
-            logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'RootLocationContext',
-            once: true,
-            position: 0,
-          }),
-        ],
+        initialized: true,
+        validationRules: [],
       },
       {
         pluginName: 'ApplicationContextPlugin',
@@ -74,21 +58,8 @@ describe('Tracker', () => {
     expect(testTracker.plugins.plugins).toEqual([
       {
         pluginName: 'OpenTaxonomyValidationPlugin',
-        validationRules: [
-          new GlobalContextValidationRule({
-            platform: TrackerPlatform.CORE,
-            logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'ApplicationContext',
-            once: true,
-          }),
-          new LocationContextValidationRule({
-            platform: TrackerPlatform.CORE,
-            logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'RootLocationContext',
-            once: true,
-            position: 0,
-          }),
-        ],
+        initialized: true,
+        validationRules: [],
       },
       {
         pluginName: 'ApplicationContextPlugin',
@@ -114,21 +85,8 @@ describe('Tracker', () => {
     expect(testTracker.plugins.plugins).toEqual([
       {
         pluginName: 'OpenTaxonomyValidationPlugin',
-        validationRules: [
-          new GlobalContextValidationRule({
-            platform: TrackerPlatform.CORE,
-            logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'ApplicationContext',
-            once: true,
-          }),
-          new LocationContextValidationRule({
-            platform: TrackerPlatform.CORE,
-            logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'RootLocationContext',
-            once: true,
-            position: 0,
-          }),
-        ],
+        initialized: true,
+        validationRules: [],
       },
     ]);
     expect(testTracker.location_stack).toStrictEqual([]);

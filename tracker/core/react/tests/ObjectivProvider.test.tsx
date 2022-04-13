@@ -2,15 +2,14 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
+  GlobalContextName,
   GlobalContextValidationRule,
+  LocationContextName,
   LocationContextValidationRule,
-  makeApplicationLoadedEvent,
-  Tracker,
-  TrackerConsole,
-  TrackerPlatform,
-} from '@objectiv/tracker-core';
+} from '@objectiv/developer-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { makeApplicationLoadedEvent, Tracker, TrackerConsole, TrackerPlatform } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { ObjectivProvider, useTrackingContext } from '../src';
@@ -42,17 +41,18 @@ describe('ObjectivProvider', () => {
         plugins: [
           {
             pluginName: 'OpenTaxonomyValidationPlugin',
+            initialized: true,
             validationRules: [
               new GlobalContextValidationRule({
                 platform: TrackerPlatform.CORE,
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'ApplicationContext',
+                contextName: GlobalContextName.ApplicationContext,
                 once: true,
               }),
               new LocationContextValidationRule({
                 platform: TrackerPlatform.CORE,
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'RootLocationContext',
+                contextName: LocationContextName.RootLocationContext,
                 once: true,
                 position: 0,
               }),
