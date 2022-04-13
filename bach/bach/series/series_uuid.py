@@ -18,8 +18,11 @@ class SeriesUuid(Series):
     """
     A Series that represents the UUID type and its specific operations.
 
-    On Postgres this utilizes the `uuid` database type.
-    On BigQuery this utilizes the 'STRING' database type.
+    Depending on the database this Series is backed by different databse types:
+
+    * On Postgres this utilizes the native 'uuid' database type.
+    * On BigQuery this utilizes the generic 'STRING' database type.
+
     """
     dtype = 'uuid'
     dtype_aliases = ()
@@ -71,14 +74,20 @@ class SeriesUuid(Series):
     @classmethod
     def sql_gen_random_uuid(cls, base: DataFrameOrSeries) -> 'SeriesUuid':
         """
-        Create a new Series object with for every row the `gen_random_uuid()` expression, which will
-        evaluate to a random uuid for each row.
+        Create a new Series object with an expression, that will evaluate to a random uuid for each row.
 
-        Note that this is non-deterministic expression, it will give a different result each time it is run.
-        This can have some unexpected consequences. Considers the following code:
+        .. warning::
+            The returned Series has a non-deterministic expression, it will give a different result each
+            time it is evaluated by the database.
+
+        The non-deterministic expression can have some unexpected consequences. Consider the following code:
+
+        .. code-block:: python
+
             df['x'] = SeriesUuid.sql_gen_random_uuid(df)
             df['y'] = df['x']
             df['different'] = df['y'] != df['x']
+
         The df['different'] column will be True for all rows, because the second statement copies the
         unevaluated expression, not the result of the expression. So at evaluation time the expression will
         be evaluated twice for each row, for the 'x' column and the 'y' column, giving different results both
