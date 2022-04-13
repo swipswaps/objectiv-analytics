@@ -95,8 +95,8 @@ def test_add_string_series(engine):
     )
 
 
-def test_get_dummies() -> None:
-    bt = get_bt_with_test_data()
+def test_get_dummies(engine) -> None:
+    bt = get_df_with_test_data(engine)
     result = bt['city'].get_dummies()
     assert isinstance(result, DataFrame)
 
