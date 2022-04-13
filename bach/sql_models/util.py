@@ -70,8 +70,9 @@ def quote_identifier(dialect: Dialect, name: str) -> str:
         # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#column_names
         # https://cloud.google.com/bigquery/docs/schemas#column_names
         # https://cloud.google.com/bigquery/docs/tables#table_naming
-        result = dialect.preparer(dialect).quote_identifier(value=name)
-        return result
+        replaced_chars = name.replace('\\', '\\\\')
+        replaced_chars = replaced_chars.replace('`', '\\`')
+        return f'`{replaced_chars}`'
     raise DatabaseNotSupportedException(dialect)
 
 
