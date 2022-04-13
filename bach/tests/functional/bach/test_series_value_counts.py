@@ -66,6 +66,19 @@ def test_value_counts_w_bins() -> None:
         ],
     )
 
+    bin1_bach = NumericRange(Decimal('700'), Decimal('23896.25'), bounds='[]')
+    result_w_bach_method = inhabitants.value_counts(bins=bins, method='bach')
+    assert_equals_data(
+        result_w_bach_method.sort_index(),
+        expected_columns=['range', 'value_counts'],
+        expected_data=[
+            [bin1_bach, 9],
+            [bin2, 1],
+            [bin3, 0],
+            [bin4, 1],
+        ],
+    )
+
 
 def test_value_counts_w_groupby() -> None:
     bt = get_bt_with_railway_data()[['town', 'platforms', 'station_id']].reset_index(drop=True)
@@ -103,3 +116,8 @@ def test_value_counts_w_groupby() -> None:
 def test_bins_error() -> None:
     with pytest.raises(ValueError, match='Cannot calculate bins for non numeric series.'):
         get_bt_with_railway_data()['town'].value_counts(bins=4)
+
+
+def test_method_error() -> None:
+    with pytest.raises(ValueError, match=r'"whatever" is not a valid method'):
+        get_bt_with_test_data()['inhabitants'].value_counts(bins=4, method='whatever')

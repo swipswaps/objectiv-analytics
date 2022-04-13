@@ -13,6 +13,9 @@ from sql_models.sql_generator import to_sql
 from tests.unit.sql_models.util import RefModel, ValueModel, JoinModel
 
 
+pytestmark = [pytest.mark.db_independent]  # mark all tests here as database independent.
+
+
 def test_builder_cycles_raise_exception():
     rm1 = RefModel()
     rm2 = RefModel(ref=rm1)

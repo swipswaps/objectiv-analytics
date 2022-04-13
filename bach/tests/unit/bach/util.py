@@ -2,7 +2,9 @@
 Copyright 2021 Objectiv B.V.
 """
 from dataclasses import dataclass, field
-from typing import List, Dict, Union, cast, Optional, NamedTuple
+from typing import List, Dict, Union, cast, Optional, NamedTuple, Any
+
+import pandas
 from sqlalchemy.dialects.postgresql.base import PGDialect
 from sqlalchemy.engine import Dialect, Engine
 
@@ -18,16 +20,17 @@ class FakeEngine:
     """ Helper class that serves as a mock for SqlAlchemy Engine objects """
     dialect: Dialect
     name: str = field(init=False)
+    url: str = 'postgresql://user@host:5432/db'
 
     def __post_init__(self):
         super().__setattr__('name', self.dialect.name)  # set the 'frozen' attribute self.name
 
 
 def get_fake_df(
+    dialect: Dialect,
     index_names: List[str],
     data_names: List[str],
-    dtype: Union[str, Dict[str, str]] = 'int64',
-    dialect: Dialect = PGDialect()
+    dtype: Union[str, Dict[str, str]] = 'int64'
 ) -> DataFrame:
     engine = FakeEngine(dialect=dialect)
     columns = index_names + data_names
@@ -87,3 +90,18 @@ def get_fake_df_test_data(dialect: Dialect) -> DataFrame:
         },
         dialect=dialect
     )
+
+
+def get_pandas_df(dataset: List[List[Any]], columns: List[str]) -> pandas.DataFrame:
+    """
+    Convert the given dataset to a Pandas DataFrame
+    :param dataset: list, with each item representing a row, and each row consisting of a list of columns.
+    :param columns: names of the columns
+    """
+    df = pandas.DataFrame.from_records(dataset, columns=columns)
+    df.set_index(df.columns[0], drop=False, inplace=True)
+    if 'moment' in df.columns:
+        df['moment'] = df['moment'].astype('datetime64')
+    if 'date' in df.columns:
+        df['date'] = df['date'].astype('datetime64')
+    return df

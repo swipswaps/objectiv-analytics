@@ -41,9 +41,10 @@ def quote_identifier(dialect: Dialect, name: str) -> str:
     """
     Add quotes around an identifier (e.g. a table or column name), and escape special characters in the name.
 
-    By default this assumes Postgres identifier notation format, but this can be overridden by specifying a
-    SqlAlchemy Dialect.
-
+    Note that the result of this function is not always a valid column name and/or table name. e.g. The
+    following string can be quoted by this function to give a valid BigQuery identifier: '`te`st`'. However,
+    that name is only valid as a table name, not as a column name as there are additional rules on what
+    makes a valid column name.
 
     Examples
     >>> from sqlalchemy.dialects.postgresql.base import PGDialect
@@ -64,7 +65,11 @@ def quote_identifier(dialect: Dialect, name: str) -> str:
         return f'"{replaced_chars}"'
 
     if is_bigquery(dialect):
-        # todo: check whether this is efficient and correct
+        # Spec: https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#quoted_identifiers
+        # For additional rules on column and table names (not enforced by this function!) See
+        # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#column_names
+        # https://cloud.google.com/bigquery/docs/schemas#column_names
+        # https://cloud.google.com/bigquery/docs/tables#table_naming
         result = dialect.preparer(dialect).quote_identifier(value=name)
         return result
     raise DatabaseNotSupportedException(dialect)

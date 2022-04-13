@@ -594,7 +594,14 @@ def _resolve_merge_expression_references(
                     df_series = right
                     table_alias = 'r'
 
-                resolved_expr = _get_expression(df_series=df_series, label=nested_token.column_name)
+                # nested_token.column_name might not be the same to token.column_name
+                # since series can be renamed
+                expr_label = (
+                    nested_token.column_name
+                    if nested_token.column_name == cond.name
+                    else token.column_name
+                )
+                resolved_expr = _get_expression(df_series=df_series, label=expr_label)
                 resolved_expr = resolved_expr.resolve_column_references(dialect, table_alias)
                 resolved_nested_tokens.append(resolved_expr)
 

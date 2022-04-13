@@ -21,8 +21,14 @@ def compare_boundaries(expected: pd.Series, result: Series) -> None:
         np.testing.assert_almost_equal(exp.left, float(res.lower), decimal=2)
         np.testing.assert_almost_equal(exp.right, float(res.upper), decimal=2)
 
+        if exp.closed_left:
+            assert res.lower_inc
 
-def test_cut_operation() -> None:
+        if exp.closed_right:
+            assert res.upper_inc
+
+
+def test_cut_operation_pandas() -> None:
     p_series = pd.Series(range(100), name='a')
     series = get_from_df('cut_df', p_series.to_frame()).a
 
@@ -35,6 +41,46 @@ def test_cut_operation() -> None:
     compare_boundaries(expected_wo_right, result_wo_right)
 
 
+def test_cut_operation_bach() -> None:
+    p_series = pd.Series(range(100), name='a')
+    series = get_from_df('cut_df', p_series.to_frame()).a
+
+    ranges = [
+        pd.Interval(0, 9.9, closed='both'),
+        pd.Interval(9.9, 19.8, closed='right'),
+        pd.Interval(19.8, 29.7, closed='right'),
+        pd.Interval(29.7, 39.6, closed='right'),
+        pd.Interval(39.6, 49.5, closed='right'),
+        pd.Interval(49.5, 59.4, closed='right'),
+        pd.Interval(59.4, 69.3, closed='right'),
+        pd.Interval(69.3, 79.2, closed='right'),
+        pd.Interval(79.2, 89.1, closed='right'),
+        pd.Interval(89.1, 99, closed='right'),
+    ]
+
+    expected = pd.Series({num: ranges[int(num / 10)] for num in range(100)})
+    result = CutOperation(series=series, bins=10, method='bach')().sort_index()
+    compare_boundaries(expected, result)
+
+    ranges_wo_right = [
+        pd.Interval(0, 9.9, closed='left'),
+        pd.Interval(9.9, 19.8, closed='left'),
+        pd.Interval(19.8, 29.7, closed='left'),
+        pd.Interval(29.7, 39.6, closed='left'),
+        pd.Interval(39.6, 49.5, closed='left'),
+        pd.Interval(49.5, 59.4, closed='left'),
+        pd.Interval(59.4, 69.3, closed='left'),
+        pd.Interval(69.3, 79.2, closed='left'),
+        pd.Interval(79.2, 89.1, closed='left'),
+        pd.Interval(89.1, 99, closed='both'),
+    ]
+
+    expected_wo_right = pd.Series({num: ranges_wo_right[int(num / 10)] for num in range(100)})
+    result_wo_right = CutOperation(series=series, bins=10, method='bach', right=False)().sort_index()
+
+    compare_boundaries(expected_wo_right, result_wo_right)
+
+
 def test_cut_operation_boundary() -> None:
     bins = 3
     p_series = pd.Series(data=[1, 2, 3, 4], name='a')
@@ -43,6 +89,18 @@ def test_cut_operation_boundary() -> None:
     expected = pd.cut(p_series, bins=bins, right=True)
     result = CutOperation(series=series, bins=bins, right=True)()
     compare_boundaries(expected, result)
+
+
+def test_cut_w_ignore_index() -> None:
+    bins = 3
+    p_series = pd.Series(data=[1, 2, 3, 4], name='a')
+    series = get_from_df('cut_df', p_series.to_frame()).a
+
+    result = CutOperation(series=series, bins=bins, right=True, ignore_index=False)()
+    assert ['_index_0', 'a'] == list(result.index.keys())
+
+    result_w_ignore = CutOperation(series=series, bins=bins, right=True, ignore_index=True)()
+    assert ['a'] == list(result_w_ignore.index.keys())
 
 
 def test_cut_w_include_empty_bins() -> None:
@@ -117,12 +175,12 @@ def test_cut_operation_calculate_bucket_properties() -> None:
     pd.testing.assert_frame_equal(expected_zero[final_properties], result_zero.to_pandas(), **PD_TESTING_SETTINGS)
 
 
-def test_cut_calculate_adjustments() -> None:
+def test_cut_calculate_pandas_adjustments() -> None:
     pdf = pd.DataFrame(data={'min': [1], 'max': [100]})
     df = get_from_df('cut_df', pdf)
     to_adjust = df['min']
     to_compare = df['max']
-    result = CutOperation(series=df['min'], bins=1)._calculate_adjustments(to_adjust, to_compare)
+    result = CutOperation(series=df['min'], bins=1)._calculate_pandas_adjustments(to_adjust, to_compare)
     assert isinstance(result, Series)
 
     result_case_sql = result.expression.to_sql(df.engine.dialect)
