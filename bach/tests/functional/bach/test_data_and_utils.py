@@ -6,7 +6,6 @@ Utilities and a very simple dataset for testing Bach DataFrames.
 This file does not contain any test, but having the file's name start with `test_` makes pytest treat it
 as a test file. This makes pytest rewrite the asserts to give clearer errors.
 """
-import os
 from decimal import Decimal
 from typing import List, Union, Type, Dict, Any
 
@@ -28,6 +27,7 @@ from tests.conftest import DB_PG_TEST_URL
 
 # cities is the main table and should be used when sufficient. The other tables can be used in addition
 # for more complex scenarios (e.g. merging)
+from tests.unit.bach.util import get_pandas_df
 
 TEST_DATA_CITIES_FULL = [
     [1, 'Ljouwert', 'Leeuwarden', 93485, 1285],
@@ -124,19 +124,12 @@ def get_bt(
     return _TABLE_DATAFRAME_CACHE[lookup_key].copy_override(savepoints=Savepoints())
 
 
-def get_pandas_df(dataset: List[List[Any]], columns: List[str]) -> pandas.DataFrame:
-    """ Convert the given dataset to a Pandas DataFrame """
-    df = pandas.DataFrame.from_records(dataset, columns=columns)
-    df.set_index(df.columns[0], drop=False, inplace=True)
-    if 'moment' in df.columns:
-        df['moment'] = df['moment'].astype('datetime64')
-    if 'date' in df.columns:
-        df['date'] = df['date'].astype('datetime64')
-    return df
-
-
 def get_from_df(table: str, df: pandas.DataFrame, convert_objects=True) -> DataFrame:
-    """ Create a database table with the data from the data-frame. """
+    """
+    Create a database table with the data from the data-frame.
+
+    Will be deprecated! When possible use `DataFrame.from_pandas()` with `materialization='cte'`
+    """
     engine = sqlalchemy.create_engine(DB_PG_TEST_URL)
     buh_tuh = DataFrame.from_pandas(
         engine=engine,
@@ -181,6 +174,9 @@ def get_df_with_test_data(engine: Engine, full_data_set: bool = False) -> DataFr
 
 
 def get_bt_with_test_data(full_data_set: bool = False) -> DataFrame:
+    """
+    DEPRECATED: Use get_df_with_test_data()
+    """
     if full_data_set:
         return get_bt('test_table_full', TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
     return get_bt('test_table_partial', TEST_DATA_CITIES, CITIES_COLUMNS, True)

@@ -5,22 +5,21 @@
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   generateUUID,
-  makeFailureEvent,
   makeApplicationLoadedEvent,
-  makePressableContext,
-  makePressEvent,
-  makeSuccessEvent,
+  makeContentContext,
+  makeFailureEvent,
+  makeHiddenEvent,
   makeInputChangeEvent,
   makeInteractiveEvent,
-  makeContentContext,
-  makeHiddenEvent,
-  makeVisibleEvent,
   makeMediaEvent,
   makeMediaLoadEvent,
   makeMediaPauseEvent,
   makeMediaStartEvent,
   makeMediaStopEvent,
   makeNonInteractiveEvent,
+  makePressEvent,
+  makeSuccessEvent,
+  makeVisibleEvent,
   TrackerConsole,
 } from '@objectiv/tracker-core';
 import {
@@ -29,22 +28,22 @@ import {
   getTrackerRepository,
   makeTracker,
   TaggingAttribute,
-  trackFailureEvent,
   trackApplicationLoadedEvent,
-  trackPressEvent,
-  trackSuccessEvent,
   trackEvent,
+  trackFailureEvent,
+  trackHiddenEvent,
   trackInputChangeEvent,
   trackInteractiveEvent,
-  trackHiddenEvent,
-  trackVisibleEvent,
   trackMediaEvent,
   trackMediaLoadEvent,
   trackMediaPauseEvent,
   trackMediaStartEvent,
   trackMediaStopEvent,
   trackNonInteractiveEvent,
+  trackPressEvent,
+  trackSuccessEvent,
   trackVisibility,
+  trackVisibleEvent,
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
@@ -109,10 +108,10 @@ describe('trackEvent', () => {
         id: matchUUID,
         global_contexts: [],
         location_stack: [
-          makeContentContext({ id: 'main' }),
-          makeContentContext({ id: 'parent' }),
-          makeContentContext({ id: 'child' }),
-          makePressableContext({ id: 'button' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'main' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'parent' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'child' }),
+          expect.objectContaining({ _type: 'PressableContext', id: 'button' }),
         ],
       })
     );
@@ -126,7 +125,7 @@ describe('trackEvent', () => {
         _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeContentContext({ id: 'custom' })],
+        location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'custom' })],
       })
     );
 
@@ -139,7 +138,7 @@ describe('trackEvent', () => {
         _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeContentContext({ id: 'custom' })],
+        location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'custom' })],
       })
     );
   });

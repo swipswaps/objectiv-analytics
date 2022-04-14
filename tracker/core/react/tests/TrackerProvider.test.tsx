@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   GlobalContextValidationRule,
   LocationContextValidationRule,
@@ -54,7 +54,12 @@ describe('TrackerProvider', () => {
             ],
           },
           {
-            applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+            applicationContext: {
+              __instance_id: matchUUID,
+              __global_context: true,
+              _type: 'ApplicationContext',
+              id: 'app-id',
+            },
             pluginName: 'ApplicationContextPlugin',
           },
         ],

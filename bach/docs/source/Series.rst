@@ -52,8 +52,7 @@ explicit call is made to one of the functions that transfers data:
 
      * :py:meth:`bach.DataFrame.to_pandas()`
      * :py:meth:`bach.DataFrame.head()`
-     * The property accessors :py:attr:`Series.value` (Series only),
-       :py:attr:`Series.values`, and :py:attr:`Series.array`
+     * The property accessor :py:attr:`Series.array`
 
 If you really need the actual values, use the above, but in general it's better to use the Series that
 generate them, as this will create more flexible code.

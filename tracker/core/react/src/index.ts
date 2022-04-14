@@ -2,16 +2,6 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-export * from './common/factories/makeContentContext';
-export * from './common/factories/makeExpandableContext';
-export * from './common/factories/makeInputContext';
-export * from './common/factories/makeLinkContext';
-export * from './common/factories/makeLocationContext';
-export * from './common/factories/makeMediaPlayerContext';
-export * from './common/factories/makeNavigationContext';
-export * from './common/factories/makeOverlayContext';
-export * from './common/factories/makePressableContext';
-export * from './common/factories/makeRootLocationContext';
 export * from './common/factories/makeTitleFromChildren';
 export * from './common/factories/recursiveGetTextFromChildren';
 

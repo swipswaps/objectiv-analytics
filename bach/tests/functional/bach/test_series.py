@@ -162,13 +162,13 @@ def test_series_sort_index_multi_level():
 def test_fillna():
     # TODO test fillna with series instead of constants.
     values = [1, np.nan, 3, np.nan, 7]
-    pdf = pd.DataFrame(data=values)
+    pdf = pd.DataFrame(data={'0': values})
     bt = get_from_df('test_fillna', pdf)
 
     def tf(x):
         bt_fill = bt['0'].fillna(x)
         assert bt_fill.expression.is_constant == bt['0'].expression.is_constant
-        np.testing.assert_equal(pdf[0].fillna(x).to_numpy(), bt_fill.to_numpy())
+        np.testing.assert_equal(pdf['0'].fillna(x).to_numpy(), bt_fill.to_numpy())
 
     assert(bt['0'].dtype == 'float64')
     tf(1.25)

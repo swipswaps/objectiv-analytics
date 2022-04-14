@@ -28,7 +28,7 @@ export type TrackerProviderProps = TrackerProviderContext & {
  */
 export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => {
   if (isDevMode()) {
-    LocationTree.initialize(tracker);
+    LocationTree.clear();
   }
 
   return (

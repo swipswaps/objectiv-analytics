@@ -38,9 +38,8 @@ def test_quote_identifier(dialect):
         assert quote_identifier(dialect, 'test') == '`test`'
         assert quote_identifier(dialect, 'te"st') == '`te""st`'
         assert quote_identifier(dialect, '"te""st"') == r'`""te""""st""`'
-        # TODO: CHECK, is the implementation of BigQueryDialect correct?? Seems odd
-        #assert quote_identifier(dialect, '`te`st`') == r'`\`te\`st\``'
-        #assert quote_identifier(dialect, 'te%st') == '`te%st`'
+        assert quote_identifier(dialect, '`te`st`') == r'`\`te\`st\``'
+        assert quote_identifier(dialect, 'te%st') == '`te%st`'
     else:
         # if we add more dialects, we should not forget to extend this test
         raise Exception()
