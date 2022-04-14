@@ -179,6 +179,9 @@ def get_df_with_food_data(engine: Engine) -> DataFrame:
 
 
 def get_bt_with_food_data() -> DataFrame:
+    """
+    DEPRECATED: Use get_df_with_food_data()
+    """
     return get_bt(TEST_DATA_FOOD, FOOD_COLUMNS, True)
 
 
@@ -197,6 +200,9 @@ def get_df_with_railway_data(engine: Engine) -> DataFrame:
 
 
 def get_bt_with_railway_data() -> DataFrame:
+    """
+    DEPRECATED: Use get_df_with_railway_data()
+    """
     return get_bt(TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
 
 

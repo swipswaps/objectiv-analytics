@@ -38,7 +38,8 @@ def test_numerical_describe() -> None:
     pd.testing.assert_series_equal(expected, result.to_pandas())
 
 
-def test_describe_datetime(engine) -> None:
+def test_describe_datetime(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     p_series = pd.Series(
         data=[np.datetime64("2000-01-01"), np.datetime64("2010-01-01"), np.datetime64("2010-01-01")],
         name='dt',

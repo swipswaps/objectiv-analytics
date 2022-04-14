@@ -13,34 +13,26 @@ DATA = {
 def test_dropna_w_nan(engine) -> None:
     pdf = pd.DataFrame(
         {
-            'a': ['a', 'b', None],
-        },
-    )
-    df1 = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
-    df2 = df1.copy()
-    df1['b'] = float(np.nan)
-    df2['b'] = pd.Series([1, 2, 3])
-    df = df1.append(df2)
-
-    pdf2 = pd.DataFrame(
-        {
             'a': ['a', 'b', None, 'a', 'b', None],
             'b': [np.nan, np.nan, np.nan, 1, 2, 3],
         },
     )
-    expected = pdf2.dropna()
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+
+    expected = pdf.dropna()
     result = df.dropna()
     pd.testing.assert_frame_equal(
-        expected.reset_index(drop=True),
-        result.to_pandas(),
+        expected,
+        result.sort_index().to_pandas(),
         check_names=False,
+        check_index_type=False,
     )
 
-    expected_w_thresh = pdf2.dropna(thresh=2)
+    expected_w_thresh = pdf.dropna(thresh=2)
     result_w_thresh = df.dropna(thresh=2)
     pd.testing.assert_frame_equal(
-        expected_w_thresh.reset_index(drop=True),
-        result_w_thresh.to_pandas(),
+        expected_w_thresh,
+        result_w_thresh.sort_index().to_pandas(),
         check_names=False,
     )
 

@@ -4,7 +4,8 @@ import pandas as pd
 import pytest
 
 from bach import Series, DataFrame
-from tests.functional.bach.test_data_and_utils import assert_equals_data
+from sql_models.util import is_bigquery
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
 
 @pytest.fixture()
@@ -75,6 +76,10 @@ def test_basic_indexing_column_based(indexing_dfs: Tuple[pd.DataFrame, DataFrame
 
 def test_index_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
     pdf, df = indexing_dfs
+
+    if is_bigquery(df.engine):
+        # indexing with slicing is still not supported for BigQuery
+        return
 
     df = df.sort_index()
     result_slicing = df.loc['b':'d']
@@ -171,6 +176,9 @@ def test_set_item_by_label_diff_node(indexing_dfs: Tuple[pd.DataFrame, DataFrame
 
 def test_set_item_by_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame], engine) -> None:
     pdf, df = indexing_dfs
+    if is_bigquery(df.engine):
+        # indexing with slicing is still not supported for BigQuery
+        return
     df = df.sort_index()
 
     df.loc['b':'d'] = 1
@@ -213,4 +221,25 @@ def test_set_item_by_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame], engin
             ['d', None, 1, None],
             ['e', 4, 9, 'j'],
         ],
+    )
+
+
+def test_indexing_wo_index(engine) -> None:
+    bt = get_df_with_test_data(engine)[['city']]
+    bt['city_normal'] = 'placeholder'
+    bt = bt.reset_index()
+
+    with pytest.raises(ValueError, match=r'Cannot access rows by label'):
+        bt.loc[0, 'city_normal']
+
+    bt.loc[bt.city == 'Snits', 'city_normal'] = 'Snake'
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'city', 'city_normal'],
+        expected_data=[
+            [1, 'Ljouwert', 'placeholder'],
+            [2, 'Snits', 'Snake'],
+            [3, 'Drylts', 'placeholder'],
+        ],
+        order_by=['_index_skating_order'],
     )

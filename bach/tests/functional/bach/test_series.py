@@ -7,6 +7,7 @@ import pytest
 
 from bach import DataFrame, SeriesString, SeriesInt64
 from bach.expression import Expression
+from sql_models.util import is_postgres, is_bigquery
 from tests.functional.bach.test_data_and_utils import (
     get_df_with_test_data, assert_equals_data, df_to_list,
     get_df_with_railway_data, get_df_with_food_data, get_bt_with_test_data, get_bt_with_food_data
@@ -167,15 +168,15 @@ def test_series_sort_index_multi_level(engine):
 def test_fillna(engine):
     # TODO test fillna with series instead of constants.
     values = [1, np.nan, 3, np.nan, 7]
-    pdf = pd.DataFrame(data={'0': values})
+    pdf = pd.DataFrame(data={'num': values})
     bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     def tf(x):
-        bt_fill = bt['0'].fillna(x)
-        assert bt_fill.expression.is_constant == bt['0'].expression.is_constant
-        np.testing.assert_equal(pdf['0'].fillna(x).to_numpy(), bt_fill.to_numpy())
+        bt_fill = bt['num'].fillna(x)
+        assert bt_fill.expression.is_constant == bt['num'].expression.is_constant
+        np.testing.assert_equal(pdf['num'].fillna(x).to_numpy(), bt_fill.to_numpy())
 
-    assert(bt['0'].dtype == 'float64')
+    assert(bt['num'].dtype == 'float64')
     tf(1.25)
     tf(float(99))
     tf(np.nan)
@@ -183,10 +184,11 @@ def test_fillna(engine):
     # pandas allows this, but we can't
     for val in [int(99), 'nope']:
         with pytest.raises(TypeError):
-            bt['0'].fillna(val)
+            bt['num'].fillna(val)
 
 
-def test_isnull(engine):
+def test_isnull(pg_engine):
+    engine = pg_engine  # TODO BigQuery, fix sorting for nullable columns
     values = ['a', 'b', None]
     pdf = pd.DataFrame(data=values, columns=['text_with_null'])
     pdf.set_index('text_with_null', drop=False, inplace=True)
@@ -684,7 +686,12 @@ def test__set_item_with_merge_w_conflict_names(engine) -> None:
     result = df1['b'] - df2['a'] - df2['c']
     assert result.base_node.references['left_node'] == df1.base_node
     assert result.base_node.references['right_node'] == df2.base_node
-    assert '("b" - "a__data_column") - "c"' == result.expression.to_sql(dialect)
+
+    if is_postgres(dialect):
+        assert '("b" - "a__data_column") - "c"' == result.expression.to_sql(dialect)
+    elif is_bigquery(dialect):
+        assert '(`b` - `a__data_column`) - `c`' == result.expression.to_sql(dialect)
+
     assert {'a', 'b', 'a__data_column', 'c'} == set(result.base_node.columns)
     assert Expression.table_column_reference('r', 'a') == result.base_node.column_expressions['a__data_column']
 
@@ -692,8 +699,15 @@ def test__set_item_with_merge_w_conflict_names(engine) -> None:
     result2 = (result + df1['c']) * df1['c'] - df2['c']
     assert result2.base_node.references['left_node'] == df1.base_node
     assert result2.base_node.references['right_node'] == df2.base_node
-    assert '(((("b" - "a__data_column") - "c__other") + "c") * "c") - "c__other"' == result2.expression.to_sql(dialect)
+    if is_postgres(dialect):
+        assert '(((("b" - "a__data_column") - "c__other") + "c") * "c") - "c__other"' == result2.expression.to_sql(
+            dialect)
+    elif is_bigquery(dialect):
+        assert '((((`b` - `a__data_column`) - `c__other`) + `c`) * `c`) - `c__other`' == result2.expression.to_sql(
+            dialect)
+
     assert {'a', 'b', 'a__data_column', 'c', 'c__other'} == set(result2.base_node.columns)
+
     assert Expression.table_column_reference('l', 'c') == result2.base_node.column_expressions['c']
     assert Expression.table_column_reference('r', 'c') == result2.base_node.column_expressions['c__other']
 
