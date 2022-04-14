@@ -4,9 +4,10 @@ Copyright 2021 Objectiv B.V.
 import datetime
 from abc import ABC
 from enum import Enum
-from typing import Union, cast, List, Tuple
+from typing import Union, cast, List, Tuple, Optional
 
 import numpy
+import pandas
 from sqlalchemy.engine import Dialect
 
 from bach import DataFrame
@@ -15,7 +16,7 @@ from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from bach.types import DtypeOrAlias
 from sql_models.constants import DBDialect
-from sql_models.util import DatabaseNotSupportedException, is_postgres
+from sql_models.util import DatabaseNotSupportedException, is_postgres, is_bigquery
 
 _SECONDS_IN_DAY = 24 * 60 * 60
 
@@ -299,9 +300,22 @@ class SeriesTime(SeriesAbstractDateTime):
     # python supports no arithmetic on Time
 
 
+def microseconds_to_timedelta(microseconds: int) -> datetime.timedelta:
+    """
+    INTERNAL: convert microseconds to timedelta
+    """
+    return datetime.timedelta(microseconds=microseconds)
+
+
 class SeriesTimedelta(SeriesAbstractDateTime):
     """
-    A Series that represents the timedelta type and its specific operations
+    A Series that represents the timedelta type and its specific operations.
+
+    Depending on the database this Series is backed by different database types:
+
+    * On Postgres this utilizes the native 'interval' database type.
+    * On BigQuery this utilizes the generic 'INT64' database type, to store the number of microseconds in
+        the interval
     """
 
     dtype = 'timedelta'
@@ -309,23 +323,58 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     supported_db_dtype = {
         DBDialect.POSTGRES: 'interval'
     }
-    supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
+    supported_value_types = (datetime.timedelta, numpy.timedelta64)
+
+    query_result_processor = {
+        DBDialect.POSTGRES: None,
+        DBDialect.BIGQUERY: microseconds_to_timedelta
+    }
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        if not is_postgres(dialect):
-            raise DatabaseNotSupportedException(dialect)
-        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
+        if is_bigquery(dialect):
+            return SeriesInt64.supported_literal_to_expression(dialect, literal)
+        if is_postgres(dialect):
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
+        raise DatabaseNotSupportedException(dialect)
 
     @classmethod
     def supported_value_to_literal(
             cls,
             dialect: Dialect,
-            value: Union[str, numpy.timedelta64, datetime.timedelta]
+            value: Union[numpy.timedelta64, datetime.timedelta]
     ) -> Expression:
-        value = str(value)
-        # TODO: check here already that the string has the correct format
-        return Expression.string_value(value)
+        # numpy.timedelta64, datetime.timedelta have very different interfaces. Convert to datetime.timedelta
+        td_value = cls._normalize_timedelta(value)
+
+        if is_bigquery(dialect):
+            # Construct an integer with the total number of microsecond in the timedelta
+            total_microseconds = round(td_value / datetime.timedelta(microseconds=1))
+            return SeriesInt64.supported_value_to_literal(dialect, total_microseconds)
+        if is_postgres(dialect):
+            # Construct a string that can be cast to interval [1]. days, seconds and microseconds together
+            # make up the full timedelta, see [2]
+            # [1] https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
+            # [2] https://docs.python.org/3/library/datetime.html#timedelta-objects
+            return Expression.string_value(
+                f'{td_value.days} days {td_value.seconds} seconds {td_value.microseconds} microseconds'
+            )
+        raise DatabaseNotSupportedException(dialect)
+
+    @classmethod
+    def _normalize_timedelta(cls, value: Union[numpy.timedelta64, datetime.timedelta]) -> datetime.timedelta:
+        """
+        Normalize value to timedelta.
+        """
+        # TODO: add tests
+        if isinstance(value, datetime.timedelta):
+            return value
+        if isinstance(value, numpy.timedelta64):
+            if numpy.isnat(value):
+                raise ValueError('Not a Time (NaT) is not supported as a value, use None instead.')
+            microseconds = round(value / numpy.timedelta64(1, 'us'))
+            return microseconds_to_timedelta(microseconds)
+        raise ValueError(f'Cannot convert {value} to timedelta. Type {type(value)} not supported.')
 
     @classmethod
     def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:

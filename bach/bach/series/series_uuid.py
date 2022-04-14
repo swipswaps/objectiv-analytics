@@ -18,7 +18,7 @@ class SeriesUuid(Series):
     """
     A Series that represents the UUID type and its specific operations.
 
-    Depending on the database this Series is backed by different databse types:
+    Depending on the database this Series is backed by different database types:
 
     * On Postgres this utilizes the native 'uuid' database type.
     * On BigQuery this utilizes the generic 'STRING' database type.

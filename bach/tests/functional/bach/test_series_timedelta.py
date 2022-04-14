@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from tests.functional.bach.test_data_and_utils import get_bt_with_food_data, assert_equals_data, \
-    get_bt_with_test_data, get_from_df
+    get_bt_with_test_data, get_from_df, get_df_with_test_data
 from tests.functional.bach.test_series_timestamp import types_plus_min
 
 
@@ -22,8 +22,8 @@ def test_timedelta_arithmetic(pg_engine):
     types_plus_min(pg_engine, data, datetime.timedelta(days=123, seconds=5621), 'timedelta')
 
 
-def test_timedelta_arithmetic2():
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+def test_timedelta_arithmetic2(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)[['inhabitants']]
     td = datetime.timedelta(days=365, seconds=9877)
     td2 = datetime.timedelta(days=23, seconds=12)
 
@@ -41,11 +41,12 @@ def test_timedelta_arithmetic2():
     assert [s.dtype for s in list(bt.all_series.values())[2:]] == expected_types
 
     assert_equals_data(
-        bt[:1],
+        bt.sort_index()[:1],
         expected_columns=list(bt.all_series.keys()),
         expected_data=[
             [1, 93485, *expected],
-        ]
+        ],
+        use_to_pandas=True
     )
 
 
@@ -83,8 +84,8 @@ def test_timedelta():
     )
 
 
-def test_to_pandas():
-    bt = get_bt_with_test_data()
+def test_to_pandas(engine):
+    bt = get_df_with_test_data(engine)
     bt['td'] = datetime.timedelta(days=321, seconds=9877)
     bt[['td']].to_pandas()
     # TODO, this is not great, but at least it does not error when imported into pandas,
