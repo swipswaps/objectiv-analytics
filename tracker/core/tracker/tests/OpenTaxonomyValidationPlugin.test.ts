@@ -4,6 +4,7 @@
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
+  LocationContextName,
   makeApplicationContext,
   makeContentContext,
   makeRootLocationContext,
@@ -75,7 +76,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
     });
   });
 
-  describe('RootLocationContext', () => {
+  describe(LocationContextName.RootLocationContext, () => {
     it('should succeed', () => {
       const testOpenTaxonomyValidationPlugin = new OpenTaxonomyValidationPlugin();
       const validEvent = new TrackerEvent({
