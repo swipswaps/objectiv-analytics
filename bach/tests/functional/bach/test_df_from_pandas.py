@@ -334,3 +334,21 @@ def test_from_pandas_columns_w_nulls(engine) -> None:
             [2, 'c', 2, None],
         ],
     )
+
+    pdf['d'] = pdf['d'].astype(str)
+    result = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf,
+        convert_objects=True,
+        materialization='cte'
+    )
+    assert_equals_data(
+        result,
+        expected_columns=['_index_0', 'a', 'b', 'c', 'd'],
+        expected_data=[
+            [0, 'a', None, None, 'None'],
+            [1, None, 1, pd.Timestamp("1940-04-25"), 'None'],
+            [2, 'c', 2, None, 'None'],
+        ],
+    )
+

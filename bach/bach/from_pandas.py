@@ -221,14 +221,14 @@ def _from_pd_shared(
     supported_pandas_dtypes = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool', 'int32']
     all_dtypes = {}
     for column in df_copy.columns:
-        if df_copy[column].dropna().empty:
-            raise ValueError(f'{column} column has no non-nullable values, cannot infer type.')
-
         dtype = df_copy[column].dtype.name
 
         if dtype in supported_pandas_dtypes:
             all_dtypes[str(column)] = dtype
             continue
+
+        if df_copy[column].dropna().empty:
+            raise ValueError(f'{column} column has no non-nullable values, cannot infer type.')
 
         if convert_objects:
             df_copy[column] = df_copy[column].convert_dtypes(
