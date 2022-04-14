@@ -9,7 +9,6 @@ as a test file. This makes pytest rewrite the asserts to give clearer errors.
 from decimal import Decimal
 from typing import List, Union, Type, Dict, Any
 
-import pandas
 import sqlalchemy
 from sqlalchemy.engine import ResultProxy, Engine
 
@@ -18,7 +17,7 @@ from bach.types import get_series_type_from_db_dtype
 from sql_models.constants import DBDialect
 from sql_models.util import is_bigquery, is_postgres
 from tests.conftest import DB_PG_TEST_URL
-
+from tests.unit.bach.util import get_pandas_df
 
 # Three data tables for testing are defined here that can be used in tests
 # 1. cities: 3 rows (or 11 for the full dataset) of data on cities
@@ -27,8 +26,7 @@ from tests.conftest import DB_PG_TEST_URL
 
 # cities is the main table and should be used when sufficient. The other tables can be used in addition
 # for more complex scenarios (e.g. merging)
-from tests.unit.bach.util import get_pandas_df
-
+ROW_LIMIT = 3
 TEST_DATA_CITIES_FULL = [
     [1, 'Ljouwert', 'Leeuwarden', 93485, 1285],
     [2, 'Snits', 'Súdwest-Fryslân', 33520, 1456],
@@ -43,8 +41,15 @@ TEST_DATA_CITIES_FULL = [
     [11, 'Dokkum', 'Noardeast-Fryslân', 12675, 1298],
 ]
 # The TEST_DATA set that we'll use in most tests is limited to 3 rows for convenience.
-TEST_DATA_CITIES = TEST_DATA_CITIES_FULL[:3]
-CITIES_COLUMNS = ['skating_order', 'city', 'municipality', 'inhabitants', 'founding']
+TEST_DATA_CITIES = TEST_DATA_CITIES_FULL[:ROW_LIMIT]
+CITIES_COLUMNS_X_DTYPES = {
+    'skating_order': 'int64',
+    'city': 'string',
+    'municipality': 'string',
+    'inhabitants': 'int64',
+    'founding': 'int64'
+}
+CITIES_COLUMNS = list(CITIES_COLUMNS_X_DTYPES.keys())
 # The default dataframe has skating_order as index, so that column will be prepended before the actual
 # data in the query results.
 CITIES_INDEX_AND_COLUMNS = ['_index_skating_order'] + CITIES_COLUMNS
@@ -54,7 +59,13 @@ TEST_DATA_FOOD = [
     [2, 'Dúmkes', '2021-05-04 23:28:36.388', '2021-05-04'],
     [4, 'Grutte Pier Bier', '2022-05-03 14:13:13.388', '2022-05-03']
 ]
-FOOD_COLUMNS = ['skating_order', 'food', 'moment', 'date']
+FOOD_COLUMNS_X_DTYPES = {
+    'skating_order': 'int64',
+    'food': 'string',
+    'moment': 'timestamp',
+    'date': 'date',
+}
+FOOD_COLUMNS = list(FOOD_COLUMNS_X_DTYPES.keys())
 FOOD_INDEX_AND_COLUMNS = ['_index_skating_order'] + FOOD_COLUMNS
 
 TEST_DATA_RAILWAYS = [
@@ -66,7 +77,13 @@ TEST_DATA_RAILWAYS = [
     [6, 'Snits', 'Sneek', 2],
     [7, 'Snits', 'Sneek Noord', 2],
 ]
-RAILWAYS_COLUMNS = ['station_id', 'town', 'station', 'platforms']
+RAILWAYS_COLUMNS_X_DTYPES = {
+    'station_id': 'int64',
+    'town': 'string',
+    'station': 'string',
+    'platforms': 'int64',
+}
+RAILWAYS_COLUMNS = list(RAILWAYS_COLUMNS_X_DTYPES.keys())
 RAILWAYS_INDEX_AND_COLUMNS = ['_index_station_id'] + RAILWAYS_COLUMNS
 
 TEST_DATA_JSON = [
@@ -119,28 +136,18 @@ def get_df_with_test_data(engine: Engine, full_data_set: bool = False) -> DataFr
             return get_bt(TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
         return get_bt(TEST_DATA_CITIES, CITIES_COLUMNS, True)
     if is_bigquery(engine):
-        # todo: move this somewhere
-        all_dtypes = {
-            'skating_order': 'int64',
-            'city': 'string',
-            'municipality': 'string',
-            'inhabitants': 'int64',
-            'founding': 'int64'
-        }
-        df = DataFrame.from_table(
+        df = _get_big_query_data(
             engine=engine,
-            table_name="cities",
-            index=['skating_order'],
-            all_dtypes=all_dtypes
+            table_name='cities',
+            index='skating_order',
+            dtypes=CITIES_COLUMNS_X_DTYPES,
         )
-        # todo: update actual table to match the postgres test data. so we don't need this magic here
-        df = df.reset_index()
-        if not full_data_set:
-            df = df[df.skating_order <= 3]
-        df['_index_skating_order'] = df.skating_order
-        df = df.set_index('_index_skating_order')
-        df = df.materialize()
-        return df
+        if full_data_set:
+            return df
+
+        # skating_orders in (1, 2, 3)
+        skating_orders = list(range(1, ROW_LIMIT + 1))
+        return df.loc[skating_orders]
     raise ValueError(f'engine of type {engine.name} is not supported.')
 
 
@@ -153,8 +160,37 @@ def get_bt_with_test_data(full_data_set: bool = False) -> DataFrame:
     return get_bt(TEST_DATA_CITIES, CITIES_COLUMNS, True)
 
 
+def get_df_with_food_data(engine: Engine) -> DataFrame:
+    if is_postgres(engine):
+        return get_bt(TEST_DATA_FOOD, FOOD_COLUMNS, True)
+
+    if is_bigquery(engine):
+        return _get_big_query_data(
+            engine=engine,
+            table_name='foods',
+            index='skating_order',
+            dtypes=FOOD_COLUMNS_X_DTYPES,
+        )
+
+    raise ValueError(f'engine of type {engine.name} is not supported.')
+
+
 def get_bt_with_food_data() -> DataFrame:
     return get_bt(TEST_DATA_FOOD, FOOD_COLUMNS, True)
+
+
+def get_df_with_railway_data(engine: Engine) -> DataFrame:
+    if is_postgres(engine):
+        return get_bt(TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
+
+    if is_bigquery(engine):
+        return _get_big_query_data(
+            engine=engine,
+            table_name='railways',
+            index='station_id',
+            dtypes=RAILWAYS_COLUMNS_X_DTYPES,
+        )
+    raise ValueError(f'engine of type {engine.name} is not supported.')
 
 
 def get_bt_with_railway_data() -> DataFrame:
@@ -256,6 +292,22 @@ def _get_to_pandas_data(df: DataFrame):
         db_values.append(index_row + value_row)
     print(db_values)
     return column_names, db_values
+
+
+# todo: rename this function to a more generic name since we might need to use it for other engines
+def _get_big_query_data(engine: Engine, table_name: str, index: str, dtypes: Dict[str, str]) -> DataFrame:
+    df = DataFrame.from_table(
+        engine=engine,
+        table_name=table_name,
+        index=[index],
+        all_dtypes=dtypes
+    )
+    # todo: update actual table to match the postgres test data. so we don't need this magic here
+    df = df.reset_index()
+    df[f'_index_{index}'] = df[index]
+    df = df.set_index(f'_index_{index}')
+    df = df.materialize()
+    return df
 
 
 def assert_postgres_type(

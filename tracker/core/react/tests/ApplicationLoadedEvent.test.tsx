@@ -2,11 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeApplicationLoadedEvent, Tracker } from '@objectiv/tracker-core';
+import { makeApplicationLoadedEvent, makeContentContext, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import {
-  makeContentContext,
   ObjectivProvider,
   trackApplicationLoadedEvent,
   TrackingContextProvider,

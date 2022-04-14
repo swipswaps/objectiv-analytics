@@ -36,16 +36,27 @@ def test_quote_identifier(dialect):
     elif is_bigquery(dialect):
         # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#identifiers
         assert quote_identifier(dialect, 'test') == '`test`'
-        assert quote_identifier(dialect, 'te"st') == '`te""st`'
-        assert quote_identifier(dialect, '"te""st"') == '"""te""""st""`'
-        assert quote_identifier(dialect, '`te`st`') == '"""`\`te\`st\`"""'
+        assert quote_identifier(dialect, 'te"st') == '`te"st`'
+        assert quote_identifier(dialect, '"te""st"') == r'`"te""st"`'
+        assert quote_identifier(dialect, '`te`st`') == r'`\`te\`st\``'
         assert quote_identifier(dialect, 'te%st') == '`te%st`'
     else:
         # if we add more dialects, we should not forget to extend this test
         raise Exception()
 
 
-def test_quote_string():
-    assert quote_string("test") == "'test'"
-    assert quote_string("te'st") == "'te''st'"
-    assert quote_string("'te''st'") == "'''te''''st'''"
+def test_quote_string(dialect):
+    if is_postgres(dialect):
+        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+        assert quote_string(dialect, "test") == "'test'"
+        assert quote_string(dialect, "te'st") == "'te''st'"
+        assert quote_string(dialect, "'te''st'") == "'''te''''st'''"
+
+    elif is_bigquery(dialect):
+        # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#string_and_bytes_literals
+        assert quote_string(dialect, "test") == '"""test"""'
+        assert quote_string(dialect, "te'st") == '"""te\'st"""'
+        assert quote_string(dialect, "'te''st'") == '"""\'te\'\'st\'"""'
+    else:
+        # if we add more dialects, we should not forget to extend this test
+        raise Exception()

@@ -27,7 +27,8 @@ def compare_boundaries(expected: pd.Series, result: Series) -> None:
             assert res.upper_inc
 
 
-def test_cut_operation_pandas(engine) -> None:
+def test_cut_operation_pandas(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     p_series = pd.Series(range(100), name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
 
@@ -40,7 +41,8 @@ def test_cut_operation_pandas(engine) -> None:
     compare_boundaries(expected_wo_right, result_wo_right)
 
 
-def test_cut_operation_bach(engine) -> None:
+def test_cut_operation_bach(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     p_series = pd.Series(range(100), name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
 
@@ -80,7 +82,8 @@ def test_cut_operation_bach(engine) -> None:
     compare_boundaries(expected_wo_right, result_wo_right)
 
 
-def test_cut_operation_boundary(engine) -> None:
+def test_cut_operation_boundary(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     bins = 3
     p_series = pd.Series(data=[1, 2, 3, 4], name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
@@ -90,7 +93,8 @@ def test_cut_operation_boundary(engine) -> None:
     compare_boundaries(expected, result)
 
 
-def test_cut_w_ignore_index(engine) -> None:
+def test_cut_w_ignore_index(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     bins = 3
     p_series = pd.Series(data=[1, 2, 3, 4], name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
@@ -102,7 +106,8 @@ def test_cut_w_ignore_index(engine) -> None:
     assert ['a'] == list(result_w_ignore.index.keys())
 
 
-def test_cut_w_include_empty_bins(engine) -> None:
+def test_cut_w_include_empty_bins(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     bins = 3
     p_series = pd.Series(data=[1, 1, 2, 3, 6, 7, 8], name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
@@ -122,7 +127,8 @@ def test_cut_w_include_empty_bins(engine) -> None:
     compare_boundaries(expected, result)
 
 
-def test_cut_operation_calculate_bucket_properties(engine) -> None:
+def test_cut_operation_calculate_bucket_properties(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     final_properties = ['a_min', 'a_max', 'bin_adjustment', 'step']
     bins = 2
     # min != max
@@ -174,7 +180,8 @@ def test_cut_operation_calculate_bucket_properties(engine) -> None:
     pd.testing.assert_frame_equal(expected_zero[final_properties], result_zero.to_pandas(), **PD_TESTING_SETTINGS)
 
 
-def test_cut_calculate_pandas_adjustments(engine) -> None:
+def test_cut_calculate_pandas_adjustments(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     pdf = pd.DataFrame(data={'min': [1], 'max': [100]})
     df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     to_adjust = df['min']
@@ -192,7 +199,8 @@ def test_cut_calculate_pandas_adjustments(engine) -> None:
     assert expected_case_sql == result_case_sql
 
 
-def test_cut_calculate_bucket_ranges(engine) -> None:
+def test_cut_calculate_bucket_ranges(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     bins = 3
     p_series = pd.Series(data=[1, 1, 2, 3, 4, 5, 6, 7, 8], name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
@@ -206,7 +214,8 @@ def test_cut_calculate_bucket_ranges(engine) -> None:
     )
 
 
-def test_qcut_operation(engine) -> None:
+def test_qcut_operation(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     p_series = pd.Series(range(100), name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
 
@@ -219,7 +228,8 @@ def test_qcut_operation(engine) -> None:
     compare_boundaries(expected_q_num, result_q_num)
 
 
-def test_qcut_operation_one_quantile(engine) -> None:
+def test_qcut_operation_one_quantile(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     p_series = pd.Series(range(10), name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
     expected = pd.qcut(p_series, q=0)
@@ -231,7 +241,8 @@ def test_qcut_operation_one_quantile(engine) -> None:
     compare_boundaries(expected2, result2)
 
 
-def test_get_quantile_ranges(engine) -> None:
+def test_get_quantile_ranges(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     p_series = pd.Series(data=[1, 1, 2, 3, 4, 5, 6, 7, 8], name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
 
@@ -240,7 +251,8 @@ def test_get_quantile_ranges(engine) -> None:
     compare_boundaries(pd.Series([pd.Interval(2, 4), None]), result.sort_values())
 
 
-def test_qcut_w_duplicated_quantiles(engine) -> None:
+def test_qcut_w_duplicated_quantiles(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     p_series = pd.Series(data=[0, 1, 2, 2, 2, 2, 2], name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
 

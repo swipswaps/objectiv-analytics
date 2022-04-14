@@ -8,12 +8,13 @@ import pytest
 from bach import DataFrame, SeriesString, SeriesInt64
 from bach.expression import Expression
 from tests.functional.bach.test_data_and_utils import (
-    get_bt_with_test_data, assert_equals_data, df_to_list, get_bt_with_railway_data, get_bt_with_food_data
+    get_df_with_test_data, assert_equals_data, df_to_list,
+    get_df_with_railway_data, get_df_with_food_data, get_bt_with_test_data, get_bt_with_food_data
 )
 
 
-def test_series__getitem__():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_series__getitem__(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     series = bt['city']
     assert isinstance(series, SeriesString)
 
@@ -46,7 +47,7 @@ def test_series__getitem__():
 
 
 def test_positional_slicing():
-    bt = get_bt_with_test_data(full_data_set=True)['inhabitants']
+    bt = get_bt_with_test_data(full_data_set=True)['inhabitants'].sort_values()
 
     class ReturnSlice:
         def __getitem__(self, key):
@@ -61,8 +62,10 @@ def test_positional_slicing():
                   return_slice[4:5],
                   return_slice[:1]
                   ]
+
+    pbt = bt.to_pandas()
     for s in slice_list:
-        bt_slice = bt.sort_values()[s]
+        bt_slice = bt[s]
 
         assert isinstance(bt_slice, SeriesInt64)
 
@@ -70,14 +73,15 @@ def test_positional_slicing():
         assert (len('slice_me_now'.__getitem__(s)) == 1) == bt_slice.expression.is_single_value
 
         assert_equals_data(
-            bt[s],
+            bt_slice,
             expected_columns=['_index_skating_order', 'inhabitants'],
-            expected_data=df_to_list(bt.to_pandas()[s])
+            expected_data=df_to_list(pbt[s]),
+            order_by=['inhabitants'],
         )
 
 
-def test_series_value():
-    bt = get_bt_with_test_data(full_data_set=False)
+def test_series_value(engine):
+    bt = get_df_with_test_data(engine, full_data_set=False)
     assert bt.city[1] == 'Ljouwert'
     assert bt.count().city_count.value == 3
 
@@ -87,8 +91,8 @@ def test_series_value():
     assert l2.value == 3
 
 
-def test_series_sort_values():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_series_sort_values(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     bt_series = bt.city
     kwargs_list = [
         {'ascending': True},
@@ -103,8 +107,8 @@ def test_series_sort_values():
         )
 
 
-def test_series_sort_index_simple():
-    df = get_bt_with_test_data(full_data_set=False)
+def test_series_sort_index_simple(engine):
+    df = get_df_with_test_data(engine, full_data_set=False)
     s_city = df.set_index(['skating_order'])['city']
     assert_equals_data(
         s_city.sort_index(ascending=True),
@@ -128,8 +132,8 @@ def test_series_sort_index_simple():
     )
 
 
-def test_series_sort_index_multi_level():
-    df = get_bt_with_railway_data()
+def test_series_sort_index_multi_level(engine):
+    df = get_df_with_railway_data(engine)
     s_station = df.set_index(['platforms', 'station_id'])['station']
     s_station = s_station.sort_values(ascending=True)  # sort_index should override this
     assert_equals_data(
@@ -206,9 +210,9 @@ def test_isnull(engine):
     )
 
 
-def test_aggregation():
+def test_aggregation(engine):
     # Test aggregation on single series
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+    bt = get_df_with_test_data(engine, full_data_set=True)[['inhabitants']]
     s = bt['inhabitants']
     a1 = s.agg('sum')
     assert isinstance(a1, type(s))
@@ -263,8 +267,8 @@ def test_type_agnostic_aggregation_functions():
     assert result_bt.dtypes == result_series_dtypes
 
 
-def test_unique():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_unique(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     uq = bt.municipality.unique()
     assert not uq.expression.is_single_value
 
@@ -290,8 +294,8 @@ def test_unique():
     )
 
 
-def test_unique_subquery():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_unique_subquery(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
 
     uq = bt.municipality.unique().sort_values()[:2]
     bt = bt[bt.municipality.isin(uq)]
@@ -306,9 +310,9 @@ def test_unique_subquery():
     )
 
 
-def test_dataframe_agg_skipna_parameter():
+def test_dataframe_agg_skipna_parameter(engine):
     # test full parameter traversal
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+    bt = get_df_with_test_data(engine, full_data_set=True)[['inhabitants']]
 
     series_agg = ['count', 'max', 'median', 'min', 'mode', 'nunique']
     for agg in series_agg:
@@ -317,8 +321,8 @@ def test_dataframe_agg_skipna_parameter():
             bt.agg(agg, skipna=False)
 
 
-def test_to_frame():
-    bt = get_bt_with_test_data(full_data_set=False)
+def test_to_frame(engine):
+    bt = get_df_with_test_data(engine, full_data_set=False)
     series = bt.inhabitants
     frame = series.to_frame()
 
@@ -333,9 +337,9 @@ def test_to_frame():
     assert isinstance(frame.head(), pd.DataFrame)
 
 
-def test_series_inherit_flag():
+def test_series_inherit_flag(engine):
     # TODO: change this so it checks the flag correctly
-    bts = get_bt_with_test_data(full_data_set=False).groupby('municipality')['founding']
+    bts = get_df_with_test_data(engine, full_data_set=False).groupby('municipality')['founding']
     bts_min = bts.min()
     assert not bts.expression.has_aggregate_function
     assert bts_min.expression.has_aggregate_function
@@ -386,8 +390,8 @@ def test_series_independant_subquery_any_value_all_values():
     )
 
 
-def test_series_independant_subquery_sets():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_series_independant_subquery_sets(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     # get 3 smallest cities
     s = bt.sort_values('inhabitants', True)[:3]
     result_bt = bt[bt.city.isin(s.city)]
@@ -410,8 +414,8 @@ def test_series_independant_subquery_sets():
     )
 
 
-def test_series_independant_subquery_single():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_series_independant_subquery_single(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     # get smallest city
     s = bt.sort_values('inhabitants', True)[:1]
     result_bt = bt[bt.city == s.city]
@@ -423,7 +427,7 @@ def test_series_independant_subquery_single():
         ]
     )
     # and some math
-    bt = get_bt_with_test_data(full_data_set=False)
+    bt = get_df_with_test_data(engine, full_data_set=False)
     result_bt = bt.inhabitants + s.inhabitants
     assert_equals_data(
         result_bt,
@@ -434,8 +438,8 @@ def test_series_independant_subquery_single():
     )
 
 
-def test_series_different_aggregations():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_series_different_aggregations(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     v = bt.groupby('municipality').skating_order.nunique() / bt.skating_order.nunique()
     assert_equals_data(
         v,
@@ -450,9 +454,9 @@ def test_series_different_aggregations():
         bt.skating_order.nunique() / bt.groupby('municipality').skating_order.nunique()
 
 
-def test_series_different_base_nodes():
-    bt = get_bt_with_test_data()
-    mt = get_bt_with_railway_data()
+def test_series_different_base_nodes(engine):
+    bt = get_df_with_test_data(engine)
+    mt = get_df_with_railway_data(engine)
     bt_s = bt.skating_order + mt.platforms
 
     assert_equals_data(
@@ -470,8 +474,8 @@ def test_series_different_base_nodes():
     )
 
 
-def test_series_append_same_dtype_different_index() -> None:
-    bt = get_bt_with_test_data(full_data_set=False)[['city', 'skating_order']]
+def test_series_append_same_dtype_different_index(engine) -> None:
+    bt = get_df_with_test_data(engine, full_data_set=False)[['city', 'skating_order']]
     bt_other_index = bt.reset_index(drop=False)
     bt_other_index['_index_skating_order'] = bt_other_index['_index_skating_order'].astype('string')
     bt_other_index = bt_other_index.set_index('_index_skating_order')
@@ -694,8 +698,8 @@ def test__set_item_with_merge_w_conflict_names(engine) -> None:
     assert Expression.table_column_reference('r', 'c') == result2.base_node.column_expressions['c__other']
 
 
-def test__set_item_with_merge_index_level_error() -> None:
-    bt = get_bt_with_test_data(full_data_set=False)
+def test__set_item_with_merge_index_level_error(engine) -> None:
+    bt = get_df_with_test_data(engine, full_data_set=False)
     bt2 = bt.groupby(bt.index_columns)['inhabitants'].sum().to_frame()
 
     bt = bt.reset_index(drop=True)
