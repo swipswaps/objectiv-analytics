@@ -68,19 +68,18 @@ class BaseLocIndex(object):
         """
         returns a boolean series representing the subset to get
         """
-        if not self.obj:
+        from bach.series import SeriesBoolean
+        if not self.obj.index and not isinstance(labels, SeriesBoolean):
             raise ValueError('Cannot access rows by label if DataFrame/Series has no index.')
+
+        if isinstance(labels, SeriesBoolean):
+            return labels
 
         level_0_index = self.obj.index_columns[0]
 
-        if isinstance(labels, (str, int)):
-            return self.obj.index[level_0_index] == labels
-
-        if isinstance(labels, list):
-            loc_conditions = [self.obj.index[level_0_index] == label for label in labels]
-            return reduce(lambda cond1, cond2: cond1 | cond2, loc_conditions)
-
-        return labels
+        list_of_labels = [labels] if isinstance(labels, (str, int)) else labels
+        loc_conditions = [self.obj.index[level_0_index] == label for label in list_of_labels]
+        return reduce(lambda cond1, cond2: cond1 | cond2, loc_conditions)
 
     def _get_sliced_subset(
         self,
