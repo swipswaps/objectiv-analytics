@@ -1,38 +1,22 @@
-from typing import Tuple
-
 import pandas as pd
 import numpy as np
-import pytest
 
 from bach import DataFrame
 
 DATA = {
     "name": ['Alfred', 'Batman', 'Catwoman'],
-    "toy": ['', 'Batmobile', 'Bullwhip'],
-    "born": [pd.Timestamp("1940-04-25"), pd.Timestamp("1940-04-25"), pd.Timestamp("1940-04-25")]
+    "toy": [np.nan, 'Batmobile', 'Bullwhip'],
+    "born": [pd.NaT, pd.Timestamp("1940-04-25"), pd.NaT]
 }
 
 
-@pytest.fixture()
-def dc_dataset(engine) -> Tuple[pd.DataFrame, DataFrame]:
-    df1 = DataFrame.from_pandas(engine=engine, df=pd.DataFrame(DATA), convert_objects=True)
-
-    # need to add missing values separate
-    df1.loc[0, 'toy'] = None
-    df1.loc[[0, 2], 'born'] = None
-    return df1.to_pandas(), df1
-
-
 def test_dropna_w_nan(engine) -> None:
-    pdf = pd.DataFrame({'a': ['a', 'b']})
-
+    pdf = pd.DataFrame(
+        {
+            'a': ['a', 'b', None],
+        },
+    )
     df1 = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
-
-    # cannot convert series with nulls  in DataFrame.from_pandas
-    null_pdf = pd.DataFrame({'a': [None], '0': 2}).set_index('0')
-    null_df1 = DataFrame.from_pandas(engine=engine, df=null_pdf, convert_objects=True)
-
-    df1 = df1.append(null_df1)
     df2 = df1.copy()
     df1['b'] = float(np.nan)
     df2['b'] = pd.Series([1, 2, 3])
@@ -61,19 +45,22 @@ def test_dropna_w_nan(engine) -> None:
     )
 
 
-def test_basic_dropna(dc_dataset) -> None:
-    pdf, df = dc_dataset
+def test_basic_dropna(engine) -> None:
+    pdf = pd.DataFrame(DATA)
+
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     result = df.dropna()
     pd.testing.assert_frame_equal(
         pdf.dropna(),
         result.to_pandas(),
         check_names=False,
-        check_index_type=False,
     )
 
 
-def test_dropna_all(dc_dataset) -> None:
-    pdf, df = dc_dataset
+def test_dropna_all(engine) -> None:
+    pdf = pd.DataFrame(DATA)
+
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     result = df.dropna(how='all')
     pd.testing.assert_frame_equal(
         pdf.dropna(how='all'),
@@ -82,8 +69,10 @@ def test_dropna_all(dc_dataset) -> None:
     )
 
 
-def test_dropna_thresh(dc_dataset) -> None:
-    pdf, df = dc_dataset
+def test_dropna_thresh(engine) -> None:
+    pdf = pd.DataFrame(DATA)
+
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     result = df.dropna(thresh=2)
     pd.testing.assert_frame_equal(
         pdf.dropna(thresh=2),
