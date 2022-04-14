@@ -216,6 +216,18 @@ describe('TrackedLink', () => {
     expect(contexts.location_stack).toEqual([expect.objectContaining({ _type: 'RootLocationContext', id: 'home' })]);
   });
 
+  it('should fallback to defaults when navigationContainerRef is not ready', async () => {
+    const navigationContainerRef = createNavigationContainerRef();
+    jest.spyOn(navigationContainerRef, 'isReady').mockImplementation(() => false);
+    const testContextsFromReactNavigationPlugin = new ContextsFromReactNavigationPlugin({ navigationContainerRef });
+
+    const contexts = { location_stack: [], global_contexts: [] };
+    testContextsFromReactNavigationPlugin.enrich(contexts);
+
+    expect(contexts.location_stack).toEqual([expect.objectContaining({ _type: 'RootLocationContext', id: 'home' })]);
+    expect(contexts.global_contexts).toEqual([expect.objectContaining({ _type: 'PathContext', id: '/' })]);
+  });
+
   it('should correctly generate RootLocation and Path Contexts with nested navigators', async () => {
     const navigationContainerRef = createNavigationContainerRef();
     const tracker = new ReactNativeTracker({

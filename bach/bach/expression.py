@@ -112,7 +112,7 @@ class StringValueToken(ExpressionToken):
     value: str
 
     def to_sql(self, dialect: Dialect) -> str:
-        return escape_raw_sql(quote_string(self.value))
+        return escape_raw_sql(quote_string(dialect, self.value))
 
 
 @dataclass(frozen=True)

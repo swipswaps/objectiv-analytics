@@ -18,7 +18,7 @@ from sqlalchemy.engine import Engine
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
-from bach.types import get_series_type_from_dtype
+from bach.types import get_series_type_from_dtype, AllSupportedLiteralTypes
 from bach.utils import escape_parameter_characters
 from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
@@ -1134,7 +1134,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['DataFrame', 'Series', int, str, float, UUID, pandas.Series]):
+                    value: Union[AllSupportedLiteralTypes, pandas.Series]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -1879,25 +1879,6 @@ class DataFrame:
             This function queries the database.
         """
         return self.to_pandas(limit=n)
-
-    @property
-    def values(self) -> numpy.ndarray:
-        """
-        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
-
-        .. warning::
-           We recommend using :meth:`DataFrame.to_numpy` instead.
-
-        :returns: Returns the values of the DataFrame as numpy.ndarray.
-
-        .. note::
-            This function queries the database.
-        """
-        warnings.warn(
-            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
-            category=DeprecationWarning,
-        )
-        return self.to_numpy()
 
     def to_numpy(self) -> numpy.ndarray:
         """

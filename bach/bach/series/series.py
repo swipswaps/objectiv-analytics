@@ -22,7 +22,7 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype, DtypeOrAlias
+from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 
@@ -606,23 +606,6 @@ class Series(ABC):
             This function queries the database.
         """
         return self.to_pandas(limit=n)
-
-    @property
-    def values(self):
-        """
-        .values property accessor akin pandas.Series.values
-
-        .. warning::
-           We recommend using :meth:`Series.to_numpy` instead.
-
-        .. note::
-            This function queries the database.
-        """
-        warnings.warn(
-            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
-            category=DeprecationWarning,
-        )
-        return self.to_numpy()
 
     @property
     def value(self):
@@ -1608,7 +1591,7 @@ class Series(ABC):
 
 
 def const_to_series(base: Union[Series, DataFrame],
-                    value: Optional[Union[Series, int, float, str, bool, date, datetime, time, UUID]],
+                    value: Optional[Union[AllSupportedLiteralTypes, Series]],
                     name: str = None) -> Series:
     """
     INTERNAL: Take a value and return a Series representing a column with that value.
@@ -1631,7 +1614,11 @@ def const_to_series(base: Union[Series, DataFrame],
     return series_type.from_const(base=base, value=value, name=name)
 
 
-def variable_series(base: Union[Series, DataFrame], value: Any, name: str) -> Series:
+def variable_series(
+    base: Union[Series, DataFrame],
+    value: Union[AllSupportedLiteralTypes, Series],
+    name: str
+) -> Series:
     """
     INTERNAL: Return a series with the same dtype as the value, but with a VariableToken instead of the
     value's literal in the series.expression.

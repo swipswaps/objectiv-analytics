@@ -23,7 +23,6 @@ Value accessors
     Series.head
     Series.to_pandas
     Series.array
-    Series.values
     Series.value
 
 Attributes and underlying data

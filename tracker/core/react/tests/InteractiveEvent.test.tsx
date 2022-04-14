@@ -2,10 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeInteractiveEvent, Tracker } from '@objectiv/tracker-core';
+import { makeContentContext, makeInteractiveEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import { makeContentContext, TrackingContextProvider, trackInteractiveEvent, useInteractiveEventTracker } from '../src';
+import { TrackingContextProvider, trackInteractiveEvent, useInteractiveEventTracker } from '../src';
 
 describe('InteractiveEvent', () => {
   beforeEach(() => {

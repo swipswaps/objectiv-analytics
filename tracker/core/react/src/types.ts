@@ -7,19 +7,9 @@ import { GlobalContexts, Tracker, TrackEventOptions } from '@objectiv/tracker-co
 import { useEffect } from 'react';
 
 /**
- * A uniquely identifiable LocationContext
- */
-export type LocationContext<T extends AbstractLocationContext> = T & {
-  /**
-   * A unique identifier, generated at rendering time, used internally to identify a Location Context uniquely
-   */
-  __location_id: string;
-};
-
-/**
  * An ordered list of uniquely identifiable LocationContexts
  */
-export type LocationStack = LocationContext<AbstractLocationContext>[];
+export type LocationStack = AbstractLocationContext[];
 
 /**
  * A custom generic EffectCallback that receives the monitored `previousState` and `state` values
