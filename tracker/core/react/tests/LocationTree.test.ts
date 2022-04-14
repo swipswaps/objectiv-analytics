@@ -2,17 +2,14 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Tracker } from '@objectiv/tracker-core';
 import {
-  locationNodes,
-  LocationTree,
   makeContentContext,
   makeLinkContext,
   makeNavigationContext,
   makePressableContext,
   makeRootLocationContext,
-  rootNode,
-} from '../src';
+} from '@objectiv/tracker-core';
+import { locationNodes, LocationTree, rootNode } from '../src';
 
 describe('LocationTree', () => {
   beforeEach(() => {
@@ -53,25 +50,25 @@ describe('LocationTree', () => {
         id: 'location-tree-root',
       }),
       expect.objectContaining({
-        __location_id: root.__location_id,
+        __instance_id: root.__instance_id,
         _type: 'RootLocationContext',
         id: 'root',
-        parentLocationId: rootNode.__location_id,
+        parentLocationId: rootNode.__instance_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',
         id: 'nav',
-        parentLocationId: root.__location_id,
+        parentLocationId: root.__instance_id,
       }),
       expect.objectContaining({
         _type: 'PressableContext',
         id: 'button',
-        parentLocationId: nav.__location_id,
+        parentLocationId: nav.__instance_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',
         id: 'footer',
-        parentLocationId: root.__location_id,
+        parentLocationId: root.__instance_id,
       }),
     ]);
   });
@@ -100,20 +97,20 @@ describe('LocationTree', () => {
         id: 'location-tree-root',
       }),
       expect.objectContaining({
-        __location_id: root.__location_id,
+        __instance_id: root.__instance_id,
         _type: 'RootLocationContext',
         id: 'root',
-        parentLocationId: rootNode.__location_id,
+        parentLocationId: rootNode.__instance_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',
         id: 'nav',
-        parentLocationId: root.__location_id,
+        parentLocationId: root.__instance_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',
         id: 'footer',
-        parentLocationId: root.__location_id,
+        parentLocationId: root.__instance_id,
       }),
     ]);
   });
@@ -142,15 +139,15 @@ describe('LocationTree', () => {
         id: 'location-tree-root',
       }),
       expect.objectContaining({
-        __location_id: root.__location_id,
+        __instance_id: root.__instance_id,
         _type: 'RootLocationContext',
         id: 'root',
-        parentLocationId: rootNode.__location_id,
+        parentLocationId: rootNode.__instance_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',
         id: 'footer',
-        parentLocationId: root.__location_id,
+        parentLocationId: root.__instance_id,
       }),
     ]);
   });
@@ -188,20 +185,20 @@ describe('LocationTree', () => {
         id: 'location-tree-root',
       }),
       expect.objectContaining({
-        __location_id: root.__location_id,
+        __instance_id: root.__instance_id,
         _type: 'RootLocationContext',
         id: 'root',
-        parentLocationId: rootNode.__location_id,
+        parentLocationId: rootNode.__instance_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',
         id: 'nav',
-        parentLocationId: root.__location_id,
+        parentLocationId: root.__instance_id,
       }),
       expect.objectContaining({
         _type: 'PressableContext',
         id: 'button',
-        parentLocationId: nav.__location_id,
+        parentLocationId: nav.__instance_id,
       }),
     ]);
   });
@@ -293,39 +290,5 @@ describe('LocationTree', () => {
     expect(console.log).toHaveBeenNthCalledWith(7, '    ContentContext:3a');
     expect(console.log).toHaveBeenNthCalledWith(8, '  ContentContext:footer');
     expect(console.log).toHaveBeenNthCalledWith(9, '    ContentContext:4');
-  });
-
-  it('should initialize the LocationTree with the Location Contexts originating from Plugins', () => {
-    const tracker = new Tracker({
-      applicationId: 'app-id',
-      plugins: [
-        {
-          pluginName: 'TestPlugin',
-          enrich: ({ location_stack }) => {
-            location_stack.push({
-              __location_context: true,
-              _type: 'LocationContext',
-              id: 'test',
-            });
-          },
-          isUsable() {
-            return true;
-          },
-        },
-      ],
-    });
-
-    jest.spyOn(LocationTree, 'add');
-
-    LocationTree.initialize(tracker);
-
-    expect(LocationTree.add).toHaveBeenCalledTimes(1);
-    expect(LocationTree.add).toHaveBeenCalledWith(
-      expect.objectContaining({
-        _type: 'LocationContext',
-        id: 'test',
-      }),
-      null
-    );
   });
 });

@@ -14,7 +14,7 @@ describe('Browser / SSR', () => {
   const OLD_ENV = process.env;
 
   beforeEach(() => {
-    jest.spyOn(LocationTree, 'initialize');
+    jest.spyOn(LocationTree, 'clear');
     jest.spyOn(LocationTree, 'add');
     jest.spyOn(LocationTree, 'remove');
     process.env = { ...OLD_ENV };
@@ -46,7 +46,7 @@ describe('Browser / SSR', () => {
 
     unmount();
 
-    expect(LocationTree.initialize).not.toHaveBeenCalled();
+    expect(LocationTree.clear).not.toHaveBeenCalled();
     expect(LocationTree.add).not.toHaveBeenCalled();
     expect(LocationTree.remove).not.toHaveBeenCalled();
   });
@@ -72,7 +72,7 @@ describe('Browser / SSR', () => {
 
     unmount();
 
-    expect(LocationTree.initialize).toHaveBeenCalled();
+    expect(LocationTree.clear).toHaveBeenCalled();
     expect(LocationTree.add).toHaveBeenCalled();
     expect(LocationTree.remove).toHaveBeenCalled();
   });

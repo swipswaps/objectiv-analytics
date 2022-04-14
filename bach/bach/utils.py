@@ -6,6 +6,11 @@ from bach.expression import Expression
 from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
 
+class FeatureRange(NamedTuple):
+    min: int
+    max: int
+
+
 class ResultSeries(NamedTuple):
     name: str
     expression: 'Expression'
@@ -49,6 +54,9 @@ def escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
 
 
 def is_valid_column_name(dialect: Dialect, name: str) -> bool:
+    """
+    Check that the given name is a valid column name in the SQL dialect.
+    """
     if is_postgres(dialect):
         # Identifiers longer than 63 characters are not necessarily wrong, but they will be truncated which
         # could lead to identifier collisions, so we just disallow it.
