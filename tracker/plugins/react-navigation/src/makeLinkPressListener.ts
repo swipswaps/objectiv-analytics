@@ -2,8 +2,8 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { TrackerConsole } from '@objectiv/tracker-core';
-import { makeLinkContext, TrackingContext, trackPressEvent } from '@objectiv/tracker-react-core';
+import { makeLinkContext, TrackerConsole } from '@objectiv/tracker-core';
+import { TrackingContext, trackPressEvent } from '@objectiv/tracker-react-core';
 import { findFocusedRoute, NavigationState } from '@react-navigation/native';
 
 /**

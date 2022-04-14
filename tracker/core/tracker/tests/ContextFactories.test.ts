@@ -2,6 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { matchUUID } from '@objectiv/testing-tools';
 import {
   makeApplicationContext,
   makeContentContext,
@@ -23,6 +24,7 @@ import {
 describe('Context Factories', () => {
   it('ApplicationContext', () => {
     expect(makeApplicationContext({ id: 'app' })).toStrictEqual({
+      __instance_id: matchUUID,
       __global_context: true,
       _type: 'ApplicationContext',
       id: 'app',
@@ -31,6 +33,7 @@ describe('Context Factories', () => {
 
   it('ContentContext', () => {
     expect(makeContentContext({ id: 'content-A' })).toStrictEqual({
+      __instance_id: matchUUID,
       __location_context: true,
       _type: 'ContentContext',
       id: 'content-A',
@@ -39,6 +42,7 @@ describe('Context Factories', () => {
 
   it('CookieIdContext', () => {
     expect(makeCookieIdContext({ id: 'error-id', cookie_id: '12345' })).toStrictEqual({
+      __instance_id: matchUUID,
       __global_context: true,
       _type: 'CookieIdContext',
       id: 'error-id',
@@ -48,6 +52,7 @@ describe('Context Factories', () => {
 
   it('ExpandableContext', () => {
     expect(makeExpandableContext({ id: 'accordion-a' })).toStrictEqual({
+      __instance_id: matchUUID,
       __location_context: true,
       _type: 'ExpandableContext',
       id: 'accordion-a',
@@ -58,6 +63,7 @@ describe('Context Factories', () => {
     expect(
       makeHttpContext({ id: 'http', referrer: 'referrer', user_agent: 'ua', remote_address: '0.0.0.0' })
     ).toStrictEqual({
+      __instance_id: matchUUID,
       __global_context: true,
       _type: 'HttpContext',
       id: 'http',
@@ -66,20 +72,20 @@ describe('Context Factories', () => {
       remote_address: '0.0.0.0',
     });
 
-    expect(
-      makeHttpContext({ id: 'http', referrer: 'referrer', user_agent: 'ua' })
-    ).toStrictEqual({
+    expect(makeHttpContext({ id: 'http', referrer: 'referrer', user_agent: 'ua' })).toStrictEqual({
+      __instance_id: matchUUID,
       __global_context: true,
       _type: 'HttpContext',
       id: 'http',
       referrer: 'referrer',
       user_agent: 'ua',
-      remote_address: null
+      remote_address: null,
     });
   });
 
   it('InputContext', () => {
     expect(makeInputContext({ id: 'input-1' })).toStrictEqual({
+      __instance_id: matchUUID,
       __location_context: true,
       _type: 'InputContext',
       id: 'input-1',
@@ -88,6 +94,7 @@ describe('Context Factories', () => {
 
   it('LinkContext', () => {
     expect(makeLinkContext({ id: 'confirm-data', href: '/some/url' })).toStrictEqual({
+      __instance_id: matchUUID,
       __location_context: true,
       __pressable_context: true,
       _type: 'LinkContext',
@@ -105,6 +112,7 @@ describe('Context Factories', () => {
         source: 'test-source',
       })
     ).toStrictEqual({
+      __instance_id: matchUUID,
       __global_context: true,
       _type: 'MarketingContext',
       id: 'utm',
@@ -114,6 +122,7 @@ describe('Context Factories', () => {
       term: null,
       content: null,
     });
+
     expect(
       makeMarketingContext({
         id: 'utm',
@@ -124,6 +133,7 @@ describe('Context Factories', () => {
         content: 'test-content',
       })
     ).toStrictEqual({
+      __instance_id: matchUUID,
       __global_context: true,
       _type: 'MarketingContext',
       id: 'utm',
@@ -137,6 +147,7 @@ describe('Context Factories', () => {
 
   it('MediaPlayerContext', () => {
     expect(makeMediaPlayerContext({ id: 'player-1' })).toStrictEqual({
+      __instance_id: matchUUID,
       __location_context: true,
       _type: 'MediaPlayerContext',
       id: 'player-1',
@@ -145,6 +156,7 @@ describe('Context Factories', () => {
 
   it('NavigationContext', () => {
     expect(makeNavigationContext({ id: 'top-nav' })).toStrictEqual({
+      __instance_id: matchUUID,
       __location_context: true,
       _type: 'NavigationContext',
       id: 'top-nav',
@@ -153,6 +165,7 @@ describe('Context Factories', () => {
 
   it('OverlayContext', () => {
     expect(makeOverlayContext({ id: 'top-menu' })).toStrictEqual({
+      __instance_id: matchUUID,
       __location_context: true,
       _type: 'OverlayContext',
       id: 'top-menu',
@@ -161,6 +174,7 @@ describe('Context Factories', () => {
 
   it('PathContext', () => {
     expect(makePathContext({ id: '/some/path' })).toStrictEqual({
+      __instance_id: matchUUID,
       __global_context: true,
       _type: 'PathContext',
       id: '/some/path',
@@ -169,6 +183,7 @@ describe('Context Factories', () => {
 
   it('PressableContext', () => {
     expect(makePressableContext({ id: 'confirm-data' })).toStrictEqual({
+      __instance_id: matchUUID,
       __location_context: true,
       __pressable_context: true,
       _type: 'PressableContext',
@@ -178,6 +193,7 @@ describe('Context Factories', () => {
 
   it('RootLocationContext', () => {
     expect(makeRootLocationContext({ id: 'page-A' })).toStrictEqual({
+      __instance_id: matchUUID,
       __location_context: true,
       _type: 'RootLocationContext',
       id: 'page-A',
@@ -186,6 +202,7 @@ describe('Context Factories', () => {
 
   it('SessionContext', () => {
     expect(makeSessionContext({ id: 'session-id', hit_number: 123 })).toStrictEqual({
+      __instance_id: matchUUID,
       __global_context: true,
       _type: 'SessionContext',
       id: 'session-id',

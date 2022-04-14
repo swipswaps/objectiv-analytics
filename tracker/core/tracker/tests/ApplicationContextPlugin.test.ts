@@ -2,8 +2,16 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, TrackerConsole, TrackerEvent } from '../src';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
+import {
+  ApplicationContextPlugin,
+  ContextsConfig,
+  generateUUID,
+  Tracker,
+  TrackerConfig,
+  TrackerConsole,
+  TrackerEvent,
+} from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -19,6 +27,7 @@ describe('ApplicationContextPlugin', () => {
     expect(tracker.plugins.get('ApplicationContextPlugin')).toEqual(
       expect.objectContaining({
         applicationContext: {
+          __instance_id: matchUUID,
           __global_context: true,
           _type: 'ApplicationContext',
           id: 'app-id',
@@ -39,8 +48,8 @@ describe('ApplicationContextPlugin', () => {
     const testTracker = new Tracker({ ...trackerConfig });
     const eventContexts: ContextsConfig = {
       global_contexts: [
-        { __global_context: true, _type: 'section', id: 'X' },
-        { __global_context: true, _type: 'section', id: 'Y' },
+        { __instance_id: generateUUID(), __global_context: true, _type: 'Context', id: 'X' },
+        { __instance_id: generateUUID(), __global_context: true, _type: 'Context', id: 'Y' },
       ],
     };
     const testEvent = new TrackerEvent({ _type: 'test-event', ...eventContexts });
@@ -50,6 +59,7 @@ describe('ApplicationContextPlugin', () => {
     expect(trackedEvent.global_contexts).toEqual(
       expect.arrayContaining([
         {
+          __instance_id: matchUUID,
           __global_context: true,
           _type: 'ApplicationContext',
           id: 'app-id',

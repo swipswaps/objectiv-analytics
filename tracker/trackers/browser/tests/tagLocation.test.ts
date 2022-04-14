@@ -113,43 +113,51 @@ describe('tagLocation', () => {
   });
 
   it('should allow overriding whether to track click, blur and visibility events via options', () => {
-    expect(tagContent({ id: 'test' })).toStrictEqual({
+    const taggingAttributesA = tagContent({ id: 'test' });
+    expect(taggingAttributesA).toStrictEqual({
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributesA
+          ? JSON.parse(taggingAttributesA[TaggingAttribute.context]).__instance_id
+          : null,
         __location_context: true,
         _type: 'ContentContext',
         id: 'test',
       }),
     });
 
-    expect(
-      tagOverlay({
-        id: 'test',
-        options: {
-          trackVisibility: false,
-        },
-      })
-    ).toStrictEqual({
+    const taggingAttributesB = tagOverlay({
+      id: 'test',
+      options: {
+        trackVisibility: false,
+      },
+    });
+    expect(taggingAttributesB).toStrictEqual({
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributesB
+          ? JSON.parse(taggingAttributesB[TaggingAttribute.context]).__instance_id
+          : null,
         __location_context: true,
         _type: 'OverlayContext',
         id: 'test',
       }),
     });
 
-    expect(
-      tagContent({
-        id: 'test',
-        options: {
-          trackClicks: false,
-          trackBlurs: true,
-          trackVisibility: { mode: 'manual', isVisible: true },
-        },
-      })
-    ).toStrictEqual({
+    const taggingAttributesC = tagContent({
+      id: 'test',
+      options: {
+        trackClicks: false,
+        trackBlurs: true,
+        trackVisibility: { mode: 'manual', isVisible: true },
+      },
+    });
+    expect(taggingAttributesC).toStrictEqual({
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributesC
+          ? JSON.parse(taggingAttributesC[TaggingAttribute.context]).__instance_id
+          : null,
         __location_context: true,
         _type: 'ContentContext',
         id: 'test',
@@ -162,19 +170,27 @@ describe('tagLocation', () => {
 
   it('should allow overriding parent auto detection via options', () => {
     const parent = tagContent({ id: 'parent' });
-    expect(tagContent({ id: 'test' })).toStrictEqual({
+    const taggingAttributesA = tagContent({ id: 'test' });
+    expect(taggingAttributesA).toStrictEqual({
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributesA
+          ? JSON.parse(taggingAttributesA[TaggingAttribute.context]).__instance_id
+          : null,
         __location_context: true,
         _type: 'ContentContext',
         id: 'test',
       }),
     });
-    expect(tagContent({ id: 'test', options: { parent } })).toStrictEqual({
+    const taggingAttributesB = tagContent({ id: 'test', options: { parent } });
+    expect(taggingAttributesB).toStrictEqual({
       [TaggingAttribute.elementId]: matchUUID,
       // @ts-ignore
       [TaggingAttribute.parentElementId]: parent[TaggingAttribute.elementId],
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributesB
+          ? JSON.parse(taggingAttributesB[TaggingAttribute.context]).__instance_id
+          : null,
         __location_context: true,
         _type: 'ContentContext',
         id: 'test',
@@ -190,6 +206,7 @@ describe('tagLocation', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         __pressable_context: true,
         _type: 'PressableContext',
@@ -207,6 +224,7 @@ describe('tagLocation', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'ContentContext',
         id: 'test-section',
@@ -224,6 +242,7 @@ describe('tagLocation', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'ExpandableContext',
         id: 'test-expandable',
@@ -240,6 +259,7 @@ describe('tagLocation', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'InputContext',
         id: 'test-input',
@@ -258,6 +278,7 @@ describe('tagLocation', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         __pressable_context: true,
         _type: 'LinkContext',
@@ -276,6 +297,7 @@ describe('tagLocation', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'MediaPlayerContext',
         id: 'test-media-player',
@@ -291,6 +313,7 @@ describe('tagLocation', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'NavigationContext',
         id: 'test-nav',
@@ -306,6 +329,7 @@ describe('tagLocation', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'OverlayContext',
         id: 'test-overlay',

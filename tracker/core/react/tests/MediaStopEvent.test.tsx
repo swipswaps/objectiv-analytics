@@ -2,10 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeMediaStopEvent, Tracker } from '@objectiv/tracker-core';
+import { makeContentContext, makeMediaStopEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import { makeContentContext, TrackingContextProvider, trackMediaStopEvent, useMediaStopEventTracker } from '../src';
+import { TrackingContextProvider, trackMediaStopEvent, useMediaStopEventTracker } from '../src';
 
 describe('trackMediaStop', () => {
   beforeEach(() => {
