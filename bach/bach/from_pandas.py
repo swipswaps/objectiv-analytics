@@ -230,6 +230,9 @@ def _from_pd_shared(
             all_dtypes[str(column)] = dtype
             continue
 
+        if df_copy[column].dropna().empty:
+            raise ValueError(f'{column} column has no non-nullable values, cannot infer type.')
+
         if convert_objects:
             df_copy[column] = df_copy[column].convert_dtypes(
                 convert_integer=False, convert_boolean=False, convert_floating=False,
