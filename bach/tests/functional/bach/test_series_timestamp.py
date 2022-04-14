@@ -166,7 +166,7 @@ def types_plus_min(engine: Engine, data: List[list], base_value: Any, base_type:
             assert bt[f'{base_name}_min_{name}'].dtype == min_type
 
     assert_equals_data(
-        bt[:1],
+        bt.sort_index()[:1],
         expected_columns=list(bt.all_series.keys()),
         expected_data=[
             [1, 93485, *expected],
