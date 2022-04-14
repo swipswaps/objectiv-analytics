@@ -3,13 +3,15 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { generateUUID, TrackerConsole, TrackerEvent, TrackerPlatform } from '@objectiv/tracker-core';
 import {
+  generateUUID,
   GlobalContextName,
-  GlobalContextValidationRule,
   LocationContextName,
-  LocationContextValidationRule,
-} from '../src';
+  TrackerConsole,
+  TrackerEvent,
+  TrackerPlatform,
+} from '@objectiv/tracker-core';
+import { GlobalContextValidationRule, LocationContextValidationRule } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 

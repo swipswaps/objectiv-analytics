@@ -2,6 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import { GlobalContextName, LocationContextName } from '../ContextNames';
 import { isDevMode } from '../helpers';
 import { TrackerInterface } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
@@ -24,8 +25,7 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    */
   initialize({ platform }: TrackerInterface) {
     if (globalThis.objectiv?.developerTools) {
-      const { GlobalContextName, GlobalContextValidationRule, LocationContextName, LocationContextValidationRule } =
-        globalThis.objectiv.developerTools;
+      const { GlobalContextValidationRule, LocationContextValidationRule } = globalThis.objectiv.developerTools;
 
       this.validationRules = [
         new GlobalContextValidationRule({

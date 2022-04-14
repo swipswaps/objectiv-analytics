@@ -10,7 +10,6 @@ export * from './validationRules/LocationContextValidationRule';
 
 export * from './ContextErrorMessages';
 export * from './ContextErrorType';
-export * from './ContextNames';
 export * from './makeGlobalDeveloperTools';
 export * from './TrackerDeveloperToolsInterface';
 export * from './types';

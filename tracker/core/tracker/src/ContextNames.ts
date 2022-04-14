@@ -2,11 +2,6 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-// TODO: generate these from schema
-
-/**
- * A type representing all GlobalContext names
- */
 export enum GlobalContextName {
   ApplicationContext = 'ApplicationContext',
   CookieIdContext = 'CookieIdContext',
@@ -16,9 +11,6 @@ export enum GlobalContextName {
   SessionContext = 'SessionContext',
 }
 
-/**
- * All LocationContext names
- */
 export enum LocationContextName {
   ContentContext = 'ContentContext',
   ExpandableContext = 'ExpandableContext',

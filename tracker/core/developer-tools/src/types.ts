@@ -2,9 +2,8 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { TrackerPlatform } from '@objectiv/tracker-core';
+import { GlobalContextName, LocationContextName, TrackerPlatform } from '@objectiv/tracker-core';
 import { GlobalContextErrorType, LocationContextErrorType } from './ContextErrorType';
-import { GlobalContextName, LocationContextName } from './ContextNames';
 
 /**
  * Error messages are key:value structures where the keu is the contextName and the value is the message itself.

@@ -10,6 +10,7 @@ export * from './plugins/OpenTaxonomyValidationPlugin';
 export * from './cleanObjectFromInternalProperties';
 export * from './Context';
 export * from './ContextFactories';
+export * from './ContextNames';
 export * from './EventFactories';
 export * from './helpers';
 export * from './NoopConsoleImplementation';

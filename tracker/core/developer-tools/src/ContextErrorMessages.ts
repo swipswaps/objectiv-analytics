@@ -2,8 +2,8 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import { GlobalContextName, LocationContextName } from '@objectiv/tracker-core';
 import { GlobalContextErrorType, LocationContextErrorType } from './ContextErrorType';
-import { GlobalContextName, LocationContextName } from './ContextNames';
 import { ContextErrorMessages } from './types';
 
 export const GlobalContextErrorMessages: ContextErrorMessages<GlobalContextErrorType, GlobalContextName> = {

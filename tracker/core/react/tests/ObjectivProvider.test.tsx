@@ -2,14 +2,16 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { GlobalContextValidationRule, LocationContextValidationRule } from '@objectiv/developer-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   GlobalContextName,
-  GlobalContextValidationRule,
   LocationContextName,
-  LocationContextValidationRule,
-} from '@objectiv/developer-tools';
-import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { makeApplicationLoadedEvent, Tracker, TrackerConsole, TrackerPlatform } from '@objectiv/tracker-core';
+  makeApplicationLoadedEvent,
+  Tracker,
+  TrackerConsole,
+  TrackerPlatform,
+} from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { ObjectivProvider, useTrackingContext } from '../src';

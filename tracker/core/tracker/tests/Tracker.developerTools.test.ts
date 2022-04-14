@@ -3,7 +3,14 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { Tracker, TrackerConfig, TrackerConsole, TrackerPlatform } from '../src';
+import {
+  GlobalContextName,
+  LocationContextName,
+  Tracker,
+  TrackerConfig,
+  TrackerConsole,
+  TrackerPlatform,
+} from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -13,8 +20,7 @@ describe('Tracker', () => {
   });
 
   it('should instantiate with just applicationId (with developer tools)', async () => {
-    const { GlobalContextName, GlobalContextValidationRule, LocationContextName, LocationContextValidationRule } =
-      await import('@objectiv/developer-tools');
+    const { GlobalContextValidationRule, LocationContextValidationRule } = await import('@objectiv/developer-tools');
 
     jest.spyOn(console, 'log');
     expect(console.log).not.toHaveBeenCalled();

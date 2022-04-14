@@ -3,6 +3,7 @@
  */
 
 import {
+  GlobalContextName,
   makeHttpContext,
   TrackerConsole,
   TrackerEvent,
@@ -25,7 +26,7 @@ export class HttpContextPlugin implements TrackerPluginInterface {
    */
   initialize({ global_contexts, platform }: TrackerInterface): void {
     if (globalThis.objectiv?.developerTools) {
-      const { GlobalContextName, GlobalContextValidationRule } = globalThis.objectiv.developerTools;
+      const { GlobalContextValidationRule } = globalThis.objectiv.developerTools;
       this.validationRules = [
         new GlobalContextValidationRule({
           platform,

@@ -2,7 +2,6 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { GlobalContextName, LocationContextName } from './ContextNames';
 import { TrackerDeveloperTools } from './TrackerDeveloperToolsInterface';
 import { GlobalContextValidationRule } from './validationRules/GlobalContextValidationRule';
 import { LocationContextValidationRule } from './validationRules/LocationContextValidationRule';
@@ -11,9 +10,7 @@ import { LocationContextValidationRule } from './validationRules/LocationContext
  * A global object containing all DeveloperTools
  */
 export const developerTools: TrackerDeveloperTools = {
-  GlobalContextName,
   GlobalContextValidationRule,
-  LocationContextName,
   LocationContextValidationRule,
 };
 
