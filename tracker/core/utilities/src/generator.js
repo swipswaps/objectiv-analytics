@@ -21,7 +21,7 @@ const fs = require('fs');
 const JSON5 = require('json5');
 
 const COPYRIGHT = `/*
- * Copyright 2021-${new Date().getFullYear()} Objectiv B.V.
+ * Copyright ${new Date().getFullYear()} Objectiv B.V.
  */
  \n
 `;
@@ -146,7 +146,8 @@ function createFactory(
   // by parent classes.
   const object_discriminator = {};
   if (params.object_type === 'context') {
-    object_discriminator[CONTEXT_DISCRIMINATOR] = { value: `'${params.class_name}'` };
+    const enumName = params.stack_type === 'location_contexts' ? 'LocationContextName' : 'GlobalContextName';
+    object_discriminator[CONTEXT_DISCRIMINATOR] = { value: `${enumName}.${params.class_name}` };
   } else {
     object_discriminator[EVENT_DISCRIMINATOR] = { value: `'${params.class_name}'` };
   }
@@ -667,6 +668,7 @@ Object.keys(object_factories).forEach((factory_type) => {
   const import_statements = [`import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';`];
 
   if (factory_type === 'ContextFactories') {
+    import_statements.push(`import { GlobalContextName, LocationContextName } from "./ContextNames";`);
     import_statements.push(`import { generateUUID } from "./helpers";`);
   }
 
@@ -707,6 +709,30 @@ Object.keys(object_declarations).forEach((definition_type) => {
   );
   console.log(`Written ${Object.values(object_declarations[definition_type]).length} definitions to ${filename}`);
 });
+
+// Generate ContextNames.ts enum definitions in Core Tracker
+const filename = `${core_tracker_package_dir}ContextNames.ts`;
+let content = '';
+
+Object.keys(object_declarations).forEach((definition_type) => {
+  // generate context names enum if we are writing core tracker location_contexts or global_contexts definitions
+  if (['location_contexts', 'global_contexts'].includes(definition_type)) {
+    const enumName = definition_type === 'location_contexts' ? 'LocationContextName' : 'GlobalContextName';
+    const contextNames = Object.keys(object_declarations[definition_type]).sort();
+
+    // generate enum
+    content += `export enum ${enumName} { 
+      ${contextNames.map((name) => `${name} = '${name}'`).join(',\n')}
+    }\n\n`;
+  }
+});
+
+// write ContextNames.ts to file, if we have any
+if (content) {
+  fs.writeFileSync(filename, COPYRIGHT);
+  fs.appendFileSync(filename, content);
+  console.log(`Written Context Names Enums definitions to ${filename}`);
+}
 
 // generate index for all declarations
 // this includes all generated types, as well as those in static.d.ts

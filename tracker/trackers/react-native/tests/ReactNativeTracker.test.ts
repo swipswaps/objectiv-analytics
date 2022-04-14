@@ -3,7 +3,13 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { TrackerConsole, TrackerEvent, TrackerQueue, TrackerTransportRetry } from '@objectiv/tracker-core';
+import {
+  GlobalContextName,
+  TrackerConsole,
+  TrackerEvent,
+  TrackerQueue,
+  TrackerTransportRetry,
+} from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
@@ -135,7 +141,7 @@ describe('ReactNativeTracker', () => {
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            _type: 'ApplicationContext',
+            _type: GlobalContextName.ApplicationContext,
             id: 'app-id',
           }),
         ])

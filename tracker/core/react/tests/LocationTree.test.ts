@@ -3,6 +3,7 @@
  */
 
 import {
+  LocationContextName,
   makeContentContext,
   makeLinkContext,
   makeNavigationContext,
@@ -51,22 +52,22 @@ describe('LocationTree', () => {
       }),
       expect.objectContaining({
         __instance_id: root.__instance_id,
-        _type: 'RootLocationContext',
+        _type: LocationContextName.RootLocationContext,
         id: 'root',
         parentLocationId: rootNode.__instance_id,
       }),
       expect.objectContaining({
-        _type: 'NavigationContext',
+        _type: LocationContextName.NavigationContext,
         id: 'nav',
         parentLocationId: root.__instance_id,
       }),
       expect.objectContaining({
-        _type: 'PressableContext',
+        _type: LocationContextName.PressableContext,
         id: 'button',
         parentLocationId: nav.__instance_id,
       }),
       expect.objectContaining({
-        _type: 'NavigationContext',
+        _type: LocationContextName.NavigationContext,
         id: 'footer',
         parentLocationId: root.__instance_id,
       }),
@@ -98,17 +99,17 @@ describe('LocationTree', () => {
       }),
       expect.objectContaining({
         __instance_id: root.__instance_id,
-        _type: 'RootLocationContext',
+        _type: LocationContextName.RootLocationContext,
         id: 'root',
         parentLocationId: rootNode.__instance_id,
       }),
       expect.objectContaining({
-        _type: 'NavigationContext',
+        _type: LocationContextName.NavigationContext,
         id: 'nav',
         parentLocationId: root.__instance_id,
       }),
       expect.objectContaining({
-        _type: 'NavigationContext',
+        _type: LocationContextName.NavigationContext,
         id: 'footer',
         parentLocationId: root.__instance_id,
       }),
@@ -140,12 +141,12 @@ describe('LocationTree', () => {
       }),
       expect.objectContaining({
         __instance_id: root.__instance_id,
-        _type: 'RootLocationContext',
+        _type: LocationContextName.RootLocationContext,
         id: 'root',
         parentLocationId: rootNode.__instance_id,
       }),
       expect.objectContaining({
-        _type: 'NavigationContext',
+        _type: LocationContextName.NavigationContext,
         id: 'footer',
         parentLocationId: root.__instance_id,
       }),
@@ -186,17 +187,17 @@ describe('LocationTree', () => {
       }),
       expect.objectContaining({
         __instance_id: root.__instance_id,
-        _type: 'RootLocationContext',
+        _type: LocationContextName.RootLocationContext,
         id: 'root',
         parentLocationId: rootNode.__instance_id,
       }),
       expect.objectContaining({
-        _type: 'NavigationContext',
+        _type: LocationContextName.NavigationContext,
         id: 'nav',
         parentLocationId: root.__instance_id,
       }),
       expect.objectContaining({
-        _type: 'PressableContext',
+        _type: LocationContextName.PressableContext,
         id: 'button',
         parentLocationId: nav.__instance_id,
       }),
@@ -281,14 +282,14 @@ describe('LocationTree', () => {
     LocationTree.log();
 
     expect(console.log).toHaveBeenCalledTimes(9);
-    expect(console.log).toHaveBeenNthCalledWith(1, 'ContentContext:root');
-    expect(console.log).toHaveBeenNthCalledWith(2, '  ContentContext:1');
-    expect(console.log).toHaveBeenNthCalledWith(3, '  ContentContext:2');
-    expect(console.log).toHaveBeenNthCalledWith(4, '    ContentContext:2a');
-    expect(console.log).toHaveBeenNthCalledWith(5, '    ContentContext:2b');
-    expect(console.log).toHaveBeenNthCalledWith(6, '  ContentContext:3');
-    expect(console.log).toHaveBeenNthCalledWith(7, '    ContentContext:3a');
-    expect(console.log).toHaveBeenNthCalledWith(8, '  ContentContext:footer');
-    expect(console.log).toHaveBeenNthCalledWith(9, '    ContentContext:4');
+    expect(console.log).toHaveBeenNthCalledWith(1, `${LocationContextName.ContentContext}:root`);
+    expect(console.log).toHaveBeenNthCalledWith(2, `  ${LocationContextName.ContentContext}:1`);
+    expect(console.log).toHaveBeenNthCalledWith(3, `  ${LocationContextName.ContentContext}:2`);
+    expect(console.log).toHaveBeenNthCalledWith(4, `    ${LocationContextName.ContentContext}:2a`);
+    expect(console.log).toHaveBeenNthCalledWith(5, `    ${LocationContextName.ContentContext}:2b`);
+    expect(console.log).toHaveBeenNthCalledWith(6, `  ${LocationContextName.ContentContext}:3`);
+    expect(console.log).toHaveBeenNthCalledWith(7, `    ${LocationContextName.ContentContext}:3a`);
+    expect(console.log).toHaveBeenNthCalledWith(8, `  ${LocationContextName.ContentContext}:footer`);
+    expect(console.log).toHaveBeenNthCalledWith(9, `    ${LocationContextName.ContentContext}:4`);
   });
 });
