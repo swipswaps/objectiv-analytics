@@ -3,8 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
-    get_df_with_test_data
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
 
 def test_reset_index_to_empty(engine):
@@ -46,13 +45,6 @@ def test_reset_index_to_empty(engine):
     invalid_level = 'random'
     with pytest.raises(ValueError, match=fr"'{invalid_level}' level not found"):
         bt_cp.reset_index(level=['city', invalid_level])
-
-
-def test_reset_index_no_change():
-    bt = get_bt_with_test_data()
-    bt = bt.set_index(['skating_order', 'city'], append=True)
-    lbt = bt.reset_index(level=[])
-    assert list(lbt.index.keys()) == list(bt.index.keys())
 
 
 def test_set_index(engine):

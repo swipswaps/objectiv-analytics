@@ -4,12 +4,11 @@
 
 import { AbstractLocationContext } from '@objectiv/schema';
 import { generateUUID, getLocationPath } from '@objectiv/tracker-core';
-import { LocationContext } from '../types';
 
 /**
  * LocationTree nodes have the same shape of LocationContext, but they can have a parent LocationNode themselves.
  */
-export type LocationNode = LocationContext<AbstractLocationContext> & {
+export type LocationNode = AbstractLocationContext & {
   /**
    * The parent LocationNode identifier.
    */
@@ -21,7 +20,7 @@ export type LocationNode = LocationContext<AbstractLocationContext> & {
  */
 export const rootNode: LocationNode = {
   __location_context: true,
-  __location_id: generateUUID(),
+  __instance_id: generateUUID(),
   _type: 'LocationTreeRoot',
   id: 'location-tree-root',
   parentLocationId: null,
@@ -58,8 +57,8 @@ export const LocationTree = {
   /**
    * Helper method to return a list of children of the given LocationNode
    */
-  children: ({ __location_id }: LocationNode): LocationNode[] => {
-    return locationNodes.filter(({ parentLocationId }) => parentLocationId === __location_id);
+  children: ({ __instance_id }: LocationNode): LocationNode[] => {
+    return locationNodes.filter(({ parentLocationId }) => parentLocationId === __instance_id);
   },
 
   /**
@@ -117,7 +116,7 @@ export const LocationTree = {
       locationStack.push(nodeToValidate);
 
       // Collision detection
-      const locationId = nodeToValidate.__location_id;
+      const locationId = nodeToValidate.__instance_id;
       const locationPath = getLocationPath(locationStack);
       const locationPathsSize = locationPaths.size;
       locationPaths.add(locationPath);
@@ -140,11 +139,8 @@ export const LocationTree = {
    *
    * Note: This method is invoked automatically by LocationContextWrapper.
    */
-  add: (
-    locationContext: LocationContext<AbstractLocationContext>,
-    parentLocationContext: LocationContext<AbstractLocationContext> | null
-  ) => {
-    const parentLocationId = (parentLocationContext ?? rootNode).__location_id;
+  add: (locationContext: AbstractLocationContext, parentLocationContext: AbstractLocationContext | null) => {
+    const parentLocationId = (parentLocationContext ?? rootNode).__instance_id;
 
     // Create and push the new LocationNode into the LocationTree
     locationNodes.push({ ...locationContext, parentLocationId });
@@ -159,9 +155,9 @@ export const LocationTree = {
    *
    * Note: This method is invoked automatically by LocationContextWrapper.
    */
-  remove: (locationContext: LocationContext<AbstractLocationContext>) => {
-    locationNodes = locationNodes.filter(({ __location_id }) => __location_id !== locationContext.__location_id);
-    errorCache.delete(locationContext.__location_id);
+  remove: (locationContext: AbstractLocationContext) => {
+    locationNodes = locationNodes.filter(({ __instance_id }) => __instance_id !== locationContext.__instance_id);
+    errorCache.delete(locationContext.__instance_id);
 
     const sizeBeforeCleanup = locationNodes.length;
 
@@ -170,7 +166,7 @@ export const LocationTree = {
       if (!locationNode.parentLocationId) {
         accumulator.push(locationNode);
       }
-      if (locationNodes.some(({ __location_id }) => __location_id === locationNode.parentLocationId)) {
+      if (locationNodes.some(({ __instance_id }) => __instance_id === locationNode.parentLocationId)) {
         accumulator.push(locationNode);
       }
       return accumulator;

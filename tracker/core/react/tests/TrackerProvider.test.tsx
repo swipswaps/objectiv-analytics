@@ -8,7 +8,7 @@ import {
   LocationContextName,
   LocationContextValidationRule,
 } from '@objectiv/developer-tools';
-import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import { Tracker, TrackerConsole, TrackerPlatform } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
@@ -57,7 +57,12 @@ describe('TrackerProvider', () => {
             ],
           },
           {
-            applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+            applicationContext: {
+              __instance_id: matchUUID,
+              __global_context: true,
+              _type: 'ApplicationContext',
+              id: 'app-id',
+            },
             pluginName: 'ApplicationContextPlugin',
           },
         ],

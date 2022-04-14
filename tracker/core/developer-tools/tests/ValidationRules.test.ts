@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { TrackerConsole, TrackerEvent, TrackerPlatform } from '@objectiv/tracker-core';
+import { generateUUID, TrackerConsole, TrackerEvent, TrackerPlatform } from '@objectiv/tracker-core';
 import {
   GlobalContextName,
   GlobalContextValidationRule,
@@ -65,8 +65,8 @@ describe('Validation Rules', () => {
         new TrackerEvent({
           _type: 'PressEvent',
           global_contexts: [
-            { __global_context: true, _type: GlobalContextName.PathContext, id: 'test' },
-            { __global_context: true, _type: GlobalContextName.PathContext, id: 'test' },
+            { __instance_id: generateUUID(), __global_context: true, _type: GlobalContextName.PathContext, id: 'test' },
+            { __instance_id: generateUUID(), __global_context: true, _type: GlobalContextName.PathContext, id: 'test' },
           ],
         })
       );
@@ -131,8 +131,18 @@ describe('Validation Rules', () => {
         new TrackerEvent({
           _type: 'PressEvent',
           location_stack: [
-            { __location_context: true, _type: LocationContextName.ContentContext, id: 'test' },
-            { __location_context: true, _type: LocationContextName.ContentContext, id: 'test' },
+            {
+              __instance_id: generateUUID(),
+              __location_context: true,
+              _type: LocationContextName.ContentContext,
+              id: 'test',
+            },
+            {
+              __instance_id: generateUUID(),
+              __location_context: true,
+              _type: LocationContextName.ContentContext,
+              id: 'test',
+            },
           ],
         })
       );
@@ -159,8 +169,18 @@ describe('Validation Rules', () => {
         new TrackerEvent({
           _type: 'PressEvent',
           location_stack: [
-            { __location_context: true, _type: LocationContextName.RootLocationContext, id: 'test' },
-            { __location_context: true, _type: LocationContextName.ContentContext, id: 'test' },
+            {
+              __instance_id: generateUUID(),
+              __location_context: true,
+              _type: LocationContextName.RootLocationContext,
+              id: 'test',
+            },
+            {
+              __instance_id: generateUUID(),
+              __location_context: true,
+              _type: LocationContextName.ContentContext,
+              id: 'test',
+            },
           ],
         })
       );

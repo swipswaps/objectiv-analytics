@@ -2,15 +2,17 @@
 Copyright 2021 Objectiv B.V.
 """
 import pytest
-import sqlalchemy
 
 from bach import DataFrame
-from tests.functional.bach.test_data_and_utils import get_pandas_df, TEST_DATA_CITIES, CITIES_COLUMNS, \
-    DB_TEST_URL, assert_equals_data
+from sql_models.util import is_bigquery, is_postgres
+from tests.functional.bach.test_data_and_utils import TEST_DATA_CITIES, CITIES_COLUMNS, \
+    assert_equals_data
 import datetime
 from uuid import UUID
 import pandas as pd
 import numpy as np
+
+from tests.unit.bach.util import get_pandas_df
 
 EXPECTED_COLUMNS = [
     '_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding'
@@ -30,8 +32,6 @@ COLUMNS_INJECTION = ['Index', 'X"x"', '{test}', '{te{}{{s}}t}']
 EXPECTED_COLUMNS_INJECTION = [f'_index_{COLUMNS_INJECTION[0]}'] + COLUMNS_INJECTION
 EXPECTED_DATA_INJECTION = [[row[0]] + row for row in TEST_DATA_INJECTION]
 
-get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
-
 TYPES_DATA = [
     [1, 1.324, True, datetime.datetime(2021, 5, 3, 11, 28, 36, 388), 'Ljouwert', datetime.date(2021, 5, 3),
      ['Sûkerbôlle'], UUID('36ca4c0b-804d-48ff-809f-28cf9afd078a'), {'a': 'b'},
@@ -49,11 +49,10 @@ TYPES_COLUMNS = ['int_column', 'float_column', 'bool_column', 'datetime_column',
                  'dict_column', 'timedelta_column', 'mixed_column']
 
 
-def test_from_pandas_table():
+def test_from_pandas_table(pg_engine):
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     bt = DataFrame.from_pandas(
-        engine=engine,
+        engine=pg_engine,
         df=pdf,
         convert_objects=True,
         name='test_from_pd_table',
@@ -63,11 +62,10 @@ def test_from_pandas_table():
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
 
 
-def test_from_pandas_table_injection():
+def test_from_pandas_table_injection(pg_engine):
     pdf = get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     bt = DataFrame.from_pandas(
-        engine=engine,
+        engine=pg_engine,
         df=pdf,
         convert_objects=True,
         name='test_from_pd_{table}_"injection"',
@@ -77,9 +75,8 @@ def test_from_pandas_table_injection():
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
 
 
-def test_from_pandas_ephemeral_basic():
+def test_from_pandas_ephemeral_basic(engine):
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     bt = DataFrame.from_pandas(
         engine=engine,
         df=pdf,
@@ -90,27 +87,43 @@ def test_from_pandas_ephemeral_basic():
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
 
 
-def test_from_pandas_ephemeral_injection():
+def test_from_pandas_ephemeral_injection(engine):
+    # We only support 'weird' Series names on Postgres. We must make sure tho that these 'weird' names are
+    # handled correctly, which we test here.
+    # On bigquery we cannot support 'weird' series names, because we map Series names directly to column
+    # names and BigQuery only allows [a-zA-Z0-9_] in quoted column names. This behaviour for BigQuery is
+    # tested in tests/unit/bach/test_df_from_pandas.py
     pdf = get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
-    bt = DataFrame.from_pandas(
-        engine=engine,
-        df=pdf,
-        convert_objects=True,
-        materialization='cte',
-        name='ephemeral data'
-    )
-    assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
+
+    if is_postgres(engine):
+        bt = DataFrame.from_pandas(
+            engine=engine,
+            df=pdf,
+            convert_objects=True,
+            materialization='cte',
+            name='ephemeral data'
+        )
+        assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
+    elif is_bigquery(engine):
+        with pytest.raises(ValueError, match='Invalid column name'):
+            DataFrame.from_pandas(
+                engine=engine,
+                df=pdf,
+                convert_objects=True,
+                materialization='cte',
+                name='ephemeral data'
+            )
+    else:
+        raise Exception(f'Test does not support {engine.dialect}')
 
 
-def test_from_pandas_non_happy_path():
+def test_from_pandas_non_happy_path(pg_engine):
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     with pytest.raises(TypeError):
         # if convert_objects is false, we'll get an error, because pdf's dtype for 'city' and 'municipality'
-        # is 'object
+        # is 'object'
         DataFrame.from_pandas(
-            engine=engine,
+            engine=pg_engine,
             df=pdf,
             convert_objects=False,
             name='test_from_pd_table_convert_objects_false',
@@ -121,14 +134,14 @@ def test_from_pandas_non_happy_path():
     # Might fail on either the first or second try. As we don't clean up between tests.
     with pytest.raises(ValueError, match="Table 'test_from_pd_table' already exists"):
         DataFrame.from_pandas(
-            engine=engine,
+            engine=pg_engine,
             df=pdf,
             convert_objects=True,
             name='test_from_pd_table',
             materialization='table',
         )
         DataFrame.from_pandas(
-            engine=engine,
+            engine=pg_engine,
             df=pdf,
             convert_objects=True,
             name='test_from_pd_table',
@@ -137,12 +150,11 @@ def test_from_pandas_non_happy_path():
 
 
 @pytest.mark.parametrize("materialization", ['cte', 'table'])
-def test_from_pandas_index(materialization: str):
+def test_from_pandas_index(materialization: str, pg_engine):
     # test multilevel index
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS).set_index(['skating_order', 'city'])
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     bt = DataFrame.from_pandas(
-        engine=engine,
+        engine=pg_engine,
         df=pdf,
         convert_objects=True,
         name='test_from_pd_table',
@@ -161,9 +173,8 @@ def test_from_pandas_index(materialization: str):
 
     # test nameless index
     pdf.reset_index(inplace=True)
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     bt = DataFrame.from_pandas(
-        engine=engine,
+        engine=pg_engine,
         df=pdf,
         convert_objects=True,
         name='test_from_pd_table',
@@ -183,12 +194,11 @@ def test_from_pandas_index(materialization: str):
 
 
 @pytest.mark.parametrize("materialization", ['cte', 'table'])
-def test_from_pandas_types(materialization: str):
+def test_from_pandas_types(materialization: str, pg_engine):
     pdf = pd.DataFrame.from_records(TYPES_DATA, columns=TYPES_COLUMNS)
     pdf.set_index(pdf.columns[0], drop=True, inplace=True)
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     df = DataFrame.from_pandas(
-        engine=engine,
+        engine=pg_engine,
         df=pdf.loc[:, :'string_column'],
         convert_objects=True,
         name='test_from_pd_table',
@@ -216,7 +226,7 @@ def test_from_pandas_types(materialization: str):
     pdf.set_index(pdf.columns[0], drop=False, inplace=True)
     pdf['int32_column'] = pdf.int_column.astype(np.int32)
     df = DataFrame.from_pandas(
-        engine=engine,
+        engine=pg_engine,
         df=pdf[['int32_column']],
         convert_objects=True,
         name='test_from_pd_table',
@@ -237,12 +247,11 @@ def test_from_pandas_types(materialization: str):
     )
 
 
-def test_from_pandas_types_cte():
+def test_from_pandas_types_cte(pg_engine):
     pdf = pd.DataFrame.from_records(TYPES_DATA, columns=TYPES_COLUMNS)
     pdf.set_index(pdf.columns[0], drop=True, inplace=True)
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     df = DataFrame.from_pandas(
-        engine=engine,
+        engine=pg_engine,
         df=pdf.loc[:, :'timedelta_column'],
         convert_objects=True,
         materialization='cte'
@@ -276,7 +285,7 @@ def test_from_pandas_types_cte():
 
     with pytest.raises(TypeError, match="unsupported dtype for"):
         DataFrame.from_pandas(
-            engine=engine,
+            engine=pg_engine,
             df=pdf.loc[:, :'timedelta_column'],
             convert_objects=True,
             name='test_from_pd_table',
@@ -286,7 +295,7 @@ def test_from_pandas_types_cte():
 
     with pytest.raises(TypeError, match="multiple types found in column"):
         DataFrame.from_pandas(
-            engine=engine,
+            engine=pg_engine,
             df=pdf.loc[:, :'mixed_column'],
             convert_objects=True,
             materialization='cte'

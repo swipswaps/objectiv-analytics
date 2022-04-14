@@ -10,7 +10,7 @@ import { LocationStack } from '../../types';
  */
 export type LocationProviderContext = {
   /**
-   * An array of LocationContext<AbstractLocationContext> objects.
+   * An array of AbstractLocationContext objects.
    */
   locationStack: LocationStack;
 };

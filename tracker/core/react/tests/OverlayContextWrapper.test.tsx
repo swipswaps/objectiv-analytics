@@ -5,7 +5,7 @@
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
 import React from 'react';
-import { OverlayContextWrapper, ObjectivProvider, trackPressEvent, usePressEventTracker, LocationTree } from '../src';
+import { LocationTree, ObjectivProvider, OverlayContextWrapper, trackPressEvent, usePressEventTracker } from '../src';
 
 describe('OverlayContextWrapper', () => {
   beforeEach(() => {

@@ -1,16 +1,22 @@
 import math
 from decimal import Decimal
+from typing import Union
 
 import numpy as np
 import pandas as pd
-import pytest
 from psycopg2._range import NumericRange
+from sqlalchemy.engine import Engine
 
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_from_df, assert_equals_data
+from tests.functional.bach.test_data_and_utils import get_from_df, assert_equals_data,\
+    get_df_with_test_data, get_bt_with_test_data
 
 
-def _test_simple_arithmetic(a, b):
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+def helper_test_simple_arithmetic(engine: Engine, a: Union[int, float], b: Union[int, float]):
+    """
+    Helper function that tests that the outcome of a whole list of arithmetic operations between a and b
+    matches the outcome of doing the same operation in python.
+    """
+    bt = get_df_with_test_data(engine)[['inhabitants']]
     expected = []
     bt['a'] = a
     bt['b'] = b
@@ -42,7 +48,7 @@ def _test_simple_arithmetic(a, b):
 
 def test_round():
     values = [1.9, 3.0, 4.123, 6.425124, 2.00000000001, 2.1, np.nan, 7.]
-    pdf = pd.DataFrame(data=values)
+    pdf = pd.DataFrame(data={'0': values})
     bt = get_from_df('test_round', pdf)
     bt['const'] = 14.12345
     assert bt.const.expression.is_constant
@@ -50,62 +56,34 @@ def test_round():
     for i in 0, 3, 5, 9:
         assert bt.const.round(i).expression.is_constant
         assert not bt['0'].round(i).expression.is_constant
-        np.testing.assert_equal(pdf[0].round(i).to_numpy(), bt['0'].round(i).to_numpy())
-        np.testing.assert_equal(pdf[0].round(decimals=i).to_numpy(), bt['0'].round(decimals=i).to_numpy())
+        np.testing.assert_equal(pdf['0'].round(i).to_numpy(), bt['0'].round(i).to_numpy())
+        np.testing.assert_equal(pdf['0'].round(decimals=i).to_numpy(), bt['0'].round(decimals=i).to_numpy())
 
 
 def test_round_integer():
     values = [1, 3, 4, 6, 2, 2, 6, 7]
-    pdf = pd.DataFrame(data=values)
+    pdf = pd.DataFrame(data={'0': values})
     bt = get_from_df('test_round', pdf)
 
     for i in 0, 3, 5, 9:
         result = bt['0'].round(i).sort_values().to_pandas()
-        expected = pdf[0].round(i).sort_values()
+        expected = pdf['0'].round(i).sort_values()
         pd.testing.assert_series_equal(expected, result, check_names=False, check_index=False)
 
         result2 = bt['0'].round(decimals=i).sort_values().to_pandas()
-        expected2 = pdf[0].round(decimals=i).sort_values()
+        expected2 = pdf['0'].round(decimals=i).sort_values()
         pd.testing.assert_series_equal(expected2, result2, check_names=False, check_index=False)
-
-
-def test_dataframe_agg_skipna_parameter():
-    # test full parameter traversal
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
-
-    numeric_agg = ['sum', 'mean']
-    stats_agg = ['sem', 'std', 'var']
-    for agg in numeric_agg + stats_agg:
-        with pytest.raises(NotImplementedError):
-            # currently not supported anywhere, so needs to raise
-            bt.agg(agg, skipna=False)
-
-    numeric_agg = ['prod', 'product']
-    stats_agg = ['kurt', 'kurtosis', 'skew', 'mad']
-    for agg in numeric_agg + stats_agg:
-        with pytest.raises(AttributeError):
-            # methods not present at all, so needs to raise
-            bt.agg(agg, skipna=False)
-
-def test_dataframe_agg_dd_parameter():
-    # test full parameter traversal
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
-
-    for agg in ['sem', 'std', 'var']:
-        with pytest.raises(NotImplementedError):
-            # currently not supported anywhere, so needs to raise
-            bt.agg(agg, ddof=123)
 
 
 def test_aggregations_simple_tests():
     values = [1, 3, 4, 6, 2, 2, np.nan, 7, 8]
-    pdf = pd.DataFrame(data=values)
+    pdf = pd.DataFrame(data={'0': values})
     bt = get_from_df('test_aggregations_simple_tests', pdf)
 
     numeric_agg = ['sum', 'mean']
     stats_agg = ['sem', 'std', 'var']
     for agg in numeric_agg + stats_agg:
-        pd_agg = pdf[0].agg(agg)
+        pd_agg = pdf['0'].agg(agg)
         bt_agg = bt['0'].agg(agg)
         assert bt_agg.expression.has_aggregate_function
         assert not bt_agg.expression.is_constant
@@ -114,11 +92,11 @@ def test_aggregations_simple_tests():
 
 
 def test_aggregations_sum_mincount():
-    pdf = pd.DataFrame(data=[1, np.nan, 7, 8])
+    pdf = pd.DataFrame(data={'0': [1, np.nan, 7, 8]})
     bt = get_from_df('test_aggregations_sum_mincount', pdf)
 
     for i in [5, 4, 3]:
-        pd_agg = pdf.sum(min_count=i)[0]
+        pd_agg = pdf.sum(min_count=i)['0']
         bt_agg = bt.sum(min_count=i)['0_sum']
 
         # since sum is wrapped in a CASE WHEN, we need to make sure that these are still valid:
@@ -273,3 +251,61 @@ def test_series_qcut() -> None:
             np.testing.assert_almost_equal(exp.left, float(res.lower), decimal=2)
             np.testing.assert_almost_equal(exp.right, float(res.upper), decimal=2)
 
+
+def test_series_scale() -> None:
+    inhabitants = get_bt_with_test_data(full_data_set=True)['inhabitants']
+    result = inhabitants.scale()
+
+    inhbt_values = inhabitants.to_numpy()
+    inhbt_avg = np.mean(inhbt_values)
+    inhbt_std = np.var(inhbt_values)
+    inhbt_scale = inhbt_std ** 0.5
+
+    expected_data_w_mean_std = [
+        [1, (93485 - inhbt_avg) / inhbt_scale],
+        [2, (33520 - inhbt_avg) / inhbt_scale],
+        [3, (3055 - inhbt_avg) / inhbt_scale],
+        [4, (700 - inhbt_avg) / inhbt_scale],
+        [5, (960 - inhbt_avg) / inhbt_scale],
+        [6, (870 - inhbt_avg) / inhbt_scale],
+        [7, (4440 - inhbt_avg) / inhbt_scale],
+        [8, (10120 - inhbt_avg) / inhbt_scale],
+        [9, (14740 - inhbt_avg) / inhbt_scale],
+        [10, (12760 - inhbt_avg) / inhbt_scale],
+        [11, (12675 - inhbt_avg) / inhbt_scale],
+    ]
+    assert_equals_data(
+        result.to_frame(),
+        expected_columns=['_index_skating_order', 'inhabitants'],
+        expected_data=expected_data_w_mean_std,
+        round_decimals=True,
+    )
+
+
+def test_series_minmax_scale() -> None:
+    inhabitants = get_bt_with_test_data(full_data_set=True)['inhabitants']
+    result = inhabitants.minmax_scale()
+
+    min_inh = 700
+    max_inh = 93485
+    diff_inh = max_inh - min_inh
+
+    expected_data_default = [
+        [1, (93485 - min_inh) / diff_inh],
+        [2, (33520 - min_inh) / diff_inh],
+        [3, (3055 - min_inh) / diff_inh],
+        [4, (700 - min_inh) / diff_inh],
+        [5, (960 - min_inh) / diff_inh],
+        [6, (870 - min_inh) / diff_inh],
+        [7, (4440 - min_inh) / diff_inh],
+        [8, (10120 - min_inh) / diff_inh],
+        [9, (14740 - min_inh) / diff_inh],
+        [10, (12760 - min_inh) / diff_inh],
+        [11, (12675 - min_inh) / diff_inh],
+    ]
+    assert_equals_data(
+        result.to_frame(),
+        expected_columns=['_index_skating_order', 'inhabitants'],
+        expected_data=expected_data_default,
+        round_decimals=True,
+    )

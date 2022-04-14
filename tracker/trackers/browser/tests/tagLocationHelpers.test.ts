@@ -71,6 +71,7 @@ describe('tagLocationHelpers', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         __pressable_context: true,
         _type: 'PressableContext',
@@ -88,6 +89,7 @@ describe('tagLocationHelpers', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'ContentContext',
         id: 'test-section',
@@ -103,6 +105,7 @@ describe('tagLocationHelpers', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'ExpandableContext',
         id: 'test-expandable',
@@ -119,6 +122,7 @@ describe('tagLocationHelpers', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'InputContext',
         id: 'test-input',
@@ -135,6 +139,7 @@ describe('tagLocationHelpers', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         __pressable_context: true,
         _type: 'LinkContext',
@@ -153,6 +158,7 @@ describe('tagLocationHelpers', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'MediaPlayerContext',
         id: 'test-media-player',
@@ -168,6 +174,7 @@ describe('tagLocationHelpers', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'NavigationContext',
         id: 'test-nav',
@@ -183,6 +190,7 @@ describe('tagLocationHelpers', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'OverlayContext',
         id: 'test-overlay',
@@ -199,6 +207,7 @@ describe('tagLocationHelpers', () => {
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
+        __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         _type: 'RootLocationContext',
         id: 'test-page',

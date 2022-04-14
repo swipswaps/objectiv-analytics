@@ -2,9 +2,11 @@
 Copyright 2021 Objectiv B.V.
 """
 import string
-from typing import Set, Union
+from typing import Set, Union, Optional
 
 from sqlalchemy.engine import Dialect, Engine
+
+from sql_models.constants import DBDialect
 
 
 def extract_format_fields(format_string: str, nested=1) -> Set[str]:
@@ -39,9 +41,10 @@ def quote_identifier(dialect: Dialect, name: str) -> str:
     """
     Add quotes around an identifier (e.g. a table or column name), and escape special characters in the name.
 
-    By default this assumes Postgres identifier notation format, but this can be overridden by specifying a
-    SqlAlchemy Dialect.
-
+    Note that the result of this function is not always a valid column name and/or table name. e.g. The
+    following string can be quoted by this function to give a valid BigQuery identifier: '`te`st`'. However,
+    that name is only valid as a table name, not as a column name as there are additional rules on what
+    makes a valid column name.
 
     Examples
     >>> from sqlalchemy.dialects.postgresql.base import PGDialect
@@ -62,7 +65,11 @@ def quote_identifier(dialect: Dialect, name: str) -> str:
         return f'"{replaced_chars}"'
 
     if is_bigquery(dialect):
-        # todo: check whether this is efficient and correct
+        # Spec: https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#quoted_identifiers
+        # For additional rules on column and table names (not enforced by this function!) See
+        # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#column_names
+        # https://cloud.google.com/bigquery/docs/schemas#column_names
+        # https://cloud.google.com/bigquery/docs/tables#table_naming
         result = dialect.preparer(dialect).quote_identifier(value=name)
         return result
     raise DatabaseNotSupportedException(dialect)
@@ -88,15 +95,17 @@ def quote_string(value: str) -> str:
 
 
 def is_postgres(dialect_engine: Union[Dialect, Engine]) -> bool:
-    return dialect_engine.name == 'postgresql'  # value of PGDialect.name
+    return DBDialect.POSTGRES.is_dialect(dialect_engine)
 
 
 def is_bigquery(dialect_engine: Union[Dialect, Engine]) -> bool:
-    # We hardcode the string value here instead of comparing against BigQueryDialect.name
-    # This way this code path will work, even if the BigQuery python package is not installed
-    return dialect_engine.name == 'bigquery'
+    return DBDialect.BIGQUERY.is_dialect(dialect_engine)
 
 
 class DatabaseNotSupportedException(Exception):
-    def __init__(self, dialect_engine: Union[Dialect, Engine]):
-        super().__init__(f'This function is not supported for database dialect "{dialect_engine.name}".')
+    def __init__(self, dialect_engine: Union[Dialect, Engine], message_override: Optional[str] = None):
+        if message_override is not None:
+            message = message_override
+        else:
+            message = f'This function is not supported for database dialect "{dialect_engine.name}".'
+        super().__init__(message)

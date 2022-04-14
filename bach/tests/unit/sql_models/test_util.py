@@ -1,9 +1,13 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from sql_models.util import extract_format_fields, quote_identifier, quote_string, is_postgres,\
-    is_bigquery, DatabaseNotSupportedException
+import pytest
 
+from sql_models.util import extract_format_fields, quote_identifier, quote_string, is_postgres,\
+    is_bigquery
+
+
+pytestmark = [pytest.mark.db_independent]  # mark all tests here as database independent.
 
 def test_extract_format_fields():
     assert extract_format_fields('{test}') == {'test'}
@@ -34,9 +38,8 @@ def test_quote_identifier(dialect):
         assert quote_identifier(dialect, 'test') == '`test`'
         assert quote_identifier(dialect, 'te"st') == '`te""st`'
         assert quote_identifier(dialect, '"te""st"') == r'`""te""""st""`'
-        # TODO: CHECK, is the implementation of BigQueryDialect correct?? Seems odd
-        #assert quote_identifier(dialect, '`te`st`') == r'`\`te\`st\``'
-        #assert quote_identifier(dialect, 'te%st') == '`te%st`'
+        assert quote_identifier(dialect, '`te`st`') == r'`\`te\`st\``'
+        assert quote_identifier(dialect, 'te%st') == '`te%st`'
     else:
         # if we add more dialects, we should not forget to extend this test
         raise Exception()

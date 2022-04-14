@@ -15,13 +15,12 @@ RUN mkdir -p $APP && \
     useradd --user-group --system --create-home --no-log-init notebook
 
 COPY docker/*.sql  /services/
-COPY docker/*.whl /services/
-COPY docker/requirements.txt /services
+
+COPY requirements.txt /services
 
 RUN . /services/venv/bin/activate && \
     cd /services && \
-    pip install -r requirements.txt && \
-    pip install /services/*.whl
+    pip install -r requirements.txt
 
 COPY docker/entrypoint.sh /
 RUN chmod +x /entrypoint.sh

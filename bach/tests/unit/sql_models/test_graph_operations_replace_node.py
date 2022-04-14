@@ -13,6 +13,9 @@ from sql_models.model import SqlModel, RefPath
 from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel, RefValueModel
 
 
+pytestmark = [pytest.mark.db_independent]  # mark all tests here as database independent.
+
+
 def call_replace_node_in_graph(
         start_node: SqlModel,
         reference_path: RefPath,

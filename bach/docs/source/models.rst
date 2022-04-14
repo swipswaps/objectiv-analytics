@@ -14,13 +14,16 @@ The model hub has two main type of functions: `map` and `aggregate`.
 - `aggregate` fuctions return aggregated data in some form from the DataFrame. Can also be accessed with
   `agg`.
 
-.. _map_models:
+.. Generate links in the toctree, but don't show the TOC itself in this page
+.. rst-class:: hide_toctree_ul
 
-Mapping
-~~~~~~~
+.. toctree:: 
+
+    models_mapping
+
+.. rubric:: Mapping
+
 .. autosummary::
-    :toctree: modelhub_api_reference
-
     Map.is_first_session
     Map.is_new_user
     Map.is_conversion_event
@@ -29,13 +32,16 @@ Mapping
     Map.pre_conversion_hit_number
 
 
-.. _aggregate_models:
+.. Generate links in the toctree, but don't show the TOC itself in this page
+.. rst-class:: hide_toctree_ul
 
-Aggregation
-~~~~~~~~~~~
+.. toctree:: 
+
+    models_aggregation
+
+.. rubric:: Aggregation
+
 .. autosummary::
-    :toctree: modelhub_api_reference
-
     Aggregate.unique_users
     Aggregate.unique_sessions
     Aggregate.session_duration

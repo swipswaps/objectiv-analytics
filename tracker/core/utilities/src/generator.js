@@ -203,7 +203,7 @@ function createFactory(
   const return_omit = [];
   Object.keys(merged_properties).forEach((mp) => {
     if (merged_properties[mp]['discriminator']) {
-      discriminators.push(`${mp}: true`);
+      discriminators.push(`${mp}: ${merged_properties[mp]['discriminator']}`);
     } else if (merged_properties[mp]['type']) {
       if (params.object_type === 'event' && ['location_stack', 'global_contexts'].includes(mp)) {
         // because the global_contexts and location_stack arrays are optional
@@ -523,6 +523,17 @@ Object.entries(contexts).forEach(([context_type, context]) => {
       const discriminator = camelToUnderscore(context_type.replace('Abstract', ''));
       properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator] = { discriminator: true };
     }
+
+    // Add __instance_id discriminator to AbstractContext
+    if (context_type === 'AbstractContext') {
+      properties[DISCRIMINATING_PROPERTY_PREFIX.repeat(2) + 'instance_id'] = {
+        discriminator: 'generateUUID()',
+        description: 'A unique identifier to discriminate Context instances across Location Stacks.',
+        type: `string`,
+        value: 'generateUUID()',
+      };
+    }
+
     abstract = true;
     definition_type = 'class';
     stack_type = 'abstracts';
@@ -653,11 +664,15 @@ Object.keys(object_factories).forEach((factory_type) => {
     imports.push('AbstractLocationContext');
     imports.push('AbstractGlobalContext');
   }
-  const import_statement = `import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';\n`;
+  const import_statements = [`import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';`];
+
+  if (factory_type === 'ContextFactories') {
+    import_statements.push(`import { generateUUID } from "./helpers";`);
+  }
 
   const filename = `${core_tracker_package_dir}${factory_type}.ts`;
   fs.writeFileSync(filename, COPYRIGHT);
-  fs.appendFileSync(filename, [...[import_statement], ...Object.values(factories)].join('\n'));
+  fs.appendFileSync(filename, [...import_statements, '\n', ...Object.values(factories)].join('\n'));
   console.log(`Written ${Object.values(factories).length} factories to ${filename}`);
 });
 

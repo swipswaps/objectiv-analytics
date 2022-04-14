@@ -1,4 +1,4 @@
-.. _modelhub_basics:
+.. _example_modelhub_basics:
 
 .. currentmodule:: bach
 
@@ -20,8 +20,8 @@ to run on your own data or use our
 `quickstart
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
-At first we have to instantiate the Objectiv DataFrame object. See
-:ref:`get_started_with_objectiv` for more info on how to instantiate the object.
+At first we have to install the open model hub and instantiate the Objectiv DataFrame object. See
+:ref:`get_started_with_objectiv` for more info on this.
 
 Using the open model hub
 ------------------------
@@ -29,7 +29,7 @@ The open model hub is a growing collection of open-source, free to use data mode
 combine and run for product analysis and exploration. It includes models for a wide range of typical product
 analytics use cases. The source is available for all models and you're free to make any changes to them.
 
-The model hub has two main type of functions: :ref:`map_models` and :ref:`aggregate_models`.
+The model hub has two main type of functions: :ref:`models_mapping` and :ref:`models_aggregation`.
 
 - `map` functions always return a series with the same shape and index as the DataFrame they are applied to.
   This ensures they can be added as a column to that DataFrame. `map` functions that return SeriesBoolean can

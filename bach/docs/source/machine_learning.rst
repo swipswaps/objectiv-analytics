@@ -1,4 +1,4 @@
-.. _machine_learning:
+.. _example_machine_learning:
 
 .. currentmodule:: bach
 
@@ -13,13 +13,13 @@ feature engineering `here
 <feature_engineering.html>`_.
 
 This example is also available in a `notebook
-<https://github.com/objectiv/objectiv-analytics/blob/main/analysis/notebooks/sklearn-example.ipynb>`_
+<https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/sklearn-example.ipynb>`_
 to run on your own data or use our
 `quickstart
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
-At first we have to instantiate the Objectiv DataFrame object. See
-:ref:`get_started_with_objectiv` for more info on how to instantiate the object.
+At first we have to install the open model hub and instantiate the Objectiv DataFrame object. See
+:ref:`get_started_with_objectiv` for more info on this.
 
 This object points to all data in the data set. Without any aggregation, this dataset is too large to
 for pandas and sklearn. For the data set that we need, we aggregate to user level, at which point it is

@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import { Tracker, TrackerConfig, TrackerConsole, TrackerPlatform } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
@@ -44,7 +44,12 @@ describe('Tracker', () => {
       },
       {
         pluginName: 'ApplicationContextPlugin',
-        applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+        applicationContext: {
+          __instance_id: matchUUID,
+          __global_context: true,
+          _type: 'ApplicationContext',
+          id: 'app-id',
+        },
       },
     ]);
     expect(testTracker.applicationId).toBe('app-id');

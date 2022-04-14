@@ -38,6 +38,6 @@ declare global {
   var objectiv:
     | undefined
     | {
-    developerTools?: TrackerDeveloperTools;
-  };
+        developerTools?: TrackerDeveloperTools;
+      };
 }

@@ -18,4 +18,3 @@ export * from './types';
 const developerTools = makeGlobalDeveloperTools();
 
 export default developerTools;
-

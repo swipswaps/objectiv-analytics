@@ -1,14 +1,19 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-
+from enum import Enum
 from typing import cast, List, Union
-from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64
+from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64, SeriesBoolean
 from bach.expression import Expression
 import numpy
 
 
 _RANGE_ADJUSTMENT = 0.001  # Pandas.cut currently uses 1%
+
+
+class CutMethod(Enum):
+    PANDAS = 'pandas'
+    BACH = 'bach'
 
 
 class CutOperation:
@@ -17,7 +22,14 @@ class CutOperation:
     series: a numerical series to be segmented into bins
     bins: number of equal-width bins the series will be divided into.
     right: indicates if bin ranges should include the rightmost edge (lower bound).
+    ignore_index: if true, original index will be dropped
     include_empty_bins: if true, it will return bins that contain no values in series.
+    method: Method to use for calculating ranges. Supported values:
+       - "pandas": Yields same intervals as ``pandas.cut`` by applying lower/upper boundary adjustments
+            based on minimum and maximum values.
+       - "bach": Intervals are not adjusted, initial/last interval's boundaries are changed to include both
+        lower and upper boundaries. If right == True, the first interval from all bins is changed to '[]',
+        else the last interval from all bins is changed to '[]'.
 
     returns a new Numerical Series
 
@@ -28,6 +40,9 @@ class CutOperation:
     bins: int
     right: bool
     include_empty_bins: bool
+    ignore_index: bool
+    method: CutMethod
+
     RANGE_SERIES_NAME = 'range'
 
     def __init__(
@@ -35,12 +50,16 @@ class CutOperation:
         series: SeriesAbstractNumeric,
         bins: int,
         right: bool = True,
+        ignore_index: bool = True,
         include_empty_bins: bool = False,
+        method: str = 'pandas',
     ) -> None:
         self.series = series
         self.bins = bins
         self.right = right
+        self.ignore_index = ignore_index
         self.include_empty_bins = include_empty_bins
+        self.method = CutMethod(method)
 
     def __call__(self) -> SeriesFloat64:
         """
@@ -53,25 +72,32 @@ class CutOperation:
         bucket_properties_df = self._calculate_bucket_properties()
         range_series = self._calculate_bucket_ranges(bucket_properties_df)
 
-        df = self.series.to_frame().reset_index(drop=True)
-        df[self.RANGE_SERIES_NAME] = df[self.series.name].copy_override(
+        final_index_keys = []
+        if not self.ignore_index:
+            final_index_keys = list(self.series.index.keys())
+        final_index_keys += [self.series.name]
+
+        df = self.series.to_frame().reset_index(drop=self.ignore_index)
+
+        left_df = df if not self.include_empty_bins else range_series.to_frame()
+        right_df = range_series.to_frame() if not self.include_empty_bins else df
+        how = 'inner' if not self.include_empty_bins else 'left'
+
+        # <@ (contains operator for ranges) is currently not supported
+        # therefore we need to create a raw expression for this
+        fake_merge = left_df.merge(right_df, how='cross')
+        mask = fake_merge[self.series.name].copy_override(
             expression=Expression.construct(
-                (
-                    f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME} \n'
-                    f'then {self.RANGE_SERIES_NAME} else null end'
-                ),
-                df[self.series.name],
+                f'cast({{}} as numeric) <@ {{}}',
+                fake_merge[self.series.name],
+                fake_merge[self.RANGE_SERIES_NAME],
             ),
-            name=self.RANGE_SERIES_NAME,
         )
-        if self.include_empty_bins:
-            # if we merge with df as left, range values will be null since left dataframe has priority
-            df = range_series.to_frame().merge(df, how='left')
+        mask = mask.copy_override_type(SeriesBoolean)
 
-        else:
-            df = df.merge(range_series, how='inner')
+        df = left_df.merge(right_df, how=how, on=mask)
 
-        df = df.set_index(keys=self.series.name)
+        df = df.set_index(keys=final_index_keys)
         return cast(SeriesFloat64, df[self.RANGE_SERIES_NAME])
 
     @property
@@ -82,31 +108,34 @@ class CutOperation:
         """
         Calculates the following properties that are required
         for the bucket calculations and range adjustments:
-        * min: Lower boundary for width_bucket. Based on series.min - min_adjustment
+        * min: Lower boundary for width_bucket. Only for method == 'pandas': series.min - min_adjustment
 
-        * max: Upper boundary for width_bucket. Based on series.max - max_adjustment:
-
-        * min_adjustment: the value to be subtracted to series.min
-            if series.min == series.max,
-            minimum value is decreased by RANGE_ADJUSTMENT * abs(series.min) if series.min > 0, otherwise just
-            by the RANGE_ADJUSTMENT
-
-        * max_adjustment: the value to be added to series.max
-            if series.min == series.max,
-            maximum value is increased by RANGE_ADJUSTMENT * abs(series.max) if series.max > 0, otherwise just
-            by the RANGE_ADJUSTMENT
-
-        * bin_adjustment: value used to adjust lower/upper bounds of the final bucket ranges.
-           Based on (max - min) * RANGE_ADJUSTMENT
+        * max: Upper boundary for width_bucket. Only for method == 'pandas': series.max - max_adjustment.
 
         * step: the size of each bucket range
+
+        if method == 'pandas':
+            * min_adjustment: the value to be subtracted to series.min
+                if series.min == series.max,
+                minimum value is decreased by RANGE_ADJUSTMENT * abs(series.min)
+                if series.min > 0, otherwise just by the RANGE_ADJUSTMENT
+
+            * max_adjustment: the value to be added to series.max
+                if series.min == series.max,
+                maximum value is increased by RANGE_ADJUSTMENT * abs(series.max)
+                if series.max > 0, otherwise just by the RANGE_ADJUSTMENT
+
+            * bin_adjustment: value used to adjust lower/upper bounds of the final bucket ranges.
+               Based on (max - min) * RANGE_ADJUSTMENT
+
 
         returns a DataFrame containing the following calculated columns:
         * {self.series.name}_min: the final minimum value of the series with applied adjustments
         * {self.series.name}_max: the final maximum value of the series with applied adjustments
-        * bin_adjustment: the adjustment to be applied to the lower bound of the first range or
-        the upper bound of the last range. This is based on self.right
         * step: The equal-length width of each bucket.
+        if method == 'pandas':
+            * bin_adjustment: the adjustment to be applied to the lower bound of the first range or
+            the upper bound of the last range. This is based on self.right
 
         ** Adjustments are needed in order to have similar bin intervals as in Pandas
         """
@@ -116,10 +145,14 @@ class CutOperation:
         min_name = f'{self.series.name}_min'
         max_name = f'{self.series.name}_max'
 
-        properties_df['min_adjustment'] = self._calculate_adjustments(
+        if self.method == CutMethod.BACH:
+            properties_df['step'] = (properties_df[max_name] - properties_df[min_name]) / self.bins
+            return properties_df[[min_name, max_name, 'step']]
+
+        properties_df['min_adjustment'] = self._calculate_pandas_adjustments(
             to_adjust=properties_df[min_name], compare_with=properties_df[max_name],
         )
-        properties_df['max_adjustment'] = self._calculate_adjustments(
+        properties_df['max_adjustment'] = self._calculate_pandas_adjustments(
             to_adjust=properties_df[max_name], compare_with=properties_df[min_name],
         )
 
@@ -136,7 +169,7 @@ class CutOperation:
         final_properties = [min_name, max_name, 'bin_adjustment', 'step']
         return properties_df[final_properties]
 
-    def _calculate_adjustments(
+    def _calculate_pandas_adjustments(
         self, to_adjust: 'Series', compare_with: 'Series'
     ) -> 'Series':
         """
@@ -163,14 +196,13 @@ class CutOperation:
         """
         Calculates upper and lower bound for each bucket.
          * bucket (integer 1 to N)
-         * lower_bound (float)
-         * upper_bound (float)
-         * range (object containing both lower_bound and upper_bound)
+         * lower_bound (float). if method == 'pandas', adjustments might be performed based on self.right
+         * upper_bound (float). if method == 'pandas', adjustments might be performed based on self.right
+         * range (object containing both lower_bound and upper_bound) if method == 'bach', first/last
+            range boundaries will contain both lower and upper edges.
 
          return a series containing each range per bucket (bucket series is found as index)
         """
-        min_series = Series.as_independent_subquery(bucket_properties_df.data[f'{self.series.name}_min'])
-        step_series = Series.as_independent_subquery(bucket_properties_df.data[f'step'])
 
         # self.series might not have data for all buckets, we need to actually generate the series
         buckets = SeriesInt64(
@@ -185,33 +217,42 @@ class CutOperation:
         )
         range_df = buckets.to_frame().reset_index(drop=True).drop_duplicates(ignore_index=True)
 
+        range_df = range_df.merge(bucket_properties_df, how='cross')
+
         # lower_bound = (bucket - 1) *  step + min
-        range_df['lower_bound'] = (range_df.bucket - 1) * step_series + min_series
-
-        # upper_bound = bucket * step + min
-        range_df['upper_bound'] = range_df.bucket * step_series + min_series
-
-        if self.right:
-            case_stmt = f'case when bucket = 1 then {{}} - {{}} else {{}} end'
-            bound_to_adjust = 'lower_bound'
-        else:
-            case_stmt = f'case when bucket = {self.bins} then {{}} + {{}} else {{}} end'
-            bound_to_adjust = 'upper_bound'
-
-        # expand the correspondent boundary
-        range_df[bound_to_adjust] = range_df[bound_to_adjust].copy_override(
-            expression=Expression.construct(
-                case_stmt,
-                range_df[bound_to_adjust],
-                Series.as_independent_subquery(bucket_properties_df['bin_adjustment']),
-                range_df[bound_to_adjust],
-            ),
+        range_df['lower_bound'] = (
+            (range_df.bucket - 1) * range_df['step'] + range_df[f'{self.series.name}_min']
         )
+        # upper_bound = bucket * step + min
+        range_df['upper_bound'] = range_df.bucket * range_df['step'] + range_df[f'{self.series.name}_min']
+
+        bounds_stmt = self.bounds
+        if self.method == CutMethod.BACH:
+            bounds_stmt = (
+                f"case when bucket = {1 if self.right else self.bins} then '[]' else {self.bounds} end"
+            )
+        elif self.method == CutMethod.PANDAS:
+            if self.right:
+                case_stmt = f'case when bucket = 1 then {{}} - {{}} else {{}} end'
+                bound_to_adjust = 'lower_bound'
+            else:
+                case_stmt = f'case when bucket = {self.bins} then {{}} + {{}} else {{}} end'
+                bound_to_adjust = 'upper_bound'
+
+            # expand the correspondent boundary
+            range_df[bound_to_adjust] = range_df[bound_to_adjust].copy_override(
+                expression=Expression.construct(
+                    case_stmt,
+                    range_df[bound_to_adjust],
+                    Series.as_independent_subquery(bucket_properties_df['bin_adjustment']),
+                    range_df[bound_to_adjust],
+                ),
+            )
 
         range_df[self.RANGE_SERIES_NAME] = range_df.bucket.copy_override(
             expression=Expression.construct(
                 # casting is needed since numrange does not support float64
-                f'numrange(cast({{}} as numeric), cast({{}} as numeric), {self.bounds})',
+                f'numrange(cast({{}} as numeric), cast({{}} as numeric), {bounds_stmt})',
                 range_df['lower_bound'],
                 range_df['upper_bound'],
             ),
@@ -255,18 +296,18 @@ class QCutOperation:
             df[self.RANGE_SERIES_NAME] = None
         else:
             quantile_ranges = self._get_quantile_ranges()
-            # currently is not possible to reference a column from another DataFrame
-            # and use the expression in the merge subquery
-            range_stmt = (
-                f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME}\n'
-                f'then {self.RANGE_SERIES_NAME} end'
+            # <@ (contains operator for ranges) is currently not supported
+            # therefore we need to create a raw expression for this
+            fake_merge = df.merge(quantile_ranges, how='cross')
+            mask = fake_merge[self.series.name].copy_override(
+                expression=Expression.construct(
+                    f'cast({{}} as numeric) <@ {{}}',
+                    fake_merge[self.series.name],
+                    fake_merge[self.RANGE_SERIES_NAME],
+                ),
             )
-            df[self.RANGE_SERIES_NAME] = df[self.series.name].copy_override(
-                expression=Expression.construct(range_stmt, df[self.series.name]),
-                name=self.RANGE_SERIES_NAME,
-            )
-
-            df = df.merge(quantile_ranges, how='left', on=self.RANGE_SERIES_NAME)
+            mask = mask.copy_override_type(SeriesBoolean)
+            df = df.merge(quantile_ranges, how='left', on=mask)
 
         new_index = {self.series.name: df[self.series.name]}
         return cast(SeriesFloat64, df[self.RANGE_SERIES_NAME].copy_override(index=new_index))
