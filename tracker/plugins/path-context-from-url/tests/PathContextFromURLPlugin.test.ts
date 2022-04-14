@@ -5,7 +5,8 @@
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   ContextsConfig,
-  generateUUID, GlobalContextName,
+  generateUUID,
+  GlobalContextName,
   makePathContext,
   Tracker,
   TrackerConsole,

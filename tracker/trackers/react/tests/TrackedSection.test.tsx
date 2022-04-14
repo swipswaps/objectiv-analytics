@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
-import { TrackerConsole } from '@objectiv/tracker-core';
+import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
 import React from 'react';
 import { LocationTree, ObjectivProvider, ReactTracker, TrackedSection, usePressEventTracker } from '../src';
