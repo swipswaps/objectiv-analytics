@@ -2,13 +2,14 @@
 Copyright 2022 Objectiv B.V.
 """
 import datetime
-import uuid
 
 import numpy as np
 import pandas as pd
 
 from bach import DataFrame
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, get_from_df
+from tests.functional.bach.test_data_and_utils import (
+    get_bt_with_test_data, assert_equals_data,
+)
 
 
 def test_df_categorical_describe() -> None:
@@ -99,14 +100,14 @@ def test_include_mixed() -> None:
     pd.testing.assert_frame_equal(result.to_pandas(), expected_df)
 
 
-def test_describe_datetime() -> None:
+def test_describe_datetime(pg_engine) -> None:
     pdf = pd.DataFrame(
         data=[
             [np.datetime64("2000-01-01")], [np.datetime64("2010-01-01")], [np.datetime64("2010-01-01")],
         ],
         columns=['column'],
     )
-    df = get_from_df(table='describe_table', df=pdf)
+    df = DataFrame.from_pandas(engine=pg_engine, df=pdf, convert_objects=True)
 
     result = df.describe()
     result = result.reset_index(drop=False)
@@ -124,14 +125,14 @@ def test_describe_datetime() -> None:
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
 
 
-def test_describe_date() -> None:
+def test_describe_date(pg_engine) -> None:
     pdf = pd.DataFrame(
         data=[
             [np.datetime64("2000-01-01")], [np.datetime64("2010-01-01")], [np.datetime64("2010-01-01")],
         ],
         columns=['column'],
     )
-    df = get_from_df(table='describe_table', df=pdf)
+    df = DataFrame.from_pandas(engine=pg_engine, df=pdf, convert_objects=True)
     df['column'] = df['column'].astype('date')
 
     result = df.describe()
@@ -150,14 +151,14 @@ def test_describe_date() -> None:
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
 
 
-def test_describe_time() -> None:
+def test_describe_time(pg_engine) -> None:
     pdf = pd.DataFrame(
         data=[
             ["11:00:01"], ["11:00:01"], ["13:37"],
         ],
         columns=['column'],
     )
-    df = get_from_df(table='describe_table', df=pdf)
+    df = DataFrame.from_pandas(engine=pg_engine, df=pdf, convert_objects=True)
     df['column'] = df['column'].astype('time')
 
     result = df.describe()
@@ -176,14 +177,14 @@ def test_describe_time() -> None:
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
 
 
-def test_describe_boolean() -> None:
+def test_describe_boolean(pg_engine) -> None:
     pdf = pd.DataFrame(
         data=[
             [True], [False], [True],
         ],
         columns=['column'],
     )
-    df = get_from_df(table='describe_table', df=pdf)
+    df = DataFrame.from_pandas(engine=pg_engine, df=pdf, convert_objects=True)
 
     result = df.describe()
     result = result.reset_index(drop=False)
@@ -201,7 +202,7 @@ def test_describe_boolean() -> None:
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
 
 
-def test_describe_json() -> None:
+def test_describe_json(pg_engine) -> None:
     pdf = pd.DataFrame(
         data=[
             ['"a string"'],
@@ -211,7 +212,7 @@ def test_describe_json() -> None:
         ],
         columns=['column'],
     )
-    df = get_from_df(table='describe_table', df=pdf)
+    df = DataFrame.from_pandas(engine=pg_engine, df=pdf, convert_objects=True)
     df['column'] = df['column'].astype('json')
 
     result = df.describe()
@@ -228,7 +229,7 @@ def test_describe_json() -> None:
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
 
 
-def test_describe_uuid() -> None:
+def test_describe_uuid(pg_engine) -> None:
     pdf = pd.DataFrame(
         data=[
             ['0022c7dd-074b-4a44-a7cb-b7716b668264'],
@@ -237,7 +238,7 @@ def test_describe_uuid() -> None:
         ],
         columns=['column'],
     )
-    df = get_from_df(table='describe_table', df=pdf)
+    df = DataFrame.from_pandas(engine=pg_engine, df=pdf, convert_objects=True)
     df['column'] = df['column'].astype('uuid')
     result = df.describe()
     result = result.reset_index(drop=False)

@@ -4,11 +4,11 @@ import pandas as pd
 import pytest
 
 from bach import Series, DataFrame
-from tests.functional.bach.test_data_and_utils import get_from_df, assert_equals_data
+from tests.functional.bach.test_data_and_utils import assert_equals_data
 
 
 @pytest.fixture()
-def indexing_dfs() -> Tuple[pd.DataFrame, DataFrame]:
+def indexing_dfs(engine) -> Tuple[pd.DataFrame, DataFrame]:
     pdf = pd.DataFrame(
         {
             'A': ['a', 'b', 'c', 'd', 'e'],
@@ -17,7 +17,7 @@ def indexing_dfs() -> Tuple[pd.DataFrame, DataFrame]:
             'D': ['f', 'g', 'h', 'i', 'j'],
         },
     )
-    df = get_from_df('indexing_df', pdf)
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     df = df.set_index('A', drop=True)
     pdf = pdf.set_index('A')
 
@@ -142,7 +142,7 @@ def test_basic_set_item_by_label(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -
     )
 
 
-def test_set_item_by_label_diff_node(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
+def test_set_item_by_label_diff_node(indexing_dfs: Tuple[pd.DataFrame, DataFrame], engine) -> None:
     _, df = indexing_dfs
     extra_pdf = pd.DataFrame(
         {
@@ -151,7 +151,7 @@ def test_set_item_by_label_diff_node(indexing_dfs: Tuple[pd.DataFrame, DataFrame
             'C': [11, 12],
         },
     )
-    extra_df = get_from_df('extra_df', extra_pdf)
+    extra_df = DataFrame.from_pandas(engine, df=extra_pdf, convert_objects=True)
     extra_df = extra_df.set_index('A')
 
     # cannot check against Pandas, since pandas checks index lengths when setting items.
@@ -169,7 +169,7 @@ def test_set_item_by_label_diff_node(indexing_dfs: Tuple[pd.DataFrame, DataFrame
     )
 
 
-def test_set_item_by_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
+def test_set_item_by_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame], engine) -> None:
     pdf, df = indexing_dfs
     df = df.sort_index()
 
@@ -198,7 +198,7 @@ def test_set_item_by_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> No
             'C': [11, 12],
         },
     )
-    extra_df = get_from_df('extra_df', extra_pdf)
+    extra_df = DataFrame.from_pandas(engine, df=extra_pdf, convert_objects=True)
     extra_df = extra_df.set_index('A')
 
     # cannot check against Pandas, since pandas checks index lengths when setting items.

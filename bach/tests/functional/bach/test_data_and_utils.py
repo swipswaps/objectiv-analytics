@@ -100,53 +100,24 @@ TEST_DATA_JSON = [
 JSON_COLUMNS = ['row', 'dict_column', 'list_column', 'mixed_column']
 JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
 
-# We cache all Bach DataFrames, that way we don't have to recreate and query tables each time.
-_TABLE_DATAFRAME_CACHE: Dict[str, 'DataFrame'] = {}
-
 
 def get_bt(
-        table: str,
-        dataset: List[List[Any]],
-        columns: List[str],
-        convert_objects: bool
+    dataset: List[List[Any]],
+    columns: List[str],
+    convert_objects: bool
 ) -> DataFrame:
-    # We'll just use the table as lookup key and ignore the other paramters, if we store different things
-    # in the same table, then tests will be confused anyway
-    lookup_key = table
-    if lookup_key not in _TABLE_DATAFRAME_CACHE:
-        df = get_pandas_df(dataset, columns)
-        _TABLE_DATAFRAME_CACHE[lookup_key] = get_from_df(table, df, convert_objects)
-    # We don't even renew the `engine`, as creating the database connection takes a bit of time too. If
-    # we ever do into trouble because of stale connection or something, then we can change it at that point
-    # in time.
-    # However we do renew the `savepoints`, as that contains state
-    from bach.savepoints import Savepoints
-    return _TABLE_DATAFRAME_CACHE[lookup_key].copy_override(savepoints=Savepoints())
-
-
-def get_from_df(table: str, df: pandas.DataFrame, convert_objects=True) -> DataFrame:
-    """
-    Create a database table with the data from the data-frame.
-
-    Will be deprecated! When possible use `DataFrame.from_pandas()` with `materialization='cte'`
-    """
-    engine = sqlalchemy.create_engine(DB_PG_TEST_URL)
-    buh_tuh = DataFrame.from_pandas(
-        engine=engine,
-        df=df,
+    return DataFrame.from_pandas(
+        engine=sqlalchemy.create_engine(DB_PG_TEST_URL),
+        df=get_pandas_df(dataset, columns),
         convert_objects=convert_objects,
-        name=table,
-        materialization='table',
-        if_exists='replace'
     )
-    return buh_tuh
 
 
 def get_df_with_test_data(engine: Engine, full_data_set: bool = False) -> DataFrame:
     if is_postgres(engine):
         if full_data_set:
-            return get_bt('test_table_full', TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
-        return get_bt('test_table_partial', TEST_DATA_CITIES, CITIES_COLUMNS, True)
+            return get_bt(TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
+        return get_bt(TEST_DATA_CITIES, CITIES_COLUMNS, True)
     if is_bigquery(engine):
         # todo: move this somewhere
         all_dtypes = {
@@ -178,20 +149,20 @@ def get_bt_with_test_data(full_data_set: bool = False) -> DataFrame:
     DEPRECATED: Use get_df_with_test_data()
     """
     if full_data_set:
-        return get_bt('test_table_full', TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
-    return get_bt('test_table_partial', TEST_DATA_CITIES, CITIES_COLUMNS, True)
+        return get_bt(TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
+    return get_bt(TEST_DATA_CITIES, CITIES_COLUMNS, True)
 
 
 def get_bt_with_food_data() -> DataFrame:
-    return get_bt('test_merge_table_1', TEST_DATA_FOOD, FOOD_COLUMNS, True)
+    return get_bt(TEST_DATA_FOOD, FOOD_COLUMNS, True)
 
 
 def get_bt_with_railway_data() -> DataFrame:
-    return get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
+    return get_bt(TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
 
 
 def get_bt_with_json_data(as_json=True) -> DataFrame:
-    bt = get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)
+    bt = get_bt(TEST_DATA_JSON, JSON_COLUMNS, True)
     if as_json:
         bt['dict_column'] = bt.dict_column.astype('jsonb')
         bt['list_column'] = bt.list_column.astype('jsonb')

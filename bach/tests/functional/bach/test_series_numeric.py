@@ -7,8 +7,10 @@ import pandas as pd
 from psycopg2._range import NumericRange
 from sqlalchemy.engine import Engine
 
-from tests.functional.bach.test_data_and_utils import get_from_df, assert_equals_data,\
-    get_df_with_test_data, get_bt_with_test_data
+from bach import DataFrame
+from tests.functional.bach.test_data_and_utils import (
+    assert_equals_data, get_df_with_test_data, get_bt_with_test_data
+)
 
 
 def helper_test_simple_arithmetic(engine: Engine, a: Union[int, float], b: Union[int, float]):
@@ -46,10 +48,10 @@ def helper_test_simple_arithmetic(engine: Engine, a: Union[int, float], b: Union
     )
 
 
-def test_round():
+def test_round(engine):
     values = [1.9, 3.0, 4.123, 6.425124, 2.00000000001, 2.1, np.nan, 7.]
     pdf = pd.DataFrame(data={'0': values})
-    bt = get_from_df('test_round', pdf)
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     bt['const'] = 14.12345
     assert bt.const.expression.is_constant
 
@@ -60,10 +62,10 @@ def test_round():
         np.testing.assert_equal(pdf['0'].round(decimals=i).to_numpy(), bt['0'].round(decimals=i).to_numpy())
 
 
-def test_round_integer():
+def test_round_integer(engine):
     values = [1, 3, 4, 6, 2, 2, 6, 7]
     pdf = pd.DataFrame(data={'0': values})
-    bt = get_from_df('test_round', pdf)
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     for i in 0, 3, 5, 9:
         result = bt['0'].round(i).sort_values().to_pandas()
@@ -75,10 +77,10 @@ def test_round_integer():
         pd.testing.assert_series_equal(expected2, result2, check_names=False, check_index=False)
 
 
-def test_aggregations_simple_tests():
+def test_aggregations_simple_tests(engine):
     values = [1, 3, 4, 6, 2, 2, np.nan, 7, 8]
     pdf = pd.DataFrame(data={'0': values})
-    bt = get_from_df('test_aggregations_simple_tests', pdf)
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     numeric_agg = ['sum', 'mean']
     stats_agg = ['sem', 'std', 'var']
@@ -91,9 +93,9 @@ def test_aggregations_simple_tests():
         assert pd_agg == bt_agg.value
 
 
-def test_aggregations_sum_mincount():
+def test_aggregations_sum_mincount(engine):
     pdf = pd.DataFrame(data={'0': [1, np.nan, 7, 8]})
-    bt = get_from_df('test_aggregations_sum_mincount', pdf)
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     for i in [5, 4, 3]:
         pd_agg = pdf.sum(min_count=i)['0']
@@ -110,9 +112,9 @@ def test_aggregations_sum_mincount():
         assert (math.isnan(pd_agg) and bt_agg_value is None) or bt_agg_value == pd_agg
 
 
-def test_aggregations_quantile():
+def test_aggregations_quantile(engine):
     pdf = pd.DataFrame(data={'a': range(5), 'b': [1, 3, 5, 7, 9]})
-    bt = get_from_df('test_aggregations_quantile', pdf)
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     quantiles = [0.25, 0.3, 0.5, 0.75, 0.86]
 

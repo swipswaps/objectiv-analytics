@@ -5,10 +5,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bach import DataFrame, SeriesString, SeriesInt64, Series
+from bach import DataFrame, SeriesString, SeriesInt64
 from bach.expression import Expression
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
-    get_from_df, get_bt_with_railway_data, get_bt_with_food_data
+from tests.functional.bach.test_data_and_utils import (
+    get_bt_with_test_data, assert_equals_data, df_to_list, get_bt_with_railway_data, get_bt_with_food_data
+)
 
 
 def test_series__getitem__():
@@ -159,11 +160,11 @@ def test_series_sort_index_multi_level():
     )
 
 
-def test_fillna():
+def test_fillna(engine):
     # TODO test fillna with series instead of constants.
     values = [1, np.nan, 3, np.nan, 7]
     pdf = pd.DataFrame(data={'0': values})
-    bt = get_from_df('test_fillna', pdf)
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     def tf(x):
         bt_fill = bt['0'].fillna(x)
@@ -181,11 +182,11 @@ def test_fillna():
             bt['0'].fillna(val)
 
 
-def test_isnull():
+def test_isnull(engine):
     values = ['a', 'b', None]
     pdf = pd.DataFrame(data=values, columns=['text_with_null'])
     pdf.set_index('text_with_null', drop=False, inplace=True)
-    bt = get_from_df('test_isnull', pdf)
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     bt['const_not_null'] = 'not_null'
     bt['const_null'] = None
     bt['y'] = bt.text_with_null.isnull()
@@ -480,9 +481,9 @@ def test_series_append_same_dtype_different_index() -> None:
         bt_other_index.city.append(bt.skating_order)
 
 
-def test_series_dropna() -> None:
+def test_series_dropna(engine) -> None:
     p_series = pd.Series(['a', None, 'c', 'd'], name='nan_series')
-    bt = get_from_df('test_dropna', p_series.to_frame()).nan_series
+    bt = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).nan_series
     result = bt.dropna()
     pd.testing.assert_series_equal(
         p_series.dropna(),
@@ -565,14 +566,14 @@ def test_series_unstack():
     )
 
 
-def test__set_item_with_merge_aggregated_series() -> None:
+def test__set_item_with_merge_aggregated_series(engine) -> None:
     pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
     pdf2 = pd.DataFrame(
         data={'w': [1, 1, 1, 1], 'x': [1, 2, 3, 4], 'y': [2, 2, 4, 4], 'z': [1, 2, 3, 4]},
     )
 
-    df1 = get_from_df('_set_item_1', pdf1)
-    df2 = get_from_df('_set_item_2', pdf2)
+    df1 = DataFrame.from_pandas(engine=engine, df=pdf1, convert_objects=True)
+    df2 = DataFrame.from_pandas(engine=engine, df=pdf2, convert_objects=True)
 
     df1 = df1.set_index('a')
     df2 = df2.set_index('x')
@@ -596,12 +597,12 @@ def test__set_item_with_merge_aggregated_series() -> None:
     assert result.base_node.references['right_node'] != df2.base_node
 
 
-def test__set_item_with_merge_index_data_column_name_conflict() -> None:
+def test__set_item_with_merge_index_data_column_name_conflict(engine) -> None:
     pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'c': [3, 3, 3]})
     pdf2 = pd.DataFrame(data={'x': [1, 2, 3, 4], 'a': [2, 2, 4, 4]})
 
-    df1 = get_from_df('_set_item_1', pdf1)
-    df2 = get_from_df('_set_item_2', pdf2)
+    df1 = DataFrame.from_pandas(engine=engine, df=pdf1, convert_objects=True)
+    df2 = DataFrame.from_pandas(engine=engine, df=pdf2, convert_objects=True)
 
     df1 = df1.set_index('a')
     df2 = df2.set_index('x')
@@ -617,12 +618,12 @@ def test__set_item_with_merge_index_data_column_name_conflict() -> None:
     )
 
 
-def test__set_item_with_merge_index_multi_level() -> None:
+def test__set_item_with_merge_index_multi_level(engine) -> None:
     pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
     pdf2 = pd.DataFrame(data={'a': [1, 2, 3, 4], 'b': [2, 2, 4, 4], 'z': [1, 2, 3, 4]})
 
-    df1 = get_from_df('_set_item_1', pdf1)
-    df2 = get_from_df('_set_item_2', pdf2)
+    df1 = DataFrame.from_pandas(engine=engine, df=pdf1, convert_objects=True)
+    df2 = DataFrame.from_pandas(engine=engine, df=pdf2, convert_objects=True)
 
     df1 = df1.set_index(['a', 'b'])
     df2 = df2.set_index(['a', 'b'])
@@ -639,12 +640,12 @@ def test__set_item_with_merge_index_multi_level() -> None:
     )
 
 
-def test__set_item_with_merge_index_uneven_multi_level() -> None:
+def test__set_item_with_merge_index_uneven_multi_level(engine) -> None:
     pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
     pdf2 = pd.DataFrame(data={'x': [1, 2, 3, 4], 'a': [2, 2, 4, 4], 'z': [1, 2, 3, 4]})
 
-    df1 = get_from_df('_set_item_1', pdf1)
-    df2 = get_from_df('_set_item_2', pdf2)
+    df1 = DataFrame.from_pandas(engine=engine, df=pdf1, convert_objects=True)
+    df2 = DataFrame.from_pandas(engine=engine, df=pdf2, convert_objects=True)
 
     df1 = df1.set_index(['a', 'b'])
     df2 = df2.set_index(['x'])
@@ -664,12 +665,12 @@ def test__set_item_with_merge_index_uneven_multi_level() -> None:
     assert df2.base_node == result.base_node.references['right_node']
 
 
-def test__set_item_with_merge_w_conflict_names() -> None:
+def test__set_item_with_merge_w_conflict_names(engine) -> None:
     pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]})
     pdf2 = pd.DataFrame(data={'x': [1, 2, 3, 4], 'a': [2, 2, 4, 4], 'c': [1, 2, 3, 4]})
 
-    df1 = get_from_df('_set_item_1', pdf1)
-    df2 = get_from_df('_set_item_2', pdf2)
+    df1 = DataFrame.from_pandas(engine=engine, df=pdf1, convert_objects=True)
+    df2 = DataFrame.from_pandas(engine=engine, df=pdf2, convert_objects=True)
 
     df1 = df1.set_index('a')
     df2 = df2.set_index('x')

@@ -8,7 +8,7 @@ import pytest
 
 from bach import DataFrame
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_bt_with_food_data, \
-    assert_equals_data, get_bt_with_railway_data, get_from_df
+    assert_equals_data, get_bt_with_railway_data,  get_df_with_test_data
 
 
 def test_merge_basic():
@@ -519,7 +519,7 @@ def test_merge_non_materialized():
         )
 
 
-def test_merge_on_conditions() -> None:
+def test_merge_on_conditions(engine) -> None:
     pdf1 = pd.DataFrame({
         'A': ['a', 'b', 'c', 'd'],
         'B': [100, 25, 250, 500],
@@ -529,8 +529,8 @@ def test_merge_on_conditions() -> None:
         'B': [20, 5, 10, 20, 100],
     })
 
-    df1 = get_from_df('merge_on_condition1', pdf1)
-    df2 = get_from_df('merge_on_condition2', pdf2)
+    df1 = DataFrame.from_pandas(engine=engine, df=pdf1, convert_objects=True)
+    df2 = DataFrame.from_pandas(engine=engine, df=pdf2, convert_objects=True)
 
     on_condition = [df1['A'] + df2['A'] == 'cg', df1['B'] / df2['B'] > 10]
     result = df1.merge(df2, on=on_condition)
@@ -544,7 +544,7 @@ def test_merge_on_conditions() -> None:
     )
 
 
-def test_merge_on_conditions_w_on_data_columns() -> None:
+def test_merge_on_conditions_w_on_data_columns(engine) -> None:
     pdf1 = pd.DataFrame({
         'A': ['b', 'a', 'c', 'd'],
         'B': [100, 25, 250, 500],
@@ -554,8 +554,8 @@ def test_merge_on_conditions_w_on_data_columns() -> None:
         'B': [20, 5, 50, 20, 100],
     })
 
-    df1 = get_from_df('merge_on_condition1', pdf1)
-    df2 = get_from_df('merge_on_condition2', pdf2)
+    df1 = DataFrame.from_pandas(engine=engine, df=pdf1, convert_objects=True)
+    df2 = DataFrame.from_pandas(engine=engine, df=pdf2, convert_objects=True)
 
     on_condition = df1['B'] / df2['B'] == 5
     result = df1.merge(df2, on=['A', on_condition])
@@ -570,7 +570,7 @@ def test_merge_on_conditions_w_on_data_columns() -> None:
     )
 
 
-def test_merge_on_conditions_renamed_column() -> None:
+def test_merge_on_conditions_renamed_column(engine) -> None:
     pdf1 = pd.DataFrame({
         'A': ['b', 'a', 'c', 'd'],
         'B': [100, 25, 250, 500],
@@ -580,8 +580,8 @@ def test_merge_on_conditions_renamed_column() -> None:
         'B': [20, 5, 50, 20, 100],
     })
 
-    df1 = get_from_df('merge_on_condition1', pdf1)
-    df2 = get_from_df('merge_on_condition2', pdf2)
+    df1 = DataFrame.from_pandas(engine=engine, df=pdf1, convert_objects=True)
+    df2 = DataFrame.from_pandas(engine=engine, df=pdf2, convert_objects=True)
 
     df1 = df1.rename(columns={'B': 'C'})
     on_condition = df1['C'] > df2['B']
@@ -589,7 +589,7 @@ def test_merge_on_conditions_renamed_column() -> None:
     result = df1.merge(df2, on=on_condition)
 
 
-def test_merge_on_conditions_w_index() -> None:
+def test_merge_on_conditions_w_index(engine) -> None:
     pdf1 = pd.DataFrame({
         'A': ['a', 'b', 'c', 'd'],
         'B': [100, 25, 250, 500],
@@ -599,8 +599,8 @@ def test_merge_on_conditions_w_index() -> None:
         'B': [20, 5, 10, 20, 100],
     })
 
-    df1 = get_from_df('merge_on_condition1', pdf1)
-    df2 = get_from_df('merge_on_condition2', pdf2)
+    df1 = DataFrame.from_pandas(engine=engine, df=pdf1, convert_objects=True)
+    df2 = DataFrame.from_pandas(engine=engine, df=pdf2, convert_objects=True)
 
     on_condition = df1['B'] / df2['B'] > 10
     result = df1.merge(df2, on=on_condition, left_index=True, right_index=True)
