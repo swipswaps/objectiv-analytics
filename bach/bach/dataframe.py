@@ -1134,7 +1134,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union[AllSupportedLiteralTypes, pandas.Series]):
+                    value: Union[AllSupportedLiteralTypes, 'Series', pandas.Series]):
         """
         For usage see general introduction DataFrame class.
         """
