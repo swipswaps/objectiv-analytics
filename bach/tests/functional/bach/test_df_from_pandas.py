@@ -300,3 +300,37 @@ def test_from_pandas_types_cte(pg_engine):
             convert_objects=True,
             materialization='cte'
         )
+
+
+def test_from_pandas_columns_w_nulls(engine) -> None:
+    pdf = pd.DataFrame(
+        {
+            "a": ['a', None, 'c'],
+            "b": [np.nan, 1, 2],
+            "c": [pd.NaT, pd.Timestamp("1940-04-25"), pd.NaT],
+            "d": [None, None, None],
+        }
+    )
+    with pytest.raises(ValueError, match=r'has no non-nullable values'):
+        DataFrame.from_pandas(
+            engine=engine,
+            df=pdf,
+            convert_objects=True,
+            materialization='cte'
+        )
+
+    result = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf[['a', 'b', 'c']],
+        convert_objects=True,
+        materialization='cte'
+    )
+    assert_equals_data(
+        result,
+        expected_columns=['_index_0', 'a', 'b', 'c'],
+        expected_data=[
+            [0, 'a', None, None],
+            [1, None, 1, pd.Timestamp("1940-04-25")],
+            [2, 'c', 2, None],
+        ],
+    )
