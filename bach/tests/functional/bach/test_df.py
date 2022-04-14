@@ -132,7 +132,8 @@ def test_round(engine):
         pd.testing.assert_frame_equal(expected2, result2, check_names=False)
 
 
-def test_quantile(engine) -> None:
+def test_quantile(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     pdf = pd.DataFrame(
         data={
             'a': [1, 2, 3, 4, 5, 6, np.nan, 7.],

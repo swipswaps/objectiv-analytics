@@ -50,7 +50,8 @@ def test_basic_fillna(engine) -> None:
     )
 
 
-def test_fillna_w_methods(engine) -> None:
+def test_fillna_w_methods(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
     pdf = pd.DataFrame(DATA, columns=list("ABCDEFG"))
     df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
@@ -92,7 +93,9 @@ def test_fillna_w_methods(engine) -> None:
     )
 
 
-def test_fillna_w_methods_w_sorted_df(engine) -> None:
+def test_fillna_w_methods_w_sorted_df(pg_engine) -> None:
+    engine = pg_engine  # TODO: BigQuery
+
     pdf = pd.DataFrame(DATA, columns=list("ABCDEFG"))
     df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True).sort_index()
 

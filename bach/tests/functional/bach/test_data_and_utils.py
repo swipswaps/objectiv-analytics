@@ -123,6 +123,9 @@ def get_bt(
     columns: List[str],
     convert_objects: bool
 ) -> DataFrame:
+    """
+    DEPRECATED: Call directly DataFrame.from_pandas instead
+    """
     return DataFrame.from_pandas(
         engine=sqlalchemy.create_engine(DB_PG_TEST_URL),
         df=get_pandas_df(dataset, columns),
