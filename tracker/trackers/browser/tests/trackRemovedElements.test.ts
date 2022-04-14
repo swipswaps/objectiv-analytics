@@ -3,7 +3,7 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { generateUUID, makeContentContext, TrackerConsole } from '@objectiv/tracker-core';
+import { generateUUID, TrackerConsole } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackRemovedElements } from '../src/mutationObserver/trackRemovedElements';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
@@ -68,7 +68,7 @@ describe('trackRemovedElements', () => {
         _type: 'HiddenEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeContentContext({ id: 'div' })],
+        location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'div' })],
       })
     );
   });

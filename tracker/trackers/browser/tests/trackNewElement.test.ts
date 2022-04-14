@@ -5,7 +5,6 @@
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   generateUUID,
-  makeContentContext,
   makeInputContext,
   makePressableContext,
   TrackerConsole,
@@ -107,7 +106,7 @@ describe('trackNewElement', () => {
         _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeContentContext({ id: 'test' })],
+        location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'test' })],
       })
     );
   });

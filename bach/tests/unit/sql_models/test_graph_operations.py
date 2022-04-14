@@ -10,6 +10,8 @@ from sql_models.graph_operations import get_graph_nodes_info, get_node, get_node
 from sql_models.model import RefPath, SqlModel
 from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel, RefValueModel
 
+pytestmark = [pytest.mark.db_independent]  # mark all tests here as database independent.
+
 
 def get_simple_test_graph():
     """ Give a simple graph that consists of 4 model instances of 3 model types. """

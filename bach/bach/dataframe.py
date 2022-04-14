@@ -497,6 +497,19 @@ class DataFrame:
         from bach.indexing import LocIndexer
         return LocIndexer(self)
 
+    @property
+    def plot(self):
+        """
+        The ``.plot`` accessor offers different methods for data visualization. Data is preprocessed based
+        on the kind of plot and draws image directly using Pandas ``DataFrame.plot``:
+
+        .. note::
+            - See pandas documentation online for more information.
+            - Each plotting method queries the database.
+        """
+        from bach.plotting import PlotHandler
+        return PlotHandler(self)
+
     def __eq__(self, other: Any) -> bool:
         """
         Compares two DataFrames for equality.
@@ -1861,25 +1874,6 @@ class DataFrame:
         """
         return self.to_pandas(limit=n)
 
-    @property
-    def values(self) -> numpy.ndarray:
-        """
-        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
-
-        .. warning::
-           We recommend using :meth:`DataFrame.to_numpy` instead.
-
-        :returns: Returns the values of the DataFrame as numpy.ndarray.
-
-        .. note::
-            This function queries the database.
-        """
-        warnings.warn(
-            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
-            category=DeprecationWarning,
-        )
-        return self.to_numpy()
-
     def to_numpy(self) -> numpy.ndarray:
         """
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.to_numpy`
@@ -2438,6 +2432,20 @@ class DataFrame:
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
         return self._aggregate_func('std', axis, level, numeric_only,
+                                    skipna=skipna, ddof=ddof, **kwargs)
+
+    def std_pop(self, axis=1, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
+        """
+        Returns the population standard deviation of each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param ddof: Delta Degrees of Freedom. Only 1 is supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
+        return self._aggregate_func('std_pop', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
     def sum(self, axis=1, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
@@ -3043,6 +3051,94 @@ class DataFrame:
         stacked_df = stacked_df.dropna() if dropna else stacked_df
 
         return stacked_df.all_series['__stacked']
+
+    def scale(self, with_mean: bool = True, with_std: bool = True) -> 'DataFrame':
+        """
+        Standardizes all numeric series based on mean and population standard deviation.
+
+        :param with_mean: if true, each feature value will be centered before scaling
+        :param with_std: if true, each feature value will be scaled to unit variance
+
+        :return: DataFrame
+
+        Each transformation per feature is performed as follows:
+
+        .. testsetup:: scale
+           :skipif: engine is None
+
+           import pandas
+           data = {'index': ['a', 'b', 'c', 'd'], 'feature': [1, 2, 3, 4]}
+           pdf = pandas.DataFrame(data)
+           df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+           df = df.set_index('index')
+           agg_df = df.agg(['mean', 'std_pop'], numeric_only=True)
+
+           feature = df['feature']
+           mean_feature = agg_df['feature_mean']
+           std_feature = agg_df['feature_std_pop']
+           with_mean = True
+           with_std = True
+
+        .. doctest:: scale
+            :skipif: engine is None
+
+            >>> scaled_feature = feature.copy()
+            >>> if with_mean:
+            ...     scaled_feature -= mean_feature
+
+
+            >>> if with_std:
+            ...     scaled_feature /= std_feature
+
+        Where:
+            * ``feature`` is the series to be scaled
+            * ``mean_feature`` is the mean of ``feature``
+            * ``std_feature`` is the (population-based) stardard deviation of ``feature``
+
+        """
+        from bach.preprocessing.scalers import StandardScaler
+        return StandardScaler(training_df=self, with_mean=with_mean, with_std=with_std).transform()
+
+    def minmax_scale(self, feature_range: Tuple[int, int] = (0, 1)) -> 'DataFrame':
+        """
+        Scales all numeric series based on a given range.
+
+        :param feature_range: ``tuple(min, max)`` desired range to use for scaling.
+        :return: DataFrame
+
+        Each transformation per feature is performed as follows:
+
+        .. testsetup:: minmax_scale
+           :skipif: engine is None
+
+           import pandas
+           data = {'index': ['a', 'b', 'c', 'd'], 'feature': [1, 2, 3, 4]}
+           pdf = pandas.DataFrame(data)
+
+           df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+           df = df.set_index('index')
+           agg_df = df.agg(['min', 'max'], numeric_only=True)
+           agg_df = agg_df.merge(df, how='cross')
+
+           feature = df['feature']
+           min_feature = agg_df['feature_min']
+           max_feature = agg_df['feature_max']
+
+        .. doctest:: minmax_scale
+            :skipif: engine is None
+
+            >>> range_min,  = (0, 1)
+            >>> feature_std = (feature - min_feature) / (max_feature - min_feature)
+            >>> scaled_feature = feature_std * (range_max - range_min) + range_min
+
+        Where:
+            * ``feature`` is the series to be scaled
+            * ``feature_min`` is the minimum value of ``feature``
+            * ``feature_max`` is the maximum value of ``feature``
+            * ``range_min, range_max`` = ``feature_range``
+        """
+        from bach.preprocessing.scalers import MinMaxScaler
+        return MinMaxScaler(training_df=self, feature_range=feature_range).transform()
 
     def unstack(
         self, level: Union[str, int] = -1, fill_value: Optional[Scalar] = None, aggregation: str = 'max',

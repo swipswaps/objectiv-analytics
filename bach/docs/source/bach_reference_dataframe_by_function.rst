@@ -23,7 +23,6 @@ Value accessors
 
     DataFrame.head
     DataFrame.to_pandas
-    DataFrame.values
     DataFrame.loc
 
 Attributes and underlying data
@@ -91,6 +90,9 @@ Reshaping, indexing, sorting & merging
     DataFrame.bfill
     DataFrame.stack
     DataFrame.unstack
+    DataFrame.scale
+    DataFrame.minmax_scale
+    DataFrame.get_dummies
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -136,3 +138,10 @@ Numeric
     DataFrame.sum
     DataFrame.std
     DataFrame.var
+
+Visualization
+++++++++++++++
+.. autosummary::
+    :toctree: DataFrame
+
+    DataFrame.plot

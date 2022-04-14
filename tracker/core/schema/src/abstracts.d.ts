@@ -44,6 +44,11 @@ export abstract class AbstractEvent {
  */
 export abstract class AbstractContext {
   /**
+   * A unique identifier to discriminate Context instances across Location Stacks.
+   */
+  __instance_id: string;
+
+  /**
    * A unique string identifier to be combined with the Context Type (`_type`)
    *for Context instance uniqueness.
    */

@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from abc import ABC
-from typing import cast, Union, TYPE_CHECKING, Optional, List
+from typing import cast, Union, TYPE_CHECKING, Optional, List, Tuple
 
 import numpy
 from sqlalchemy.engine import Dialect
@@ -96,7 +96,7 @@ class SeriesAbstractNumeric(Series, ABC):
     # def skew(self, partition: WrappedPartition = None, skipna: bool = True):
     #     raise NotImplementedError("skew currently not implemented")
 
-    def sem(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
+    def sem(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None, **kwargs):
         """
         Get the unbiased standard error of the mean.
         Normalized by N-1 by default.
@@ -115,20 +115,24 @@ class SeriesAbstractNumeric(Series, ABC):
             skipna=skipna
         )
 
-    def std(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
+    def std(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None, **kwargs):
         """
-        Get the sample standard deviation of the input values
+        Get the standard deviation of the input values
         Normalized by N-1 by default.
 
         :param partition: The partition or window to apply
         :param skipna: Exclude NA/NULL values
-        :param ddof: Delta degrees of freedom. he divisor used in calculations is N - ddof,
+        :param ddof: Delta degrees of freedom. The divisor used in calculations is N - ddof,
             where N represents the number of elements
         """
-        self._ddof_unsupported(ddof)
+        if ddof is not None and ddof not in (0, 1):
+            raise NotImplementedError(f"ddof == {ddof} currently not implemented")
+
+        if ddof == 0:
+            return self._derived_agg_func(partition, 'stddev_pop', skipna=skipna)
         return self._derived_agg_func(partition, 'stddev_samp', skipna=skipna)
 
-    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
+    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None, **kwargs):
         """
         Get the sum of the input values.
 
@@ -138,7 +142,7 @@ class SeriesAbstractNumeric(Series, ABC):
         """
         return self._derived_agg_func(partition, 'sum', skipna=skipna, min_count=min_count)
 
-    def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'SeriesFloat64':
+    def mean(self, partition: WrappedPartition = None, skipna: bool = True, **kwargs) -> 'SeriesFloat64':
         """
         Get the mean/average of the input values.
 
@@ -151,7 +155,7 @@ class SeriesAbstractNumeric(Series, ABC):
         )
 
     def quantile(
-        self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5,
+        self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5, **kwargs
     ) -> 'SeriesFloat64':
         """
         When q is a float or len(q) == 1, the resultant series index will remain
@@ -165,7 +169,7 @@ class SeriesAbstractNumeric(Series, ABC):
         result = calculate_quantiles(self, partition=partition, q=q)
         return cast('SeriesFloat64', result)
 
-    def var(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
+    def var(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None, **kwargs):
         """
         Get the sample variance of the input values (square of the sample standard deviation)
         Normalized by N-1 by default.
@@ -177,6 +181,26 @@ class SeriesAbstractNumeric(Series, ABC):
         """
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(partition, 'var_samp', skipna=skipna)
+
+    def scale(self, with_mean: bool = True, with_std: bool = True) -> 'Series':
+        """
+        Standardizes series based on mean and population standard deviation.
+
+        :param with_mean: if true, each value will be centered before scaling
+        :param with_std: if true, each value will be scaled to unit variance
+
+        :return: Series
+        """
+        return self.to_frame().scale(with_mean, with_std)[self.name]
+
+    def minmax_scale(self, feature_range: Tuple[int, int] = (0, 1)) -> 'Series':
+        """
+        Scales series based on a given range.
+
+        :param feature_range: ``tuple(min, max)`` desired range to use for scaling.
+        :return: Series
+        """
+        return self.to_frame().minmax_scale(feature_range)[self.name]
 
 
 class SeriesInt64(SeriesAbstractNumeric):
@@ -240,7 +264,7 @@ class SeriesInt64(SeriesAbstractNumeric):
                                               other_dtypes=tuple(['int64']))
         return self._arithmetic_operation(other, 'lshift', '({}) << ({})', other_dtypes=tuple(['int64']))
 
-    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
+    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None, **kwargs):
         # sum() has the tendency to return float on bigint arguments. Cast it back.
         series = super().sum(partition, skipna, min_count)
         return series.copy_override(

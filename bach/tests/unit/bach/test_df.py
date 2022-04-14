@@ -1,6 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+from typing import List
+
 import pytest
 
 from bach import SortColumn, DataFrame
@@ -12,27 +14,30 @@ from sql_models.model import CustomSqlModelBuilder
 from tests.unit.bach.util import get_fake_df
 
 
-def test__eq__():
-    assert get_fake_df(['a'], ['b', 'c']) != 123
-    assert get_fake_df(['a'], ['b', 'c']) != 'a'
-    assert get_fake_df(['a'], ['b', 'c']) != (['a'], ['b', 'c'])
+def test__eq__(dialect):
+    def get_df(index_names: List[str], data_names: List[str]):
+        return get_fake_df(dialect=dialect, index_names=index_names, data_names=data_names)
 
-    result = get_fake_df(['a'], ['b', 'c']) == get_fake_df(['a'], ['b', 'c'])
+    assert get_df(['a'], ['b', 'c']) != 123
+    assert get_df(['a'], ['b', 'c']) != 'a'
+    assert get_df(['a'], ['b', 'c']) != (['a'], ['b', 'c'])
+
+    result = get_df(['a'], ['b', 'c']) == get_df(['a'], ['b', 'c'])
     # Assert that we get a boolean (e.g. for Series this is not the case since we overloaded __eq__ in a
     # different way)
     assert result is True
 
-    assert get_fake_df(['a'], ['b', 'c']) == get_fake_df(['a'], ['b', 'c'])
-    assert get_fake_df(['a', 'b'], ['c']) == get_fake_df(['a', 'b'], ['c'])
+    assert get_df(['a'], ['b', 'c']) == get_df(['a'], ['b', 'c'])
+    assert get_df(['a', 'b'], ['c']) == get_df(['a', 'b'], ['c'])
     # 'b' is index or data column
-    assert get_fake_df(['a', 'b'], ['c']) != get_fake_df(['a'], ['b', 'c'])
+    assert get_df(['a', 'b'], ['c']) != get_df(['a'], ['b', 'c'])
     # switched order index columns
-    assert get_fake_df(['b', 'a'], ['c']) != get_fake_df(['a', 'b'], ['c'])
+    assert get_df(['b', 'a'], ['c']) != get_df(['a', 'b'], ['c'])
     # switched order data columns
-    assert get_fake_df(['a'], ['b', 'c']) != get_fake_df(['a'], ['c', 'b'])
+    assert get_df(['a'], ['b', 'c']) != get_df(['a'], ['c', 'b'])
 
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['b', 'c'])
+    left = get_df(['a'], ['b', 'c'])
+    right = get_df(['a'], ['b', 'c'])
     assert left == right
     # use fake value for engine and basenode to check that the values are tested
     left._engine = 'test'
@@ -51,7 +56,7 @@ def test__eq__():
     assert left == right
 
     # reset left, right
-    left, right = get_fake_df(['a'], ['b', 'c']),  get_fake_df(['a'], ['b', 'c'])
+    left, right = get_df(['a'], ['b', 'c']),  get_df(['a'], ['b', 'c'])
 
     left = left.set_variable('a', 1234)
     right = right.set_variable('a', '1234')
@@ -61,9 +66,9 @@ def test__eq__():
     assert left == right
 
 
-def test_init_conditions():
-    df = get_fake_df(['a'], ['b', 'c'])
-    df2 = get_fake_df(['a', 'b'], ['c', 'd'])
+def test_init_conditions(dialect):
+    df = get_fake_df(dialect, ['a'], ['b', 'c'])
+    df2 = get_fake_df(dialect, ['a', 'b'], ['c', 'd'])
     columns = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
     other_base_node = BachSqlModel.from_sql_model(
         sql_model=CustomSqlModelBuilder('select * from y', name='base')(),
