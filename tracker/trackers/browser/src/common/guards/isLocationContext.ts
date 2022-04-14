@@ -21,9 +21,6 @@ export const isLocationContext = (locationContext: AbstractLocationContext): loc
     return false;
   }
 
-  // FIXME restrict AbstractLocationContext._type to LocationContextName
-  // then this can be replaced by
-  // return Object.values(LocationContextName).includes(locationContext._type);
   return [
     'ContentContext',
     'ExpandableContext',
