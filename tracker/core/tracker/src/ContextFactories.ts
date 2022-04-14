@@ -19,6 +19,7 @@ import {
   RootLocationContext,
   SessionContext,
 } from '@objectiv/schema';
+import { GlobalContextName, LocationContextName } from './ContextNames';
 import { generateUUID } from './helpers';
 
 /** Creates instance of ApplicationContext
@@ -30,7 +31,7 @@ import { generateUUID } from './helpers';
 export const makeApplicationContext = (props: { id: string }): ApplicationContext => ({
   __instance_id: generateUUID(),
   __global_context: true,
-  _type: 'ApplicationContext',
+  _type: GlobalContextName.ApplicationContext,
   id: props.id,
 });
 
@@ -43,7 +44,7 @@ export const makeApplicationContext = (props: { id: string }): ApplicationContex
 export const makeContentContext = (props: { id: string }): ContentContext => ({
   __instance_id: generateUUID(),
   __location_context: true,
-  _type: 'ContentContext',
+  _type: LocationContextName.ContentContext,
   id: props.id,
 });
 
@@ -57,7 +58,7 @@ export const makeContentContext = (props: { id: string }): ContentContext => ({
 export const makeCookieIdContext = (props: { id: string; cookie_id: string }): CookieIdContext => ({
   __instance_id: generateUUID(),
   __global_context: true,
-  _type: 'CookieIdContext',
+  _type: GlobalContextName.CookieIdContext,
   id: props.id,
   cookie_id: props.cookie_id,
 });
@@ -71,7 +72,7 @@ export const makeCookieIdContext = (props: { id: string; cookie_id: string }): C
 export const makeExpandableContext = (props: { id: string }): ExpandableContext => ({
   __instance_id: generateUUID(),
   __location_context: true,
-  _type: 'ExpandableContext',
+  _type: LocationContextName.ExpandableContext,
   id: props.id,
 });
 
@@ -92,7 +93,7 @@ export const makeHttpContext = (props: {
 }): HttpContext => ({
   __instance_id: generateUUID(),
   __global_context: true,
-  _type: 'HttpContext',
+  _type: GlobalContextName.HttpContext,
   id: props.id,
   referrer: props.referrer,
   user_agent: props.user_agent,
@@ -108,7 +109,7 @@ export const makeHttpContext = (props: {
 export const makeInputContext = (props: { id: string }): InputContext => ({
   __instance_id: generateUUID(),
   __location_context: true,
-  _type: 'InputContext',
+  _type: LocationContextName.InputContext,
   id: props.id,
 });
 
@@ -123,7 +124,7 @@ export const makeLinkContext = (props: { id: string; href: string }): LinkContex
   __instance_id: generateUUID(),
   __location_context: true,
   __pressable_context: true,
-  _type: 'LinkContext',
+  _type: LocationContextName.LinkContext,
   id: props.id,
   href: props.href,
 });
@@ -150,7 +151,7 @@ export const makeMarketingContext = (props: {
 }): MarketingContext => ({
   __instance_id: generateUUID(),
   __global_context: true,
-  _type: 'MarketingContext',
+  _type: GlobalContextName.MarketingContext,
   id: props.id,
   source: props.source,
   medium: props.medium,
@@ -168,7 +169,7 @@ export const makeMarketingContext = (props: {
 export const makeMediaPlayerContext = (props: { id: string }): MediaPlayerContext => ({
   __instance_id: generateUUID(),
   __location_context: true,
-  _type: 'MediaPlayerContext',
+  _type: LocationContextName.MediaPlayerContext,
   id: props.id,
 });
 
@@ -181,7 +182,7 @@ export const makeMediaPlayerContext = (props: { id: string }): MediaPlayerContex
 export const makeNavigationContext = (props: { id: string }): NavigationContext => ({
   __instance_id: generateUUID(),
   __location_context: true,
-  _type: 'NavigationContext',
+  _type: LocationContextName.NavigationContext,
   id: props.id,
 });
 
@@ -195,7 +196,7 @@ export const makeNavigationContext = (props: { id: string }): NavigationContext 
 export const makeOverlayContext = (props: { id: string }): OverlayContext => ({
   __instance_id: generateUUID(),
   __location_context: true,
-  _type: 'OverlayContext',
+  _type: LocationContextName.OverlayContext,
   id: props.id,
 });
 
@@ -208,7 +209,7 @@ export const makeOverlayContext = (props: { id: string }): OverlayContext => ({
 export const makePathContext = (props: { id: string }): PathContext => ({
   __instance_id: generateUUID(),
   __global_context: true,
-  _type: 'PathContext',
+  _type: GlobalContextName.PathContext,
   id: props.id,
 });
 
@@ -223,7 +224,7 @@ export const makePressableContext = (props: { id: string }): PressableContext =>
   __instance_id: generateUUID(),
   __location_context: true,
   __pressable_context: true,
-  _type: 'PressableContext',
+  _type: LocationContextName.PressableContext,
   id: props.id,
 });
 
@@ -236,7 +237,7 @@ export const makePressableContext = (props: { id: string }): PressableContext =>
 export const makeRootLocationContext = (props: { id: string }): RootLocationContext => ({
   __instance_id: generateUUID(),
   __location_context: true,
-  _type: 'RootLocationContext',
+  _type: LocationContextName.RootLocationContext,
   id: props.id,
 });
 
@@ -250,7 +251,7 @@ export const makeRootLocationContext = (props: { id: string }): RootLocationCont
 export const makeSessionContext = (props: { id: string; hit_number: number }): SessionContext => ({
   __instance_id: generateUUID(),
   __global_context: true,
-  _type: 'SessionContext',
+  _type: GlobalContextName.SessionContext,
   id: props.id,
   hit_number: props.hit_number,
 });

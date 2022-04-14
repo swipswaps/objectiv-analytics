@@ -3,7 +3,15 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { ApplicationContextPlugin, ContextsConfig, generateUUID, Tracker, TrackerConsole, TrackerEvent } from '../src';
+import {
+  ApplicationContextPlugin,
+  ContextsConfig,
+  generateUUID,
+  GlobalContextName,
+  Tracker,
+  TrackerConsole,
+  TrackerEvent,
+} from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -20,7 +28,7 @@ describe('ApplicationContextPlugin', () => {
         applicationContext: {
           __instance_id: matchUUID,
           __global_context: true,
-          _type: 'ApplicationContext',
+          _type: GlobalContextName.ApplicationContext,
           id: 'app-id',
         },
       })
@@ -51,7 +59,7 @@ describe('ApplicationContextPlugin', () => {
         {
           __instance_id: matchUUID,
           __global_context: true,
-          _type: 'ApplicationContext',
+          _type: GlobalContextName.ApplicationContext,
           id: 'app-id',
         },
       ])

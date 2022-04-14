@@ -64,7 +64,7 @@ describe('ObjectivProvider', () => {
             applicationContext: {
               __instance_id: matchUUID,
               __global_context: true,
-              _type: 'ApplicationContext',
+              _type: GlobalContextName.ApplicationContext,
               id: 'app-id',
             },
             pluginName: 'ApplicationContextPlugin',

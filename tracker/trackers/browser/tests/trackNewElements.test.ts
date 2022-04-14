@@ -3,7 +3,7 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { generateUUID, TrackerConsole } from '@objectiv/tracker-core';
+import { generateUUID, LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
   getTracker,
@@ -67,7 +67,7 @@ describe('trackNewElements', () => {
         _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [expect.objectContaining({ _type: 'OverlayContext', id: 'child-div' })],
+        location_stack: [expect.objectContaining({ _type: LocationContextName.OverlayContext, id: 'child-div' })],
       })
     );
   });

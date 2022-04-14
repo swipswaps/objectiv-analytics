@@ -4,6 +4,8 @@
 
 import { matchUUID } from '@objectiv/testing-tools';
 import {
+  GlobalContextName,
+  LocationContextName,
   makeApplicationContext,
   makeContentContext,
   makeCookieIdContext,
@@ -22,50 +24,50 @@ import {
 } from '../src';
 
 describe('Context Factories', () => {
-  it('ApplicationContext', () => {
+  it(GlobalContextName.ApplicationContext, () => {
     expect(makeApplicationContext({ id: 'app' })).toStrictEqual({
       __instance_id: matchUUID,
       __global_context: true,
-      _type: 'ApplicationContext',
+      _type: GlobalContextName.ApplicationContext,
       id: 'app',
     });
   });
 
-  it('ContentContext', () => {
+  it(LocationContextName.ContentContext, () => {
     expect(makeContentContext({ id: 'content-A' })).toStrictEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'ContentContext',
+      _type: LocationContextName.ContentContext,
       id: 'content-A',
     });
   });
 
-  it('CookieIdContext', () => {
+  it(GlobalContextName.CookieIdContext, () => {
     expect(makeCookieIdContext({ id: 'error-id', cookie_id: '12345' })).toStrictEqual({
       __instance_id: matchUUID,
       __global_context: true,
-      _type: 'CookieIdContext',
+      _type: GlobalContextName.CookieIdContext,
       id: 'error-id',
       cookie_id: '12345', // Note: the cookieId parameter is mapped to cookie_id
     });
   });
 
-  it('ExpandableContext', () => {
+  it(LocationContextName.ExpandableContext, () => {
     expect(makeExpandableContext({ id: 'accordion-a' })).toStrictEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'ExpandableContext',
+      _type: LocationContextName.ExpandableContext,
       id: 'accordion-a',
     });
   });
 
-  it('HttpContext', () => {
+  it(GlobalContextName.HttpContext, () => {
     expect(
       makeHttpContext({ id: 'http', referrer: 'referrer', user_agent: 'ua', remote_address: '0.0.0.0' })
     ).toStrictEqual({
       __instance_id: matchUUID,
       __global_context: true,
-      _type: 'HttpContext',
+      _type: GlobalContextName.HttpContext,
       id: 'http',
       referrer: 'referrer',
       user_agent: 'ua',
@@ -75,7 +77,7 @@ describe('Context Factories', () => {
     expect(makeHttpContext({ id: 'http', referrer: 'referrer', user_agent: 'ua' })).toStrictEqual({
       __instance_id: matchUUID,
       __global_context: true,
-      _type: 'HttpContext',
+      _type: GlobalContextName.HttpContext,
       id: 'http',
       referrer: 'referrer',
       user_agent: 'ua',
@@ -83,27 +85,27 @@ describe('Context Factories', () => {
     });
   });
 
-  it('InputContext', () => {
+  it(LocationContextName.InputContext, () => {
     expect(makeInputContext({ id: 'input-1' })).toStrictEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'InputContext',
+      _type: LocationContextName.InputContext,
       id: 'input-1',
     });
   });
 
-  it('LinkContext', () => {
+  it(LocationContextName.LinkContext, () => {
     expect(makeLinkContext({ id: 'confirm-data', href: '/some/url' })).toStrictEqual({
       __instance_id: matchUUID,
       __location_context: true,
       __pressable_context: true,
-      _type: 'LinkContext',
+      _type: LocationContextName.LinkContext,
       id: 'confirm-data',
       href: '/some/url',
     });
   });
 
-  it('MarketingContext', () => {
+  it(GlobalContextName.MarketingContext, () => {
     expect(
       makeMarketingContext({
         id: 'utm',
@@ -114,7 +116,7 @@ describe('Context Factories', () => {
     ).toStrictEqual({
       __instance_id: matchUUID,
       __global_context: true,
-      _type: 'MarketingContext',
+      _type: GlobalContextName.MarketingContext,
       id: 'utm',
       campaign: 'test-campaign',
       medium: 'test-medium',
@@ -135,7 +137,7 @@ describe('Context Factories', () => {
     ).toStrictEqual({
       __instance_id: matchUUID,
       __global_context: true,
-      _type: 'MarketingContext',
+      _type: GlobalContextName.MarketingContext,
       id: 'utm',
       campaign: 'test-campaign',
       medium: 'test-medium',
@@ -145,66 +147,66 @@ describe('Context Factories', () => {
     });
   });
 
-  it('MediaPlayerContext', () => {
+  it(LocationContextName.MediaPlayerContext, () => {
     expect(makeMediaPlayerContext({ id: 'player-1' })).toStrictEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'MediaPlayerContext',
+      _type: LocationContextName.MediaPlayerContext,
       id: 'player-1',
     });
   });
 
-  it('NavigationContext', () => {
+  it(LocationContextName.NavigationContext, () => {
     expect(makeNavigationContext({ id: 'top-nav' })).toStrictEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'NavigationContext',
+      _type: LocationContextName.NavigationContext,
       id: 'top-nav',
     });
   });
 
-  it('OverlayContext', () => {
+  it(LocationContextName.OverlayContext, () => {
     expect(makeOverlayContext({ id: 'top-menu' })).toStrictEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'OverlayContext',
+      _type: LocationContextName.OverlayContext,
       id: 'top-menu',
     });
   });
 
-  it('PathContext', () => {
+  it(GlobalContextName.PathContext, () => {
     expect(makePathContext({ id: '/some/path' })).toStrictEqual({
       __instance_id: matchUUID,
       __global_context: true,
-      _type: 'PathContext',
+      _type: GlobalContextName.PathContext,
       id: '/some/path',
     });
   });
 
-  it('PressableContext', () => {
+  it(LocationContextName.PressableContext, () => {
     expect(makePressableContext({ id: 'confirm-data' })).toStrictEqual({
       __instance_id: matchUUID,
       __location_context: true,
       __pressable_context: true,
-      _type: 'PressableContext',
+      _type: LocationContextName.PressableContext,
       id: 'confirm-data',
     });
   });
 
-  it('RootLocationContext', () => {
+  it(LocationContextName.RootLocationContext, () => {
     expect(makeRootLocationContext({ id: 'page-A' })).toStrictEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'RootLocationContext',
+      _type: LocationContextName.RootLocationContext,
       id: 'page-A',
     });
   });
 
-  it('SessionContext', () => {
+  it(GlobalContextName.SessionContext, () => {
     expect(makeSessionContext({ id: 'session-id', hit_number: 123 })).toStrictEqual({
       __instance_id: matchUUID,
       __global_context: true,
-      _type: 'SessionContext',
+      _type: GlobalContextName.SessionContext,
       id: 'session-id',
       hit_number: 123,
     });

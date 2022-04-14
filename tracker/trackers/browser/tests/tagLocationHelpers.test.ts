@@ -4,6 +4,7 @@
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
+  LocationContextName,
   tagContent,
   tagExpandable,
   TaggingAttribute,
@@ -74,7 +75,7 @@ describe('tagLocationHelpers', () => {
         __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         __pressable_context: true,
-        _type: 'PressableContext',
+        _type: LocationContextName.PressableContext,
         id: 'test-button',
       }),
       [TaggingAttribute.trackClicks]: 'true',
@@ -91,7 +92,7 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.context]: JSON.stringify({
         __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
-        _type: 'ContentContext',
+        _type: LocationContextName.ContentContext,
         id: 'test-section',
       }),
     };
@@ -107,7 +108,7 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.context]: JSON.stringify({
         __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
-        _type: 'ExpandableContext',
+        _type: LocationContextName.ExpandableContext,
         id: 'test-expandable',
       }),
       [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -124,7 +125,7 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.context]: JSON.stringify({
         __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
-        _type: 'InputContext',
+        _type: LocationContextName.InputContext,
         id: 'test-input',
       }),
       [TaggingAttribute.trackBlurs]: 'true',
@@ -142,7 +143,7 @@ describe('tagLocationHelpers', () => {
         __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
         __pressable_context: true,
-        _type: 'LinkContext',
+        _type: LocationContextName.LinkContext,
         id: 'link',
         href: '/test',
       }),
@@ -160,7 +161,7 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.context]: JSON.stringify({
         __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
-        _type: 'MediaPlayerContext',
+        _type: LocationContextName.MediaPlayerContext,
         id: 'test-media-player',
       }),
     };
@@ -176,7 +177,7 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.context]: JSON.stringify({
         __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
-        _type: 'NavigationContext',
+        _type: LocationContextName.NavigationContext,
         id: 'test-nav',
       }),
     };
@@ -192,7 +193,7 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.context]: JSON.stringify({
         __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
-        _type: 'OverlayContext',
+        _type: LocationContextName.OverlayContext,
         id: 'test-overlay',
       }),
       [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -209,7 +210,7 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.context]: JSON.stringify({
         __instance_id: taggingAttributes ? JSON.parse(taggingAttributes[TaggingAttribute.context]).__instance_id : null,
         __location_context: true,
-        _type: 'RootLocationContext',
+        _type: LocationContextName.RootLocationContext,
         id: 'test-page',
       }),
     };

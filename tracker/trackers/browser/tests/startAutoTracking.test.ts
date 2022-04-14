@@ -3,7 +3,7 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { generateUUID, TrackerConsole } from '@objectiv/tracker-core';
+import { generateUUID, LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import {
   AutoTrackingState,
   BrowserTracker,
@@ -94,7 +94,7 @@ describe('makeMutationCallback - new nodes', () => {
         _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'div' })],
+        location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'div' })],
       })
     );
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
@@ -103,7 +103,7 @@ describe('makeMutationCallback - new nodes', () => {
         _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'div' })],
+        location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'div' })],
       })
     );
   });
@@ -168,7 +168,7 @@ describe('makeMutationCallback - removed nodes', () => {
         _type: 'HiddenEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'div' })],
+        location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'div' })],
       })
     );
   });

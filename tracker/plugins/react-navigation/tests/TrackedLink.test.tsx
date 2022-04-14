@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { TrackerConsole } from '@objectiv/tracker-core';
+import { GlobalContextName, LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import {
   ContentContextWrapper,
   ObjectivProvider,
@@ -99,10 +99,12 @@ describe('TrackedLink', () => {
         expect.objectContaining({
           _type: 'ApplicationLoadedEvent',
           global_contexts: [
-            expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
-            expect.objectContaining({ _type: 'PathContext', ...pathContext }),
+            expect.objectContaining({ _type: GlobalContextName.ApplicationContext, id: 'app-id' }),
+            expect.objectContaining({ _type: GlobalContextName.PathContext, ...pathContext }),
           ],
-          location_stack: [expect.objectContaining({ _type: 'RootLocationContext', ...rootLocationContext })],
+          location_stack: [
+            expect.objectContaining({ _type: LocationContextName.RootLocationContext, ...rootLocationContext }),
+          ],
         })
       );
       expect(spyTransport.handle).toHaveBeenNthCalledWith(
@@ -110,12 +112,12 @@ describe('TrackedLink', () => {
         expect.objectContaining({
           _type: 'PressEvent',
           global_contexts: [
-            expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
-            expect.objectContaining({ _type: 'PathContext', ...pathContext }),
+            expect.objectContaining({ _type: GlobalContextName.ApplicationContext, id: 'app-id' }),
+            expect.objectContaining({ _type: GlobalContextName.PathContext, ...pathContext }),
           ],
           location_stack: [
-            expect.objectContaining({ _type: 'RootLocationContext', ...rootLocationContext }),
-            expect.objectContaining({ _type: 'LinkContext', ...linkContext }),
+            expect.objectContaining({ _type: LocationContextName.RootLocationContext, ...rootLocationContext }),
+            expect.objectContaining({ _type: LocationContextName.LinkContext, ...linkContext }),
           ],
         })
       );
@@ -213,7 +215,9 @@ describe('TrackedLink', () => {
     const contexts = { location_stack: [], global_contexts: [] };
     testContextsFromReactNavigationPlugin.enrich(contexts);
 
-    expect(contexts.location_stack).toEqual([expect.objectContaining({ _type: 'RootLocationContext', id: 'home' })]);
+    expect(contexts.location_stack).toEqual([
+      expect.objectContaining({ _type: LocationContextName.RootLocationContext, id: 'home' }),
+    ]);
   });
 
   it('should fallback to defaults when navigationContainerRef is not ready', async () => {
@@ -224,8 +228,12 @@ describe('TrackedLink', () => {
     const contexts = { location_stack: [], global_contexts: [] };
     testContextsFromReactNavigationPlugin.enrich(contexts);
 
-    expect(contexts.location_stack).toEqual([expect.objectContaining({ _type: 'RootLocationContext', id: 'home' })]);
-    expect(contexts.global_contexts).toEqual([expect.objectContaining({ _type: 'PathContext', id: '/' })]);
+    expect(contexts.location_stack).toEqual([
+      expect.objectContaining({ _type: LocationContextName.RootLocationContext, id: 'home' }),
+    ]);
+    expect(contexts.global_contexts).toEqual([
+      expect.objectContaining({ _type: GlobalContextName.PathContext, id: '/' }),
+    ]);
   });
 
   it('should correctly generate RootLocation and Path Contexts with nested navigators', async () => {
@@ -299,10 +307,10 @@ describe('TrackedLink', () => {
       expect.objectContaining({
         _type: 'ApplicationLoadedEvent',
         global_contexts: [
-          expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
-          expect.objectContaining({ _type: 'PathContext', id: '/Home/Messages' }),
+          expect.objectContaining({ _type: GlobalContextName.ApplicationContext, id: 'app-id' }),
+          expect.objectContaining({ _type: GlobalContextName.PathContext, id: '/Home/Messages' }),
         ],
-        location_stack: [expect.objectContaining({ _type: 'RootLocationContext', id: 'Messages' })],
+        location_stack: [expect.objectContaining({ _type: LocationContextName.RootLocationContext, id: 'Messages' })],
       })
     );
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
@@ -310,12 +318,12 @@ describe('TrackedLink', () => {
       expect.objectContaining({
         _type: 'PressEvent',
         global_contexts: [
-          expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
-          expect.objectContaining({ _type: 'PathContext', id: '/Home/Messages' }),
+          expect.objectContaining({ _type: GlobalContextName.ApplicationContext, id: 'app-id' }),
+          expect.objectContaining({ _type: GlobalContextName.PathContext, id: '/Home/Messages' }),
         ],
         location_stack: [
-          expect.objectContaining({ _type: 'RootLocationContext', id: 'Messages' }),
-          expect.objectContaining({ _type: 'LinkContext', id: 'go-to-home', href: '/Home' }),
+          expect.objectContaining({ _type: LocationContextName.RootLocationContext, id: 'Messages' }),
+          expect.objectContaining({ _type: LocationContextName.LinkContext, id: 'go-to-home', href: '/Home' }),
         ],
       })
     );

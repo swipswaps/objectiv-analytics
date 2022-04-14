@@ -3,7 +3,14 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { ContextsConfig, generateUUID, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
+import {
+  ContextsConfig,
+  generateUUID,
+  GlobalContextName,
+  Tracker,
+  TrackerConsole,
+  TrackerEvent,
+} from '@objectiv/tracker-core';
 import { PathContextFromURLPlugin } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
@@ -39,7 +46,7 @@ describe('PathContextFromURLPlugin', () => {
         {
           __instance_id: matchUUID,
           __global_context: true,
-          _type: 'PathContext',
+          _type: GlobalContextName.PathContext,
           id: 'http://localhost/',
         },
       ])

@@ -3,7 +3,14 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { ContextsConfig, generateUUID, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
+import {
+  ContextsConfig,
+  generateUUID,
+  LocationContextName,
+  Tracker,
+  TrackerConsole,
+  TrackerEvent,
+} from '@objectiv/tracker-core';
 import { RootLocationContextFromURLPlugin } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
@@ -36,7 +43,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     expect(trackedEvent.location_stack[0]).toEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'RootLocationContext',
+      _type: LocationContextName.RootLocationContext,
       id: 'home',
     });
     expect(trackedEvent.global_contexts).toHaveLength(2);
@@ -62,7 +69,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     expect(trackedEvent.location_stack[0]).toEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'RootLocationContext',
+      _type: LocationContextName.RootLocationContext,
       id: 'home',
     });
   });
@@ -87,7 +94,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     expect(trackedEvent.location_stack[0]).toEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'RootLocationContext',
+      _type: LocationContextName.RootLocationContext,
       id: 'home',
     });
   });
@@ -112,7 +119,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     expect(trackedEvent.location_stack[0]).toEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'RootLocationContext',
+      _type: LocationContextName.RootLocationContext,
       id: 'dashboard',
     });
   });
@@ -165,7 +172,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     expect(trackedEvent.location_stack[0]).toEqual({
       __instance_id: matchUUID,
       __location_context: true,
-      _type: 'RootLocationContext',
+      _type: LocationContextName.RootLocationContext,
       id: 'welcome',
     });
   });
