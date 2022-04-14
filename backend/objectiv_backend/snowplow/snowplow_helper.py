@@ -8,15 +8,22 @@ from urllib.parse import urlparse
 
 from objectiv_backend.snowplow.schema.ttypes import CollectorPayload  # type: ignore
 
-from google.cloud import pubsub_v1
+
+from objectiv_backend.common.config import SnowplowConfig, get_collector_config
+from objectiv_backend.common.event_utils import get_context
+from objectiv_backend.common.types import EventDataList, EventData
+from objectiv_backend.schema.validate_events import EventError, ErrorInfo
 
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 
-from objectiv_backend.common.config import SnowplowConfig
-from objectiv_backend.common.event_utils import get_context
-from objectiv_backend.common.types import EventDataList, EventData
-from objectiv_backend.schema.validate_events import EventError, ErrorInfo
+# only load imports if needed
+snowplow_config = get_collector_config().output.snowplow
+if snowplow_config.gcp_enabled:
+    from google.cloud import pubsub_v1
+
+if snowplow_config.aws_enabled:
+    import boto3
 
 
 def make_snowplow_custom_context(snowplow_event: Dict, config: SnowplowConfig) -> str:
@@ -201,6 +208,25 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
     }
 
 
+def prepare_data(event: EventData, channel: str, event_errors: List[EventError], config: SnowplowConfig) -> bytes:
+    payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
+    if channel == 'good':
+        data = payload_to_thrift(payload)
+    else:
+        event_error = None
+        # try to find errors for the current event_id
+        if event_errors:
+            for ee in event_errors:
+                if ee.event_id == event['id']:
+                    event_error = ee
+        failed_event = snowplow_schema_violation(payload=payload, config=config, event_error=event_error)
+
+        # serialize (json) and encode to bytestring for publishing
+        data = json.dumps(failed_event, separators=(',', ':')).encode('utf-8')
+
+    return data
+
+
 def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
                          channel: str = 'good',
                          event_errors: List[EventError] = None) -> None:
@@ -217,34 +243,24 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
     topic_path = f'projects/{project}/topics/{topic}'
 
     for event in events:
-        payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
-        if channel == 'good':
-            data = payload_to_thrift(payload)
-        else:
-            event_error = None
-            # try to find errors for the current event_id
-            if event_errors:
-                for ee in event_errors:
-                    if ee.event_id == event['id']:
-                        event_error = ee
-            failed_event = snowplow_schema_violation(payload=payload, config=config, event_error=event_error)
-
-            # serialize (json) and encode to bytestring for publishing
-            data = json.dumps(failed_event, separators=(',', ':')).encode('utf-8')
+        data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
 
         publisher.publish(topic_path, data)
 
 
 def write_data_to_kinesis(events: EventDataList, config: SnowplowConfig,
-                         channel: str = 'good',
-                         event_errors: List[EventError] = None) -> None:
-    import boto3
+                          channel: str = 'good',
+                          event_errors: List[EventError] = None) -> None:
 
-    stream_name = 'sp-raw-stream'
+    if channel == 'good':
+        stream_name = config.aws_kinesis_topic_raw
+    else:
+        stream_name = config.aws_kinesis_topic_bad
+
     kinesis_client = boto3.client('kinesis')
     for event in events:
-        payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
-        data = payload_to_thrift(payload)
+        data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
+
         print(f'Writing event {event["id"]} to kinesis -> {stream_name}')
         kinesis_client.put_record(
             StreamName=stream_name,

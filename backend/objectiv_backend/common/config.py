@@ -57,6 +57,12 @@ _SP_GCP_PROJECT = os.environ.get('SP_GCP_PROJECT', None)
 _SP_GCP_PUBSUB_TOPIC_RAW = os.environ.get('SP_GCP_PUBSUB_TOPIC_RAW', '')
 _SP_GCP_PUBSUB_TOPIC_BAD = os.environ.get('SP_GCP_PUBSUB_TOPIC_BAD', '')
 
+_SP_AWS_ACCESS_KEY_ID = os.environ.get('SP_AWS_ACCESS_KEY_ID', _AWS_ACCESS_KEY_ID)
+_SP_AWS_SECRET_ACCESS_KEY = os.environ.get('SP_AWS_SECRET_ACCESS_KEY', _AWS_SECRET_ACCESS_KEY)
+_SP_AWS_REGION = os.environ.get('SP_AWS_REGION', _AWS_REGION)
+_SP_AWS_KINESIS_TOPIC_RAW = os.environ.get('SP_AWS_KINESIS_TOPIC_RAW', None)
+_SP_AWS_KINESIS_TOPIC_BAD = os.environ.get('SP_AWS_KINESIS_TOPIC_BAD', None)
+
 # Cookie settings
 _OBJ_COOKIE = 'obj_user_id'
 # default cookie duration is 1 year, can be overridden by setting `COOKIE_DURATION`
@@ -89,9 +95,17 @@ class PostgresConfig(NamedTuple):
 
 
 class SnowplowConfig(NamedTuple):
+    gcp_enabled: bool
     gcp_project: str
     gcp_pubsub_topic_raw: str
     gcp_pubsub_topic_bad: str
+
+    aws_enabled: bool
+    aws_access_key_id: str
+    aws_secret_access_key: str
+    aws_region: str
+    aws_kinesis_topic_raw: str
+    aws_kinesis_topic_bad: str
 
     schema_collector_payload: str
     schema_contexts: str
@@ -166,19 +180,24 @@ def get_config_postgres() -> Optional[PostgresConfig]:
 
 
 def get_config_output_snowplow() -> Optional[SnowplowConfig]:
-
-    if _SP_GCP_PROJECT:
-        print('Snowplow config enabled GCP support')
-
     return SnowplowConfig(
+        gcp_enabled=(_SP_GCP_PROJECT is not None),
+        gcp_project=_SP_GCP_PROJECT,
+        gcp_pubsub_topic_raw=_SP_GCP_PUBSUB_TOPIC_RAW,
+        gcp_pubsub_topic_bad=_SP_GCP_PUBSUB_TOPIC_BAD,
+
+        aws_enabled=(_SP_AWS_KINESIS_TOPIC_RAW is not None),
+        aws_access_key_id=_SP_AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=_SP_AWS_SECRET_ACCESS_KEY,
+        aws_region=_SP_AWS_REGION,
+        aws_kinesis_topic_raw=_SP_AWS_KINESIS_TOPIC_RAW,
+        aws_kinesis_topic_bad=_SP_AWS_KINESIS_TOPIC_BAD,
+
         schema_collector_payload=_SP_SCHEMA_COLLECTOR_PAYLOAD,
         schema_contexts=_SP_SCHEMA_CONTEXTS,
         schema_objectiv_taxonomy=_SP_SCHEMA_OBJECTIV_TAXONOMY,
         schema_payload_data=_SP_SCHEMA_PAYLOAD_DATA,
-        schema_schema_violations=_SP_SCHEMA_SCHEMA_VIOLATIONS,
-        gcp_project=_SP_GCP_PROJECT,
-        gcp_pubsub_topic_raw=_SP_GCP_PUBSUB_TOPIC_RAW,
-        gcp_pubsub_topic_bad=_SP_GCP_PUBSUB_TOPIC_BAD
+        schema_schema_violations=_SP_SCHEMA_SCHEMA_VIOLATIONS
     )
 
 

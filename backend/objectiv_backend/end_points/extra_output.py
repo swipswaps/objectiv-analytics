@@ -12,12 +12,14 @@ from io import BytesIO
 from typing import List
 
 
-import boto3
-from botocore.exceptions import ClientError
-
 from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.types import EventDataList
 from objectiv_backend.schema.validate_events import EventError
+from objectiv_backend.snowplow.snowplow_helper import write_data_to_kinesis, write_data_to_pubsub
+
+if get_collector_config().output.aws:
+    import boto3
+    from botocore.exceptions import ClientError
 
 
 def events_to_json(events: EventDataList) -> str:
@@ -77,12 +79,8 @@ def write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> 
 def write_data_to_snowplow_if_configured(events: EventDataList, channel: str = 'good', event_errors: List[EventError] = None) -> None:
     config = get_collector_config().output.snowplow
 
-    from objectiv_backend.snowplow.snowplow_helper import write_data_to_kinesis
-    write_data_to_kinesis(events=events, config=config, channel=channel, event_errors=event_errors)
+    if config.aws_enabled:
+        write_data_to_kinesis(events=events, config=config, channel=channel, event_errors=event_errors)
 
-    if not config.gcp_project:
-        return
-
-    # only import if needed, avoids having to install GCP dependencies if it's not used
-    from objectiv_backend.snowplow.snowplow_helper import write_data_to_pubsub
-    write_data_to_pubsub(events=events, config=config, channel=channel, event_errors=event_errors)
+    if config.gcp_enabled:
+        write_data_to_pubsub(events=events, config=config, channel=channel, event_errors=event_errors)
