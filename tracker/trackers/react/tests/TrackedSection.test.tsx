@@ -48,7 +48,7 @@ describe('TrackedSection', () => {
         _type: 'PressEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'ContentContext',
+            _type: LocationContextName.ContentContext,
             id: 'section-id',
           }),
         ]),

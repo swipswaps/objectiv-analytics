@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
-import { TrackerConsole } from '@objectiv/tracker-core';
+import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { createRef } from 'react';
 import { LocationTree, ObjectivProvider, ReactTracker, TrackedInputContext } from '../src';
@@ -94,7 +94,7 @@ describe('TrackedInputContext', () => {
         _type: 'InputChangeEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'InputContext',
+            _type: LocationContextName.InputContext,
             id: 'input-id',
           }),
         ]),

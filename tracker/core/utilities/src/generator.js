@@ -146,7 +146,8 @@ function createFactory(
   // by parent classes.
   const object_discriminator = {};
   if (params.object_type === 'context') {
-    object_discriminator[CONTEXT_DISCRIMINATOR] = { value: `'${params.class_name}'` };
+    const enumName = params.stack_type === 'location_contexts' ? 'LocationContextName' : 'GlobalContextName';
+    object_discriminator[CONTEXT_DISCRIMINATOR] = { value: `${enumName}.${params.class_name}` };
   } else {
     object_discriminator[EVENT_DISCRIMINATOR] = { value: `'${params.class_name}'` };
   }
@@ -667,6 +668,7 @@ Object.keys(object_factories).forEach((factory_type) => {
   const import_statements = [`import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';`];
 
   if (factory_type === 'ContextFactories') {
+    import_statements.push(`import { GlobalContextName, LocationContextName } from "./ContextNames";`);
     import_statements.push(`import { generateUUID } from "./helpers";`);
   }
 

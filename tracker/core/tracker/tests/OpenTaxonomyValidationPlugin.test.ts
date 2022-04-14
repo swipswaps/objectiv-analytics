@@ -4,6 +4,7 @@
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
+  GlobalContextName,
   LocationContextName,
   makeApplicationContext,
   makeContentContext,
@@ -20,7 +21,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
     jest.resetAllMocks();
   });
 
-  describe('ApplicationContext', () => {
+  describe(GlobalContextName.ApplicationContext, () => {
     it('should succeed', () => {
       const testOpenTaxonomyValidationPlugin = new OpenTaxonomyValidationPlugin();
       const validEvent = new TrackerEvent({

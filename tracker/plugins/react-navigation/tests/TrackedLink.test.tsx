@@ -307,8 +307,8 @@ describe('TrackedLink', () => {
       expect.objectContaining({
         _type: 'ApplicationLoadedEvent',
         global_contexts: [
-          expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
-          expect.objectContaining({ _type: 'PathContext', id: '/Home/Messages' }),
+          expect.objectContaining({ _type: GlobalContextName.ApplicationContext, id: 'app-id' }),
+          expect.objectContaining({ _type: GlobalContextName.PathContext, id: '/Home/Messages' }),
         ],
         location_stack: [expect.objectContaining({ _type: LocationContextName.RootLocationContext, id: 'Messages' })],
       })
