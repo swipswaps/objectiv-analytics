@@ -240,10 +240,11 @@ def _from_pd_shared(
             raise TypeError(f'unsupported dtype for {column}: {dtype}')
 
         if cte and convert_objects:
-            types = df_copy[column].dropna().apply(type).unique()
+            non_nullables = df_copy[column].dropna()
+            types = non_nullables.apply(type).unique()
             if len(types) != 1:
                 raise TypeError(f'multiple types found in column {column}: {types}')
-            dtype = value_to_dtype(df_copy[column][0])
+            dtype = value_to_dtype(non_nullables.iloc[0])
 
         all_dtypes[str(column)] = dtype
 
