@@ -79,6 +79,15 @@ def quote_identifier(dialect: Dialect, name: str) -> str:
 def quote_string(dialect_engine: Union[Dialect, Engine], value: str) -> str:
     """
     Quote and escape string value for the given database dialect.
+
+    Examples:
+    >>> from sqlalchemy.dialects.postgresql.base import PGDialect
+    >>> quote_string(PGDialect(), "test")
+    "'test'"
+    >>> quote_string(PGDialect(), "te'st")
+    "'te''st'"
+    >>> quote_string(PGDialect(), "'te''st'")
+    "'''te''''st'''"
     """
 
     if is_bigquery(dialect_engine):
