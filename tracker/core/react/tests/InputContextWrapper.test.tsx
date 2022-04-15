@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Tracker } from '@objectiv/tracker-core';
+import { LocationContextName, Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByTestId, render } from '@testing-library/react';
 import React from 'react';
 import {
@@ -52,7 +52,7 @@ describe('InputContextWrapper', () => {
         _type: 'InputChangeEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'InputContext',
+            _type: LocationContextName.InputContext,
             ...inputContextProps,
           }),
         ],
@@ -85,7 +85,7 @@ describe('InputContextWrapper', () => {
         _type: 'InputChangeEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'InputContext',
+            _type: LocationContextName.InputContext,
             ...inputContextProps,
           }),
         ],

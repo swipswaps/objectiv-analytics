@@ -3,6 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 from typing import Tuple, Dict
 
+import numpy
 import pandas
 from sqlalchemy.engine import Engine, Dialect
 
@@ -226,6 +227,9 @@ def _from_pd_shared(
             all_dtypes[str(column)] = dtype
             continue
 
+        if df_copy[column].dropna().empty:
+            raise ValueError(f'{column} column has no non-nullable values, cannot infer type.')
+
         if convert_objects:
             df_copy[column] = df_copy[column].convert_dtypes(
                 convert_integer=False, convert_boolean=False, convert_floating=False,
@@ -236,14 +240,17 @@ def _from_pd_shared(
             raise TypeError(f'unsupported dtype for {column}: {dtype}')
 
         if cte and convert_objects:
-            types = df_copy[column].apply(type).unique()
+            non_nullables = df_copy[column].dropna()
+            types = non_nullables.apply(type).unique()
             if len(types) != 1:
                 raise TypeError(f'multiple types found in column {column}: {types}')
-            dtype = value_to_dtype(df_copy[column][0])
+            dtype = value_to_dtype(non_nullables.iloc[0])
 
         all_dtypes[str(column)] = dtype
 
     _assert_column_names_valid(dialect=dialect, df=df_copy)
 
     index_dtypes = {index_name: all_dtypes[index_name] for index_name in index}
+
+    df_copy = df_copy.replace({numpy.nan: None})
     return df_copy, index_dtypes, all_dtypes

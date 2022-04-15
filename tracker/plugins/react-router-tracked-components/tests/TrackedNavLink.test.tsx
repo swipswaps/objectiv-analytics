@@ -3,7 +3,7 @@
  */
 
 import { SpyTransport } from '@objectiv/testing-tools';
-import { Tracker } from '@objectiv/tracker-core';
+import { LocationContextName, Tracker } from '@objectiv/tracker-core';
 import {
   ObjectivProvider,
   TrackedDiv,
@@ -96,7 +96,7 @@ describe('TrackedNavLink', () => {
           _type: 'PressEvent',
           location_stack: [
             expect.objectContaining({
-              _type: 'LinkContext',
+              _type: LocationContextName.LinkContext,
               ...expectedAttributes,
             }),
           ],
@@ -205,7 +205,7 @@ describe('TrackedNavLink', () => {
         _type: 'PressEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'LinkContext',
+            _type: LocationContextName.LinkContext,
             id: 'press-me',
           }),
         ]),
