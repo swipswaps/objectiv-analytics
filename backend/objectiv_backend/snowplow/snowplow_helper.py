@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from objectiv_backend.snowplow.schema.ttypes import CollectorPayload  # type: ignore
 
 
-from objectiv_backend.common.config import SnowplowConfig, get_collector_config
+from objectiv_backend.common.config import SnowplowConfig, get_collector_config, AwsMessageType
 from objectiv_backend.common.event_utils import get_context
 from objectiv_backend.common.types import EventDataList, EventData
 from objectiv_backend.schema.validate_events import EventError, ErrorInfo
@@ -208,7 +208,10 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
     }
 
 
-def prepare_data(event: EventData, channel: str, config: SnowplowConfig, event_errors: List[EventError] = None) -> bytes:
+def prepare_data(event: EventData,
+                 channel: str,
+                 config: SnowplowConfig,
+                 event_errors: List[EventError] = None) -> bytes:
     payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
     if channel == 'good':
         data = payload_to_thrift(payload)
@@ -231,6 +234,7 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
                          channel: str = 'good',
                          event_errors: List[EventError] = None) -> None:
 
+    print(config)
     project = config.gcp_project
     if channel == 'good':
         # good events get sent to the raw topic, which means they get processed by snowplow's enrichment
@@ -253,16 +257,22 @@ def write_data_to_kinesis(events: EventDataList, config: SnowplowConfig,
                           event_errors: List[EventError] = None) -> None:
 
     if channel == 'good':
-        stream_name = config.aws_kinesis_topic_raw
+        stream_name = config.aws_message_topic_raw
     else:
-        stream_name = config.aws_kinesis_topic_bad
+        stream_name = config.aws_message_topic_bad
 
-    kinesis_client = boto3.client('kinesis')
+    # this should be kinesis or sqs
+    client = boto3.client(config.aws_message_type)
+
     for event in events:
         data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
 
-        print(f'Writing event {event["id"]} to kinesis -> {stream_name}')
-        kinesis_client.put_record(
-            StreamName=stream_name,
-            Data=data,
-            PartitionKey="load_tstamp")
+        print(f'Writing event {event["id"]} to {config.aws_message_type} -> {stream_name}')
+        if config.aws_message_type == AwsMessageType.kinesis:
+            client.put_record(
+                StreamName=stream_name,
+                Data=data,
+                PartitionKey="load_tstamp")
+        if config.aws_message_type == AwsMessageType.sqs:
+            client.send_message(QueueUrl=stream_name,
+                                MessageBody=data,)

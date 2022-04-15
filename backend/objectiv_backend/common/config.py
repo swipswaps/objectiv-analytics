@@ -3,7 +3,8 @@ Copyright 2021 Objectiv B.V.
 """
 
 import os
-from typing import NamedTuple, Optional, Union
+from typing import NamedTuple, Optional
+from enum import Enum
 
 # All settings that are controlled through environment variables are listed at the top here, for a
 # complete overview.
@@ -11,6 +12,12 @@ from typing import NamedTuple, Optional, Union
 # below (e.g. get_config_output())
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema, get_event_list_schema
 from objectiv_backend.common.types import EventListSchema
+
+
+class AwsMessageType:
+    kinesis: str = 'kinesis'
+    sqs: str = 'sqs'
+
 
 LOAD_BASE_SCHEMA = os.environ.get('LOAD_BASE_SCHEMA', 'true') == 'true'
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
@@ -60,8 +67,9 @@ _SP_GCP_PUBSUB_TOPIC_BAD = os.environ.get('SP_GCP_PUBSUB_TOPIC_BAD', '')
 _SP_AWS_ACCESS_KEY_ID = os.environ.get('SP_AWS_ACCESS_KEY_ID', _AWS_ACCESS_KEY_ID)
 _SP_AWS_SECRET_ACCESS_KEY = os.environ.get('SP_AWS_SECRET_ACCESS_KEY', _AWS_SECRET_ACCESS_KEY)
 _SP_AWS_REGION = os.environ.get('SP_AWS_REGION', _AWS_REGION)
-_SP_AWS_KINESIS_TOPIC_RAW = os.environ.get('SP_AWS_KINESIS_TOPIC_RAW', '')
-_SP_AWS_KINESIS_TOPIC_BAD = os.environ.get('SP_AWS_KINESIS_TOPIC_BAD', 'W')
+_SP_AWS_MESSAGE_TOPIC_RAW = os.environ.get('SP_AWS_MESSAGE_TOPIC_RAW', '')
+_SP_AWS_MESSAGE_TOPIC_BAD = os.environ.get('SP_AWS_MESSAGE_TOPIC_BAD', '')
+_SP_AWS_MESSAGE_TYPE = os.environ.get('SP_AWS_MESSAGE_TYPE', str(AwsMessageType.kinesis))
 
 # Cookie settings
 _OBJ_COOKIE = 'obj_user_id'
@@ -104,8 +112,9 @@ class SnowplowConfig(NamedTuple):
     aws_access_key_id: str
     aws_secret_access_key: str
     aws_region: str
-    aws_kinesis_topic_raw: str
-    aws_kinesis_topic_bad: str
+    aws_message_topic_raw: str
+    aws_message_topic_bad: str
+    aws_message_type: AwsMessageType
 
     schema_collector_payload: str
     schema_contexts: str
@@ -181,17 +190,18 @@ def get_config_postgres() -> Optional[PostgresConfig]:
 
 def get_config_output_snowplow() -> SnowplowConfig:
     return SnowplowConfig(
-        gcp_enabled=(_SP_GCP_PROJECT is not None),
+        gcp_enabled=(_SP_GCP_PROJECT != ''),
         gcp_project=_SP_GCP_PROJECT,
         gcp_pubsub_topic_raw=_SP_GCP_PUBSUB_TOPIC_RAW,
         gcp_pubsub_topic_bad=_SP_GCP_PUBSUB_TOPIC_BAD,
 
-        aws_enabled=(_SP_AWS_KINESIS_TOPIC_RAW is not None),
+        aws_enabled=(_SP_AWS_MESSAGE_TOPIC_RAW != ''),
+        aws_message_type=_SP_AWS_MESSAGE_TYPE,
         aws_access_key_id=_SP_AWS_ACCESS_KEY_ID,
         aws_secret_access_key=_SP_AWS_SECRET_ACCESS_KEY,
         aws_region=_SP_AWS_REGION,
-        aws_kinesis_topic_raw=_SP_AWS_KINESIS_TOPIC_RAW,
-        aws_kinesis_topic_bad=_SP_AWS_KINESIS_TOPIC_BAD,
+        aws_message_topic_raw=_SP_AWS_MESSAGE_TOPIC_RAW,
+        aws_message_topic_bad=_SP_AWS_MESSAGE_TOPIC_BAD,
 
         schema_collector_payload=_SP_SCHEMA_COLLECTOR_PAYLOAD,
         schema_contexts=_SP_SCHEMA_CONTEXTS,
