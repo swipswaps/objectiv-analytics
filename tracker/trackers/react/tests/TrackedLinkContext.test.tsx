@@ -236,7 +236,6 @@ describe('TrackedLinkContext', () => {
           href={'/some-url'}
           waitUntilTracked={true}
           onClick={clickSpy}
-          rel="noopener noreferrer" // Just for test coverage. We can't assert desired behavior with jsdom.
         >
           Press me
         </TrackedLinkContext>
@@ -245,9 +244,7 @@ describe('TrackedLinkContext', () => {
 
     jest.resetAllMocks();
 
-    fireEvent.click(getByText(container, /press me/i), {
-      ctrlKey: true, // Just for test coverage. We can't assert desired behavior with jsdom.
-    });
+    fireEvent.click(getByText(container, /press me/i));
 
     await waitFor(() => expect(clickSpy).toHaveBeenCalledTimes(1));
 
