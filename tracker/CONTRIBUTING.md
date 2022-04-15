@@ -21,6 +21,7 @@ This is a complete list of the currently available packages.
 
 | Name                                             | Type      | Path                                     | Links                                                                |
 |--------------------------------------------------|-----------|------------------------------------------|----------------------------------------------------------------------|
+| @objectiv/developer-tools                        | core      | /core/developer-tools                    | [README](/tracker/core/developer-tools/README.md)                    |
 | @objectiv/schema                                 | core      | /core/schema                             | [README](/tracker/core/schema/README.md)                             |
 | @objectiv/tracker-core                           | core      | /core/tracker                            | [README](/tracker/core/tracker/README.md)                            |
 | @objectiv/tracker-react-core                     | core      | /core/react                              | [README](/tracker/core/react/README.md)                              |
@@ -201,6 +202,9 @@ Publishes all public packages to a Local Verdaccio instance.
 Runs the generator utility. This will generate:
 - The @objectiv/schema package TypeScript definitions from the OSF
 - The Context and Event factories in @objectiv/tracker-core package from the @objectiv/schema 
+- The ContextErrorMessages in @objectiv/developer-tools package 
+- Yarn prettify for all generated files
+- TypeScript for all generated files
 
 ## Versioning  commands
  - [Release Workflow Documentation](https://yarnpkg.com/features/release-workflow)
