@@ -7,7 +7,6 @@ import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import {
-  LocationTree,
   ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedText,
@@ -33,7 +32,6 @@ describe('TrackedText', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   it('should track PressEvent on press with a PressableContext in the LocationStack', () => {

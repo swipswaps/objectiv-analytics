@@ -8,7 +8,6 @@ import { render } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
 import {
-  LocationTree,
   ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedView,
@@ -35,7 +34,6 @@ describe('TrackedView', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   const ViewChild = (props: { title: string }) => {

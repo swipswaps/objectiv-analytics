@@ -6,14 +6,13 @@ import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools
 import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
 import React from 'react';
-import { LocationTree, ObjectivProvider, ReactTracker, TrackedNav, usePressEventTracker } from '../src';
+import { ObjectivProvider, ReactTracker, TrackedNav, usePressEventTracker } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedNav', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   afterEach(() => {

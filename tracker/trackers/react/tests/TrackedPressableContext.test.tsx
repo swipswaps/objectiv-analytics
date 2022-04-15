@@ -7,7 +7,6 @@ import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/react';
 import React, { createRef } from 'react';
 import {
-  LocationTree,
   ObjectivProvider,
   ReactTracker,
   TrackedDiv,
@@ -20,7 +19,6 @@ TrackerConsole.setImplementation(MockConsoleImplementation);
 describe('TrackedPressableContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   afterEach(() => {

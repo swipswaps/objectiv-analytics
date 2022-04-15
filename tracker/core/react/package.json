@@ -51,6 +51,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
+    "@objectiv/developer-tools": "^0.0.18",
     "@objectiv/testing-tools": "^0.0.18",
     "@testing-library/react": "^12.1.4",
     "@testing-library/react-hooks": "^7.0.2",

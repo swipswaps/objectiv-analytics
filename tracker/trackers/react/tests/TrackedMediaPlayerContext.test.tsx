@@ -6,14 +6,13 @@ import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools
 import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render, screen } from '@testing-library/react';
 import React, { createRef } from 'react';
-import { LocationTree, ObjectivProvider, ReactTracker, TrackedMediaPlayerContext, usePressEventTracker } from '../src';
+import { ObjectivProvider, ReactTracker, TrackedMediaPlayerContext, usePressEventTracker } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedMediaPlayerContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   afterEach(() => {

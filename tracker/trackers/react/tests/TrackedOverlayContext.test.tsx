@@ -6,7 +6,7 @@ import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools
 import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render, screen } from '@testing-library/react';
 import React, { createRef } from 'react';
-import { LocationTree, ObjectivProvider, ReactTracker, TrackedOverlayContext, usePressEventTracker } from '../src';
+import { ObjectivProvider, ReactTracker, TrackedOverlayContext, usePressEventTracker } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -18,7 +18,6 @@ const TrackedButton = () => {
 describe('TrackedOverlayContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   afterEach(() => {

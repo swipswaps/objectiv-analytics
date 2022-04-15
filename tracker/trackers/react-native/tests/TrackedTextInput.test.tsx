@@ -7,7 +7,6 @@ import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import {
-  LocationTree,
   ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedTextInput,
@@ -33,7 +32,6 @@ describe('TrackedTextInput', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   it('should track InputChangeEvent on press with a InputContext in the LocationStack', () => {

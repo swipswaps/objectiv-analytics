@@ -8,7 +8,6 @@ import { render } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
 import {
-  LocationTree,
   ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedFlatList,
@@ -54,7 +53,6 @@ describe('TrackedFlatList', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   const ListItem = (props: ListItemType) => {

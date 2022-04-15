@@ -3,11 +3,13 @@
  */
 
 import { GlobalContextValidationRuleFactory, LocationContextValidationRuleFactory } from './ContextValidationRules';
+import { LocationTreeInterface } from './LocationTree';
 
 /**
  * DeveloperTools interface definition.
  */
 export interface TrackerDeveloperToolsInterface {
+  LocationTree: LocationTreeInterface;
   makeGlobalContextValidationRule: GlobalContextValidationRuleFactory;
   makeLocationContextValidationRule: LocationContextValidationRuleFactory;
 }

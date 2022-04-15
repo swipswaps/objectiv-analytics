@@ -3,6 +3,7 @@
  */
 
 import { TrackerDeveloperToolsInterface } from '@objectiv/tracker-core';
+import { LocationTree } from './LocationTree';
 import { makeGlobalContextValidationRule } from './validationRules/makeGlobalContextValidationRule';
 import { makeLocationContextValidationRule } from './validationRules/makeLocationContextValidationRule';
 
@@ -10,6 +11,7 @@ import { makeLocationContextValidationRule } from './validationRules/makeLocatio
  * A global object containing all DeveloperTools
  */
 export const developerTools: TrackerDeveloperToolsInterface = {
+  LocationTree: LocationTree,
   makeGlobalContextValidationRule,
   makeLocationContextValidationRule,
 };

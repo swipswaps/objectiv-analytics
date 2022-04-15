@@ -7,7 +7,6 @@ import { TrackerConsole } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react-native';
 import React from 'react';
 import {
-  LocationTree,
   ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedActivityIndicator,
@@ -32,7 +31,6 @@ describe('TrackedActivityIndicator', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   it('should not track VisibleEvent nor HiddenEvent when visible is undefined', () => {

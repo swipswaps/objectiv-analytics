@@ -8,7 +8,6 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
 import {
-  LocationTree,
   ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedTouchableOpacity,
@@ -34,7 +33,6 @@ describe('TrackedTouchableOpacity', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   it('should track PressEvent on press with a PressableContext in the LocationStack', () => {

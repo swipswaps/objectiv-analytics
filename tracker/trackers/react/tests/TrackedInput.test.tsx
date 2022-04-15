@@ -6,14 +6,13 @@ import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools
 import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { LocationTree, ObjectivProvider, ReactTracker, TrackedInput } from '../src';
+import { ObjectivProvider, ReactTracker, TrackedInput } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedInputContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    LocationTree.clear();
   });
 
   afterEach(() => {
