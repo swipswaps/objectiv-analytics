@@ -3,7 +3,13 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { GlobalContextName, Tracker, TrackerConsole, TrackerPlatform } from '@objectiv/tracker-core';
+import {
+  GlobalContextName,
+  LocationContextName,
+  Tracker,
+  TrackerConsole,
+  TrackerPlatform
+} from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { TrackerProvider, useTracker } from '../src';
@@ -40,7 +46,7 @@ describe('TrackerProvider', () => {
               {
                 validationRuleName: 'GlobalContextValidationRule',
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'ApplicationContext',
+                contextName: GlobalContextName.ApplicationContext,
                 platform: 'CORE',
                 once: true,
                 validate: expect.any(Function),
@@ -48,7 +54,7 @@ describe('TrackerProvider', () => {
               {
                 validationRuleName: 'LocationContextValidationRule',
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'RootLocationContext',
+                contextName: LocationContextName.RootLocationContext,
                 platform: 'CORE',
                 position: 0,
                 once: true,
