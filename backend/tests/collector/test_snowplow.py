@@ -15,9 +15,18 @@ config = SnowplowConfig(
     schema_objectiv_taxonomy='test-schema-objectiv-taxonomy',
     schema_collector_payload='',
     schema_schema_violations='https://raw.githubusercontent.com/snowplow/iglu-central/master/schemas/com.snowplowanalytics.snowplow.badrows/schema_violations/jsonschema/2-0-0',
+
+    gcp_enabled=False,
     gcp_project='',
     gcp_pubsub_topic_raw='',
-    gcp_pubsub_topic_bad=''
+    gcp_pubsub_topic_bad='',
+
+    aws_enabled=False,
+    aws_region='',
+    aws_access_key_id='',
+    aws_secret_access_key='',
+    aws_kinesis_topic_raw='',
+    aws_kinesis_topic_bad=''
 )
 
 event_list = json.loads(CLICK_EVENT_JSON)
