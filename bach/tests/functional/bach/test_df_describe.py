@@ -2,7 +2,6 @@
 Copyright 2022 Objectiv B.V.
 """
 import datetime
-import uuid
 
 import numpy as np
 import pandas as pd

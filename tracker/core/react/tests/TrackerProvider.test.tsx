@@ -2,12 +2,15 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
+  GlobalContextName,
   GlobalContextValidationRule,
+  LocationContextName,
   LocationContextValidationRule,
   Tracker,
   TrackerConsole,
+  TrackerPlatform,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
@@ -29,6 +32,7 @@ describe('TrackerProvider', () => {
 
   const expectedState = {
     tracker: {
+      platform: TrackerPlatform.CORE,
       active: true,
       applicationId: 'app-id',
       global_contexts: [],
@@ -40,19 +44,24 @@ describe('TrackerProvider', () => {
             validationRules: [
               new GlobalContextValidationRule({
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'ApplicationContext',
+                contextName: GlobalContextName.ApplicationContext,
                 once: true,
               }),
               new LocationContextValidationRule({
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'RootLocationContext',
+                contextName: LocationContextName.RootLocationContext,
                 once: true,
                 position: 0,
               }),
             ],
           },
           {
-            applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+            applicationContext: {
+              __instance_id: matchUUID,
+              __global_context: true,
+              _type: GlobalContextName.ApplicationContext,
+              id: 'app-id',
+            },
             pluginName: 'ApplicationContextPlugin',
           },
         ],

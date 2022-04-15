@@ -23,7 +23,6 @@ Value accessors
 
     DataFrame.head
     DataFrame.to_pandas
-    DataFrame.values
     DataFrame.loc
 
 Attributes and underlying data
@@ -92,6 +91,8 @@ Reshaping, indexing, sorting & merging
     DataFrame.stack
     DataFrame.unstack
     DataFrame.scale
+    DataFrame.minmax_scale
+    DataFrame.get_dummies
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~

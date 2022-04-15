@@ -2,17 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Tracker } from '@objectiv/tracker-core';
+import { LocationContextName, makeContentContext, Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
 import React from 'react';
-import {
-  LocationContextWrapper,
-  LocationTree,
-  makeContentContext,
-  ObjectivProvider,
-  trackPressEvent,
-  usePressEventTracker,
-} from '../src';
+import { LocationContextWrapper, LocationTree, ObjectivProvider, trackPressEvent, usePressEventTracker } from '../src';
 
 describe('LocationContextWrapper', () => {
   beforeEach(() => {
@@ -53,7 +46,7 @@ describe('LocationContextWrapper', () => {
         _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'ContentContext',
+            _type: LocationContextName.ContentContext,
             id: 'test-section',
           }),
         ],
@@ -86,7 +79,7 @@ describe('LocationContextWrapper', () => {
         _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'ContentContext',
+            _type: LocationContextName.ContentContext,
             id: 'test-section',
           }),
         ],

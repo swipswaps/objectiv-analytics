@@ -2,6 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import { GlobalContextName, LocationContextName } from '../ContextNames';
 import { isDevMode } from '../helpers';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
@@ -26,12 +27,12 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
     this.validationRules = [
       new GlobalContextValidationRule({
         logPrefix: this.pluginName,
-        contextName: 'ApplicationContext',
+        contextName: GlobalContextName.ApplicationContext,
         once: true,
       }),
       new LocationContextValidationRule({
         logPrefix: this.pluginName,
-        contextName: 'RootLocationContext',
+        contextName: LocationContextName.RootLocationContext,
         once: true,
         position: 0,
       }),

@@ -5,14 +5,9 @@
 import { ApplicationContext } from '@objectiv/schema';
 import { ContextsConfig } from '../Context';
 import { makeApplicationContext } from '../ContextFactories';
-import { TrackerConfig, TrackerInterface } from '../Tracker';
+import { TrackerInterface } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerPluginInterface } from '../TrackerPluginInterface';
-
-/**
- * The ApplicationContextPlugin Config object.
- */
-export type ApplicationContextPluginConfig = Pick<TrackerConfig, 'applicationId'>;
 
 /**
  * The ApplicationContextPlugin adds an ApplicationContext as GlobalContext before events are transported.

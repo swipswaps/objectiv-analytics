@@ -606,23 +606,6 @@ class Series(ABC):
         return self.to_pandas(limit=n)
 
     @property
-    def values(self):
-        """
-        .values property accessor akin pandas.Series.values
-
-        .. warning::
-           We recommend using :meth:`Series.to_numpy` instead.
-
-        .. note::
-            This function queries the database.
-        """
-        warnings.warn(
-            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
-            category=DeprecationWarning,
-        )
-        return self.to_numpy()
-
-    @property
     def value(self):
         """
         Retrieve the actual single value of this series. If it's not sure that there is only one value,

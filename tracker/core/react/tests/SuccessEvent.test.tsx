@@ -2,10 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeSuccessEvent, Tracker } from '@objectiv/tracker-core';
+import { LocationContextName, makeContentContext, makeSuccessEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import { makeContentContext, trackSuccessEvent, TrackingContextProvider, useSuccessEventTracker } from '../src';
+import { trackSuccessEvent, TrackingContextProvider, useSuccessEventTracker } from '../src';
 
 describe('SuccessEvent', () => {
   beforeEach(() => {
@@ -85,7 +85,7 @@ describe('SuccessEvent', () => {
       expect.objectContaining(
         makeSuccessEvent({
           message: 'ok',
-          location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'override' })],
+          location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'override' })],
         })
       ),
       undefined
