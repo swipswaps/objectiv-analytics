@@ -1756,6 +1756,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react-core@workspace:core/react"
   dependencies:
+    "@objectiv/developer-tools": ^0.0.18
     "@objectiv/testing-tools": ^0.0.18
     "@objectiv/tracker-core": ~0.0.18
     "@testing-library/react": ^12.1.4
