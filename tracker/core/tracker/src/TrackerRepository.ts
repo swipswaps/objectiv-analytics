@@ -9,7 +9,7 @@ import { TrackerRepositoryInterface } from './TrackerRepositoryInterface';
 /**
  * TrackerRepository allows developers to create and use multiple Tracker instances in the same Application.
  */
-export class TrackerRepository<T extends Tracker> implements TrackerRepositoryInterface<T> {
+export const TrackerRepository = new (class<T extends Tracker> implements TrackerRepositoryInterface<T> {
   trackersMap = new Map<string, T>();
   defaultTracker?: T;
 
@@ -79,4 +79,4 @@ export class TrackerRepository<T extends Tracker> implements TrackerRepositoryIn
   flushAllQueues() {
     this.trackersMap.forEach((tracker) => tracker.flushQueue());
   }
-}
+})();

@@ -2,17 +2,12 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackerRepository } from '@objectiv/tracker-core';
+import { TrackerRepository, TrackerRepositoryInterface } from '@objectiv/tracker-core';
 import { BrowserTracker } from './BrowserTracker';
-import { windowExists } from './common/windowExists';
 
 /**
- * Retrieves the TrackerRepository instance from the window.__objectiv global namespace
+ * Retrieves the TrackerRepository
  */
-export const getTrackerRepository = (): TrackerRepository<BrowserTracker> => {
-  if (!windowExists()) {
-    throw new Error('Cannot access the Window interface.');
-  }
-
-  return window.__objectiv.trackers;
+export const getTrackerRepository = (): TrackerRepositoryInterface<BrowserTracker> => {
+  return TrackerRepository as TrackerRepositoryInterface<BrowserTracker>;
 };

@@ -4,47 +4,24 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { generateUUID, makePressEvent, TrackerConsole } from '@objectiv/tracker-core';
+import { TrackerConsole, TrackerRepository } from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import {
-  BrowserTracker,
   getLocationHref,
-  getTracker,
-  makeMutationCallback,
   makeTracker,
   startAutoTracking,
-  trackFailureEvent,
   trackApplicationLoadedEvent,
+  trackFailureEvent,
   trackSuccessEvent,
-  trackEvent,
 } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Without DOM', () => {
   beforeEach(() => {
+    TrackerRepository.trackersMap.clear();
+    TrackerRepository.defaultTracker = undefined;
     jest.resetAllMocks();
-  });
-
-  it('should throw if Window does not exists', async () => {
-    expect(() => makeTracker({ applicationId: generateUUID(), transport: new DebugTransport() })).toThrow(
-      'Cannot access the Window interface.'
-    );
-
-    expect(() => getTracker()).toThrow('Cannot access the Window interface.');
-  });
-
-  it('should TrackerConsole.error if a Tracker instance cannot be retrieved because DOM is not available', async () => {
-    const parameters = { eventFactory: makePressEvent, element: null };
-    // @ts-ignore
-    trackEvent(parameters);
-
-    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
-      1,
-      Error('Cannot access the Window interface.'),
-      parameters
-    );
   });
 
   it('should TrackerConsole.error id Application Loaded Event fails at retrieving the document element', () => {
@@ -93,24 +70,15 @@ describe('Without DOM', () => {
   });
 
   it('should TrackerConsole.error when MutationObserver is not available', async () => {
-    const tracker = new BrowserTracker({ applicationId: 'app', transport: new DebugTransport() });
+    const tracker = makeTracker({ applicationId: 'app', transport: new DebugTransport() });
     jest.spyOn(tracker, 'trackEvent');
 
     startAutoTracking();
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
-    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-  });
-
-  it('should TrackerConsole.error when mutationCallback receives garbled data', async () => {
-    const tracker = new BrowserTracker({ applicationId: 'app', transport: new DebugTransport() });
-    jest.spyOn(tracker, 'trackEvent');
-    const mutationCallback = makeMutationCallback();
-
-    // @ts-ignore
-    mutationCallback('not a list');
-
-    expect(tracker.trackEvent).not.toHaveBeenCalled();
-    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
+      ReferenceError('MutationObserver is not defined'),
+      undefined
+    );
   });
 });
