@@ -231,7 +231,13 @@ describe('TrackedLinkContext', () => {
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedLinkContext Component={'a'} href={'/some-url'} waitUntilTracked={true} onClick={clickSpy}>
+        <TrackedLinkContext
+          Component={'a'}
+          href={'/some-url'}
+          waitUntilTracked={true}
+          onClick={clickSpy}
+          rel="noopener noreferrer" // Just for test coverage. We can't assert desired behavior with jsdom.
+        >
           Press me
         </TrackedLinkContext>
       </ObjectivProvider>
@@ -239,7 +245,9 @@ describe('TrackedLinkContext', () => {
 
     jest.resetAllMocks();
 
-    fireEvent.click(getByText(container, /press me/i));
+    fireEvent.click(getByText(container, /press me/i), {
+      ctrlKey: true, // Just for test coverage. We can't assert desired behavior with jsdom.
+    });
 
     await waitFor(() => expect(clickSpy).toHaveBeenCalledTimes(1));
 
