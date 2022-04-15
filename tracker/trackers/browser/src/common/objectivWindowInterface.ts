@@ -11,7 +11,7 @@ import { windowExists } from './windowExists';
  */
 declare global {
   interface Window {
-    objectiv: {
+    __objectiv: {
       trackers: TrackerRepository<BrowserTracker>;
     };
   }
@@ -21,7 +21,7 @@ declare global {
  * Initialize window global namespace, unless already existing
  */
 if (windowExists()) {
-  window.objectiv = window.objectiv || {
+  window.__objectiv = window.__objectiv || {
     trackers: new TrackerRepository(),
   };
 }

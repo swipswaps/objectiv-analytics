@@ -4,4 +4,4 @@
 
 import { makeGlobalDeveloperTools } from './makeGlobalDeveloperTools';
 
-export default makeGlobalDeveloperTools();
+makeGlobalDeveloperTools();

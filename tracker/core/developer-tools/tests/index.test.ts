@@ -9,6 +9,6 @@ describe('index', () => {
     expect(globalThis.objectiv).toBeUndefined();
     import('../src');
     makeGlobalDeveloperTools();
-    expect(globalThis.objectiv?.developerTools).toBe(developerTools);
+    expect(globalThis.objectiv).toStrictEqual(developerTools);
   });
 });

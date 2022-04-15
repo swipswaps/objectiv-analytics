@@ -5,7 +5,8 @@
 import '@objectiv/developer-tools';
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
-  GlobalContextName, LocationContextName,
+  GlobalContextName,
+  LocationContextName,
   makeApplicationLoadedEvent,
   Tracker,
   TrackerConsole,
@@ -81,7 +82,7 @@ describe('ObjectivProvider', () => {
   };
 
   it('developers tools should have been imported', async () => {
-    expect(globalThis.objectiv?.developerTools).not.toBeUndefined();
+    expect(globalThis.objectiv).not.toBeUndefined();
   });
 
   it('should support children components', () => {

@@ -5,11 +5,7 @@
 import { TrackerDeveloperToolsInterface } from './TrackerDeveloperToolsInterface';
 
 declare global {
-  var objectiv:
-    | undefined
-    | {
-        developerTools?: TrackerDeveloperToolsInterface;
-      };
+  var objectiv: undefined | TrackerDeveloperToolsInterface;
 }
 
 export * from './plugins/ApplicationContextPlugin';

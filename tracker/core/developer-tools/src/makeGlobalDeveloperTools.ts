@@ -18,7 +18,7 @@ export const developerTools: TrackerDeveloperToolsInterface = {
  * Helper function to either create or extend objectiv globals with developerTools
  */
 export const makeGlobalDeveloperTools = () => {
-  globalThis.objectiv = { ...(globalThis.objectiv ?? {}), developerTools };
+  globalThis.objectiv = { ...(globalThis.objectiv ?? {}), ...developerTools };
 
   return developerTools;
 };

@@ -15,7 +15,7 @@ describe('Tracker', () => {
   });
 
   it('developers tools should have been imported', async () => {
-    expect(globalThis.objectiv?.developerTools).not.toBeUndefined();
+    expect(globalThis.objectiv).not.toBeUndefined();
   });
 
   it('should instantiate with just applicationId (with developer tools)', async () => {

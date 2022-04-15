@@ -8,7 +8,7 @@ describe('makeGlobalDeveloperTools', () => {
   it('Should create the objectiv global if not present', async () => {
     expect(globalThis.objectiv).toBeUndefined();
     makeGlobalDeveloperTools();
-    expect(globalThis.objectiv?.developerTools).toBe(developerTools);
+    expect(globalThis.objectiv).toStrictEqual(developerTools);
   });
 
   it('Should extend the objectiv global if present', async () => {
@@ -22,7 +22,7 @@ describe('makeGlobalDeveloperTools', () => {
     makeGlobalDeveloperTools();
     expect(globalThis.objectiv).toStrictEqual({
       someOtherGlobal: 'test',
-      developerTools,
+      ...developerTools,
     });
   });
 });

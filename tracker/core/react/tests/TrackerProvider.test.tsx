@@ -8,7 +8,7 @@ import {
   LocationContextName,
   Tracker,
   TrackerConsole,
-  TrackerPlatform
+  TrackerPlatform,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
@@ -80,7 +80,7 @@ describe('TrackerProvider', () => {
   };
 
   it('developers tools should have been imported', async () => {
-    expect(globalThis.objectiv?.developerTools).not.toBeUndefined();
+    expect(globalThis.objectiv).not.toBeUndefined();
   });
 
   it('should support children components', () => {
