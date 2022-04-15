@@ -231,12 +231,7 @@ describe('TrackedLinkContext', () => {
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedLinkContext
-          Component={'a'}
-          href={'/some-url'}
-          waitUntilTracked={true}
-          onClick={clickSpy}
-        >
+        <TrackedLinkContext Component={'a'} href={'/some-url'} waitUntilTracked={true} onClick={clickSpy}>
           Press me
         </TrackedLinkContext>
       </ObjectivProvider>
