@@ -12,7 +12,7 @@ from io import BytesIO
 from typing import List
 
 
-from objectiv_backend.common.config import get_collector_config
+from objectiv_backend.common.config import get_collector_config, SnowplowConfig
 from objectiv_backend.common.types import EventDataList
 from objectiv_backend.schema.validate_events import EventError
 from objectiv_backend.snowplow.snowplow_helper import write_data_to_kinesis, write_data_to_pubsub
@@ -76,8 +76,10 @@ def write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> 
         print(f'Error uploading to s3: {e} ')
 
 
-def write_data_to_snowplow_if_configured(events: EventDataList, channel: str = 'good', event_errors: List[EventError] = None) -> None:
-    config = get_collector_config().output.snowplow
+def write_data_to_snowplow_if_configured(events: EventDataList,
+                                         channel: str = 'good',
+                                         event_errors: List[EventError] = None) -> None:
+    config: SnowplowConfig = get_collector_config().output.snowplow
 
     if config.aws_enabled:
         write_data_to_kinesis(events=events, config=config, channel=channel, event_errors=event_errors)

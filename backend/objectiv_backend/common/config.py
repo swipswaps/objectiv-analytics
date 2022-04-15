@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 
 import os
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Union
 
 # All settings that are controlled through environment variables are listed at the top here, for a
 # complete overview.
@@ -53,15 +53,15 @@ _SP_SCHEMA_OBJECTIV_TAXONOMY = 'iglu:io.objectiv/taxonomy/jsonschema/1-0-0'
 _SP_SCHEMA_PAYLOAD_DATA = 'iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4'
 _SP_SCHEMA_SCHEMA_VIOLATIONS = 'iglu:com.snowplowanalytics.snowplow.badrows/schema_violations/jsonschema/2-0-0'
 
-_SP_GCP_PROJECT = os.environ.get('SP_GCP_PROJECT', None)
+_SP_GCP_PROJECT = os.environ.get('SP_GCP_PROJECT', '')
 _SP_GCP_PUBSUB_TOPIC_RAW = os.environ.get('SP_GCP_PUBSUB_TOPIC_RAW', '')
 _SP_GCP_PUBSUB_TOPIC_BAD = os.environ.get('SP_GCP_PUBSUB_TOPIC_BAD', '')
 
 _SP_AWS_ACCESS_KEY_ID = os.environ.get('SP_AWS_ACCESS_KEY_ID', _AWS_ACCESS_KEY_ID)
 _SP_AWS_SECRET_ACCESS_KEY = os.environ.get('SP_AWS_SECRET_ACCESS_KEY', _AWS_SECRET_ACCESS_KEY)
 _SP_AWS_REGION = os.environ.get('SP_AWS_REGION', _AWS_REGION)
-_SP_AWS_KINESIS_TOPIC_RAW = os.environ.get('SP_AWS_KINESIS_TOPIC_RAW', None)
-_SP_AWS_KINESIS_TOPIC_BAD = os.environ.get('SP_AWS_KINESIS_TOPIC_BAD', None)
+_SP_AWS_KINESIS_TOPIC_RAW = os.environ.get('SP_AWS_KINESIS_TOPIC_RAW', '')
+_SP_AWS_KINESIS_TOPIC_BAD = os.environ.get('SP_AWS_KINESIS_TOPIC_BAD', 'W')
 
 # Cookie settings
 _OBJ_COOKIE = 'obj_user_id'
@@ -118,7 +118,7 @@ class OutputConfig(NamedTuple):
     postgres: Optional[PostgresConfig]
     aws: Optional[AwsOutputConfig]
     file_system: Optional[FileSystemOutputConfig]
-    snowplow: Optional[SnowplowConfig]
+    snowplow: SnowplowConfig
 
 
 class CookieConfig(NamedTuple):
@@ -179,7 +179,7 @@ def get_config_postgres() -> Optional[PostgresConfig]:
     )
 
 
-def get_config_output_snowplow() -> Optional[SnowplowConfig]:
+def get_config_output_snowplow() -> SnowplowConfig:
     return SnowplowConfig(
         gcp_enabled=(_SP_GCP_PROJECT is not None),
         gcp_project=_SP_GCP_PROJECT,

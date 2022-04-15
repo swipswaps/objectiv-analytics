@@ -208,7 +208,7 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
     }
 
 
-def prepare_data(event: EventData, channel: str, event_errors: List[EventError], config: SnowplowConfig) -> bytes:
+def prepare_data(event: EventData, channel: str, config: SnowplowConfig, event_errors: List[EventError] = None) -> bytes:
     payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
     if channel == 'good':
         data = payload_to_thrift(payload)
