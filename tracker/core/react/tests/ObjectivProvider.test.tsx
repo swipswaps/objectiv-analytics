@@ -2,11 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { GlobalContextValidationRule, LocationContextValidationRule } from '@objectiv/developer-tools';
+import '@objectiv/developer-tools';
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   GlobalContextName,
-  LocationContextName,
   makeApplicationLoadedEvent,
   Tracker,
   TrackerConsole,
@@ -45,19 +44,23 @@ describe('ObjectivProvider', () => {
             pluginName: 'OpenTaxonomyValidationPlugin',
             initialized: true,
             validationRules: [
-              new GlobalContextValidationRule({
-                platform: TrackerPlatform.CORE,
+              {
+                validationRuleName: 'GlobalContextValidationRule',
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: GlobalContextName.ApplicationContext,
+                contextName: 'ApplicationContext',
+                platform: 'CORE',
                 once: true,
-              }),
-              new LocationContextValidationRule({
-                platform: TrackerPlatform.CORE,
+                validate: expect.any(Function),
+              },
+              {
+                validationRuleName: 'LocationContextValidationRule',
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: LocationContextName.RootLocationContext,
-                once: true,
+                contextName: 'RootLocationContext',
+                platform: 'CORE',
                 position: 0,
-              }),
+                once: true,
+                validate: expect.any(Function),
+              },
             ],
           },
           {
@@ -76,6 +79,10 @@ describe('ObjectivProvider', () => {
       transport: undefined,
     },
   };
+
+  it('developers tools should have been imported', async () => {
+    expect(globalThis.objectiv?.developerTools).not.toBeUndefined();
+  });
 
   it('should support children components', () => {
     const Component = () => {

@@ -3,8 +3,7 @@
  */
 
 import { GlobalContextName, LocationContextName, TrackerPlatform } from '@objectiv/tracker-core';
-import { GlobalContextErrorType, LocationContextErrorType } from '../ContextErrorType';
-import { ContextErrorMessagesTemplates } from '../types';
+import { ContextErrorMessagesTemplates, GlobalContextErrorType, LocationContextErrorType } from '../types';
 
 /**
  * These are platform-independent error messages that can be shown for any type of error and context.

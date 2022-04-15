@@ -3,7 +3,23 @@
  */
 
 import { GlobalContextName, LocationContextName, TrackerPlatform } from '@objectiv/tracker-core';
-import { GlobalContextErrorType, LocationContextErrorType } from './ContextErrorType';
+
+/**
+ * GlobalContext error types
+ */
+export enum GlobalContextErrorType {
+  GLOBAL_CONTEXT_MISSING = 'GLOBAL_CONTEXT_MISSING',
+  GLOBAL_CONTEXT_DUPLICATED = 'GLOBAL_CONTEXT_DUPLICATED',
+}
+
+/**
+ * LocationContext error types
+ */
+export enum LocationContextErrorType {
+  LOCATION_CONTEXT_MISSING = 'LOCATION_CONTEXT_MISSING',
+  LOCATION_CONTEXT_DUPLICATED = 'LOCATION_CONTEXT_DUPLICATED',
+  LOCATION_CONTEXT_WRONG_POSITION = 'LOCATION_CONTEXT_WRONG_POSITION',
+}
 
 /**
  * Error messages are key:value structures where the keu is the contextName and the value is the message itself.

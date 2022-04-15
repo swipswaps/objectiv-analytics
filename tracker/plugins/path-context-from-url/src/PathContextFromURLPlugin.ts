@@ -31,9 +31,10 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
    */
   initialize({ platform }: TrackerInterface): void {
     if (globalThis.objectiv?.developerTools) {
-      const { GlobalContextValidationRule } = globalThis.objectiv.developerTools;
+      const { makeGlobalContextValidationRule } = globalThis.objectiv.developerTools;
+
       this.validationRules = [
-        new GlobalContextValidationRule({
+        makeGlobalContextValidationRule({
           platform,
           logPrefix: this.pluginName,
           contextName: GlobalContextName.PathContext,

@@ -2,16 +2,16 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { TrackerDeveloperTools } from './TrackerDeveloperToolsInterface';
-import { GlobalContextValidationRule } from './validationRules/GlobalContextValidationRule';
-import { LocationContextValidationRule } from './validationRules/LocationContextValidationRule';
+import { TrackerDeveloperToolsInterface } from '@objectiv/tracker-core';
+import { makeGlobalContextValidationRule } from './validationRules/makeGlobalContextValidationRule';
+import { makeLocationContextValidationRule } from './validationRules/makeLocationContextValidationRule';
 
 /**
  * A global object containing all DeveloperTools
  */
-export const developerTools: TrackerDeveloperTools = {
-  GlobalContextValidationRule,
-  LocationContextValidationRule,
+export const developerTools: TrackerDeveloperToolsInterface = {
+  makeGlobalContextValidationRule,
+  makeLocationContextValidationRule,
 };
 
 /**

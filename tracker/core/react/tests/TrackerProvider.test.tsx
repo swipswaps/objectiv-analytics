@@ -2,18 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { GlobalContextValidationRule, LocationContextValidationRule } from '@objectiv/developer-tools';
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import {
-  GlobalContextName,
-  LocationContextName,
-  Tracker,
-  TrackerConsole,
-  TrackerPlatform,
-} from '@objectiv/tracker-core';
+import { GlobalContextName, Tracker, TrackerConsole, TrackerPlatform } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { TrackerProvider, useTracker } from '../src';
+
+import '@objectiv/developer-tools';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -42,19 +37,23 @@ describe('TrackerProvider', () => {
             pluginName: 'OpenTaxonomyValidationPlugin',
             initialized: true,
             validationRules: [
-              new GlobalContextValidationRule({
-                platform: TrackerPlatform.CORE,
+              {
+                validationRuleName: 'GlobalContextValidationRule',
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: GlobalContextName.ApplicationContext,
+                contextName: 'ApplicationContext',
+                platform: 'CORE',
                 once: true,
-              }),
-              new LocationContextValidationRule({
-                platform: TrackerPlatform.CORE,
+                validate: expect.any(Function),
+              },
+              {
+                validationRuleName: 'LocationContextValidationRule',
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: LocationContextName.RootLocationContext,
-                once: true,
+                contextName: 'RootLocationContext',
+                platform: 'CORE',
                 position: 0,
-              }),
+                once: true,
+                validate: expect.any(Function),
+              },
             ],
           },
           {
@@ -73,6 +72,10 @@ describe('TrackerProvider', () => {
       transport: undefined,
     },
   };
+
+  it('developers tools should have been imported', async () => {
+    expect(globalThis.objectiv?.developerTools).not.toBeUndefined();
+  });
 
   it('should support children components', () => {
     const Component = () => {

@@ -11,14 +11,15 @@ import {
   TrackerEvent,
   TrackerPlatform,
 } from '@objectiv/tracker-core';
-import { GlobalContextValidationRule, LocationContextValidationRule } from '../src';
+import { makeGlobalContextValidationRule } from '../src/validationRules/makeGlobalContextValidationRule';
+import { makeLocationContextValidationRule } from '../src/validationRules/makeLocationContextValidationRule';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Validation Rules', () => {
   describe('GlobalContextValidationRules', () => {
     it('Should TrackerConsole.error if given contextName is missing', () => {
-      const testGlobalContextValidationRule = new GlobalContextValidationRule({
+      const testGlobalContextValidationRule = makeGlobalContextValidationRule({
         platform: TrackerPlatform.CORE,
         contextName: GlobalContextName.PathContext,
       });
@@ -36,7 +37,7 @@ describe('Validation Rules', () => {
     });
 
     it('Should prefix TrackerConsole.error messages with logPrefix', () => {
-      const testGlobalContextValidationRule = new GlobalContextValidationRule({
+      const testGlobalContextValidationRule = makeGlobalContextValidationRule({
         platform: TrackerPlatform.CORE,
         contextName: GlobalContextName.PathContext,
         logPrefix: 'TestPrefix',
@@ -55,7 +56,7 @@ describe('Validation Rules', () => {
     });
 
     it('Should TrackerConsole.error if given contextName is present more than once', () => {
-      const testGlobalContextValidationRule = new GlobalContextValidationRule({
+      const testGlobalContextValidationRule = makeGlobalContextValidationRule({
         platform: TrackerPlatform.CORE,
         contextName: GlobalContextName.PathContext,
         once: true,
@@ -84,7 +85,7 @@ describe('Validation Rules', () => {
 
   describe('LocationContextValidationRules', () => {
     it('Should TrackerConsole.error if given contextName is missing', () => {
-      const testLocationContextValidationRule = new LocationContextValidationRule({
+      const testLocationContextValidationRule = makeLocationContextValidationRule({
         platform: TrackerPlatform.CORE,
         contextName: LocationContextName.ContentContext,
       });
@@ -102,7 +103,7 @@ describe('Validation Rules', () => {
     });
 
     it('Should prefix TrackerConsole.error messages with logPrefix', () => {
-      const testLocationContextValidationRule = new LocationContextValidationRule({
+      const testLocationContextValidationRule = makeLocationContextValidationRule({
         platform: TrackerPlatform.CORE,
         contextName: LocationContextName.ContentContext,
         logPrefix: 'TestPrefix',
@@ -121,7 +122,7 @@ describe('Validation Rules', () => {
     });
 
     it('Should TrackerConsole.error if given contextName is present more than once', () => {
-      const testLocationContextValidationRule = new LocationContextValidationRule({
+      const testLocationContextValidationRule = makeLocationContextValidationRule({
         platform: TrackerPlatform.CORE,
         contextName: LocationContextName.ContentContext,
         once: true,
@@ -158,7 +159,7 @@ describe('Validation Rules', () => {
     });
 
     it('Should TrackerConsole.error if given contextName is present in the wrong position', () => {
-      const testLocationContextValidationRule = new LocationContextValidationRule({
+      const testLocationContextValidationRule = makeLocationContextValidationRule({
         platform: TrackerPlatform.CORE,
         contextName: LocationContextName.ContentContext,
         once: true,

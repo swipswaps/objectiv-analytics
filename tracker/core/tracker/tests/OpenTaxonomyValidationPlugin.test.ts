@@ -2,7 +2,6 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import '@objectiv/developer-tools';
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   GlobalContextName,
@@ -16,6 +15,8 @@ import {
   TrackerEvent,
 } from '../src';
 
+import '@objectiv/developer-tools';
+
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
 const coreTracker = new Tracker({ applicationId: 'app-id' });
@@ -23,6 +24,10 @@ const coreTracker = new Tracker({ applicationId: 'app-id' });
 describe('OpenTaxonomyValidationPlugin', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+  });
+
+  it('developers tools should have been imported', async () => {
+    expect(globalThis.objectiv?.developerTools).not.toBeUndefined();
   });
 
   it('should TrackerConsole.error when calling `validate` before `initialize`', () => {

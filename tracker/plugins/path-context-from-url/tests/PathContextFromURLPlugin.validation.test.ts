@@ -2,16 +2,21 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import '@objectiv/developer-tools';
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { makePathContext, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { PathContextFromURLPlugin } from '../src';
+
+import '@objectiv/developer-tools';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('PathContextFromURLPlugin', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it('developers tools should have been imported', async () => {
+    expect(globalThis.objectiv?.developerTools).not.toBeUndefined();
   });
 
   describe('Validation', () => {

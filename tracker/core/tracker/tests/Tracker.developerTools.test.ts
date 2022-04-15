@@ -3,14 +3,9 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import {
-  GlobalContextName,
-  LocationContextName,
-  Tracker,
-  TrackerConfig,
-  TrackerConsole,
-  TrackerPlatform,
-} from '../src';
+import { GlobalContextName, Tracker, TrackerConfig, TrackerConsole } from '../src';
+
+import '@objectiv/developer-tools';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -19,9 +14,11 @@ describe('Tracker', () => {
     jest.resetAllMocks();
   });
 
-  it('should instantiate with just applicationId (with developer tools)', async () => {
-    const { GlobalContextValidationRule, LocationContextValidationRule } = await import('@objectiv/developer-tools');
+  it('developers tools should have been imported', async () => {
+    expect(globalThis.objectiv?.developerTools).not.toBeUndefined();
+  });
 
+  it('should instantiate with just applicationId (with developer tools)', async () => {
     jest.spyOn(console, 'log');
     expect(console.log).not.toHaveBeenCalled();
     const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
@@ -33,19 +30,23 @@ describe('Tracker', () => {
         pluginName: 'OpenTaxonomyValidationPlugin',
         initialized: true,
         validationRules: [
-          new GlobalContextValidationRule({
-            platform: TrackerPlatform.CORE,
+          {
+            validationRuleName: 'GlobalContextValidationRule',
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: GlobalContextName.ApplicationContext,
+            contextName: 'ApplicationContext',
+            platform: 'CORE',
             once: true,
-          }),
-          new LocationContextValidationRule({
-            platform: TrackerPlatform.CORE,
+            validate: expect.any(Function),
+          },
+          {
+            validationRuleName: 'LocationContextValidationRule',
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: LocationContextName.RootLocationContext,
-            once: true,
+            contextName: 'RootLocationContext',
+            platform: 'CORE',
             position: 0,
-          }),
+            once: true,
+            validate: expect.any(Function),
+          },
         ],
       },
       {
@@ -53,7 +54,7 @@ describe('Tracker', () => {
         applicationContext: {
           __instance_id: matchUUID,
           __global_context: true,
-          _type: 'ApplicationContext',
+          _type: GlobalContextName.ApplicationContext,
           id: 'app-id',
         },
       },

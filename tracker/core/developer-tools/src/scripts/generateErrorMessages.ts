@@ -4,7 +4,7 @@
 
 import { GlobalContextName, LocationContextName, TrackerPlatform } from '@objectiv/tracker-core';
 import * as fs from 'fs';
-import { GlobalContextErrorType, LocationContextErrorType } from '../ContextErrorType';
+import { GlobalContextErrorType, LocationContextErrorType } from '../types';
 import { GlobalContextErrorMessagesTemplates, LocationContextErrorMessagesTemplates } from './ErrorMessagesTemplates';
 import { preCompileErrorMessage } from './preCompileErrorMessage';
 
@@ -76,9 +76,8 @@ fs.writeFileSync(
  * Copyright ${new Date().getFullYear()} Objectiv B.V.
  */
 
-import { GlobalContextName, LocationContextName } from "@objectiv/tracker-core";
-import { GlobalContextErrorType, LocationContextErrorType } from "./ContextErrorType";
-import { ContextErrorMessages } from './types';
+import { GlobalContextName, LocationContextName } from '@objectiv/tracker-core';
+import { ContextErrorMessages, GlobalContextErrorType, LocationContextErrorType } from './types';
 
 `
 );

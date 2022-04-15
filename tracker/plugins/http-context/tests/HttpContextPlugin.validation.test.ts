@@ -2,16 +2,21 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import '@objectiv/developer-tools';
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { makeHttpContext, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { HttpContextPlugin } from '../src';
+
+import '@objectiv/developer-tools';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('HttpContextPlugin', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it('developers tools should have been imported', async () => {
+    expect(globalThis.objectiv?.developerTools).not.toBeUndefined();
   });
 
   describe('Validation', () => {

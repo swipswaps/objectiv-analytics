@@ -4,16 +4,4 @@
 
 import { makeGlobalDeveloperTools } from './makeGlobalDeveloperTools';
 
-export * from './validationRules/ContextValidationRuleConfig';
-export * from './validationRules/GlobalContextValidationRule';
-export * from './validationRules/LocationContextValidationRule';
-
-export * from './ContextErrorMessages';
-export * from './ContextErrorType';
-export * from './makeGlobalDeveloperTools';
-export * from './TrackerDeveloperToolsInterface';
-export * from './types';
-
-const developerTools = makeGlobalDeveloperTools();
-
-export default developerTools;
+export default makeGlobalDeveloperTools();
