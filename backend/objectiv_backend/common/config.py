@@ -14,11 +14,6 @@ from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema,
 from objectiv_backend.common.types import EventListSchema
 
 
-class AwsMessageType:
-    kinesis: str = 'kinesis'
-    sqs: str = 'sqs'
-
-
 LOAD_BASE_SCHEMA = os.environ.get('LOAD_BASE_SCHEMA', 'true') == 'true'
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
 
@@ -69,7 +64,7 @@ _SP_AWS_SECRET_ACCESS_KEY = os.environ.get('SP_AWS_SECRET_ACCESS_KEY', _AWS_SECR
 _SP_AWS_REGION = os.environ.get('SP_AWS_REGION', _AWS_REGION)
 _SP_AWS_MESSAGE_TOPIC_RAW = os.environ.get('SP_AWS_MESSAGE_TOPIC_RAW', '')
 _SP_AWS_MESSAGE_TOPIC_BAD = os.environ.get('SP_AWS_MESSAGE_TOPIC_BAD', '')
-_SP_AWS_MESSAGE_TYPE = os.environ.get('SP_AWS_MESSAGE_TYPE', str(AwsMessageType.kinesis))
+_SP_AWS_MESSAGE_TYPE = os.environ.get('SP_AWS_MESSAGE_TYPE', 'kinesis')
 
 # Cookie settings
 _OBJ_COOKIE = 'obj_user_id'
@@ -114,7 +109,7 @@ class SnowplowConfig(NamedTuple):
     aws_region: str
     aws_message_topic_raw: str
     aws_message_topic_bad: str
-    aws_message_type: AwsMessageType
+    aws_message_type: str
 
     schema_collector_payload: str
     schema_contexts: str
