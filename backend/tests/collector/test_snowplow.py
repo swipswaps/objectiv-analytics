@@ -25,8 +25,9 @@ config = SnowplowConfig(
     aws_region='',
     aws_access_key_id='',
     aws_secret_access_key='',
-    aws_kinesis_topic_raw='',
-    aws_kinesis_topic_bad=''
+    aws_message_type='',
+    aws_message_topic_raw='',
+    aws_message_topic_bad=''
 )
 
 event_list = json.loads(CLICK_EVENT_JSON)
