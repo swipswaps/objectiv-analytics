@@ -9,7 +9,7 @@ from urllib.parse import urlparse
 from objectiv_backend.snowplow.schema.ttypes import CollectorPayload  # type: ignore
 
 
-from objectiv_backend.common.config import SnowplowConfig, get_collector_config, AwsMessageType
+from objectiv_backend.common.config import SnowplowConfig, get_collector_config
 from objectiv_backend.common.event_utils import get_context
 from objectiv_backend.common.types import EventDataList, EventData
 from objectiv_backend.schema.validate_events import EventError, ErrorInfo
@@ -268,11 +268,11 @@ def write_data_to_kinesis(events: EventDataList, config: SnowplowConfig,
         data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
 
         print(f'Writing event {event["id"]} to {config.aws_message_type} -> {stream_name}')
-        if config.aws_message_type == AwsMessageType.kinesis:
+        if config.aws_message_type == 'kinesis':
             client.put_record(
                 StreamName=stream_name,
                 Data=data,
                 PartitionKey="load_tstamp")
-        if config.aws_message_type == AwsMessageType.sqs:
+        if config.aws_message_type == 'sqs':
             client.send_message(QueueUrl=stream_name,
                                 MessageBody=data,)

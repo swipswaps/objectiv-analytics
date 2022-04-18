@@ -184,6 +184,8 @@ def get_config_postgres() -> Optional[PostgresConfig]:
 
 
 def get_config_output_snowplow() -> SnowplowConfig:
+    if _SP_AWS_MESSAGE_TYPE and _SP_AWS_MESSAGE_TYPE not in ['kinesis', 'sqs']:
+        raise ValueError(f'Invalid messaged type for AWS: {_SP_AWS_MESSAGE_TYPE}')
     return SnowplowConfig(
         gcp_enabled=(_SP_GCP_PROJECT != ''),
         gcp_project=_SP_GCP_PROJECT,
