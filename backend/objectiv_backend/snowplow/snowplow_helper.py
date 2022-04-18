@@ -293,5 +293,17 @@ def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
                                 config=config,
                                 protocol_type='json').decode('utf-8')
 
+            payload = str(base64.b64encode(data.encode('UTF-8')), 'UTF-8')
+
+            print(f'sqs:: sending payload: {payload}')
+
             client.send_message(QueueUrl=stream_name,
-                                MessageBody=data,)
+                                MessageBody=payload,
+                                MessageAttributes={
+                                    'kinesisKey': {
+                                        'StringValue': event['id'],
+                                        'DataType': 'String'
+                                    }
+                                })
+
+
