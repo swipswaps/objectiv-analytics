@@ -14,7 +14,7 @@ from objectiv_backend.common.event_utils import get_context
 from objectiv_backend.common.types import EventDataList, EventData
 from objectiv_backend.schema.validate_events import EventError, ErrorInfo
 
-from thrift.protocol import TBinaryProtocol
+from thrift.protocol import TBinaryProtocol, TJSONProtocol
 from thrift.transport import TTransport
 
 # only load imports if needed
@@ -100,15 +100,21 @@ def objectiv_event_to_snowplow_payload(event: EventData, config: SnowplowConfig)
     )
 
 
-def payload_to_thrift(payload: CollectorPayload) -> bytes:
+def payload_to_thrift(payload: CollectorPayload, protocol_type: str = 'binary') -> bytes:
     """
     Generate Thrift message for payload, based on Thrift schema here:
         https://github.com/snowplow/snowplow/blob/master/2-collectors/thrift-schemas/collector-payload-1/src/main/thrift/collector-payload.thrift
     :param payload: CollectorPayload - class instance representing Thrift message
+    :param protocol_type: str - protocol type to use for Thrift serializer
     :return: serialized string
     """
     transport = TTransport.TMemoryBuffer()
-    protocol = TBinaryProtocol.TBinaryProtocol(transport)
+    if protocol_type == 'binary':
+        protocol = TBinaryProtocol.TBinaryProtocol(transport)
+    elif protocol_type == 'json':
+        protocol = TJSONProtocol.TJSONProtocol(transport)
+    else:
+        raise ValueError(f'Unknown protocol_type ({protocol_type} requested')
     payload.write(protocol)
 
     return transport.getvalue()
@@ -211,10 +217,11 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
 def prepare_data(event: EventData,
                  channel: str,
                  config: SnowplowConfig,
-                 event_errors: List[EventError] = None) -> bytes:
+                 event_errors: List[EventError] = None,
+                 protocol_type: str = 'binary') -> bytes:
     payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
     if channel == 'good':
-        data = payload_to_thrift(payload)
+        data = payload_to_thrift(payload=payload, protocol_type=protocol_type)
     else:
         event_error = None
         # try to find errors for the current event_id
@@ -252,9 +259,9 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
         publisher.publish(topic_path, data)
 
 
-def write_data_to_kinesis(events: EventDataList, config: SnowplowConfig,
-                          channel: str = 'good',
-                          event_errors: List[EventError] = None) -> None:
+def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
+                      channel: str = 'good',
+                      event_errors: List[EventError] = None) -> None:
 
     if channel == 'good':
         stream_name = config.aws_message_topic_raw
@@ -265,14 +272,26 @@ def write_data_to_kinesis(events: EventDataList, config: SnowplowConfig,
     client = boto3.client(config.aws_message_type)
 
     for event in events:
-        data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
-
-        print(f'Writing event {event["id"]} to {config.aws_message_type} -> {stream_name}')
+        #print(f'Writing event {event["id"]} to {config.aws_message_type} -> {stream_name}')
         if config.aws_message_type == 'kinesis':
+            data = prepare_data(event=event,
+                                channel=channel,
+                                event_errors=event_errors,
+                                config=config,
+                                protocol_type='binary')
+
             client.put_record(
                 StreamName=stream_name,
                 Data=data,
                 PartitionKey="load_tstamp")
         if config.aws_message_type == 'sqs':
+            # sqs doesn't support binary payloads, so in this case
+            # we force the JSON serializer factory from the thrift transport
+            data = prepare_data(event=event,
+                                channel=channel,
+                                event_errors=event_errors,
+                                config=config,
+                                protocol_type='json').decode('utf-8')
+
             client.send_message(QueueUrl=stream_name,
                                 MessageBody=data,)
