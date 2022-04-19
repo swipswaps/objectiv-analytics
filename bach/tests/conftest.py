@@ -8,10 +8,12 @@ specified on the commandline, then it will (also) get a BigQuery dialect or engi
 
 Additionally we define a 'pg_engine' fixture here that always return a Postgres engine.
 """
+import logging
 import os
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Dict
 
 import pytest
+from _pytest.main import Session
 from _pytest.python import Metafunc, Function
 from _pytest.config.argparsing import Parser
 import sqlalchemy
@@ -43,26 +45,54 @@ def pytest_addoption(parser: Parser):
     parser.addoption('--all', action='store_true', help='run the functional tests for BigQuery')
 
 
+class EngineDialect(NamedTuple):
+    engine: Optional[Engine]
+    dialect: Optional[Dialect]
+
+
+ENGINE_DIALECTS: Dict[str, EngineDialect] = {}
+
+
+def pytest_sessionstart(session: Session):
+    # Initialize ENGINE_DIALECTS per pytest-xdist worker session based on current pytest running config.
+    # This way we avoid the creation of a new engine per test, as this is quite inefficient and might
+    # cause failures due to multiple clients trying to connect to db server.
+
+    # For more information, please see:
+    # https://pytest-xdist.readthedocs.io/en/latest/distribution.html
+    # https://docs.pytest.org/en/6.2.x/reference.html#pytest.hookspec.pytest_sessionstart
+    load_engine = True
+    if (
+        ('tests/unit' in session.config.args and len(session.config.args) == 1)
+        or session.config.getoption('markexpr') == 'db_independent'
+    ):
+        # create dialect only if we are running unit tests or db independent tests
+        load_engine = False
+
+    if session.config.getoption("all"):
+        ENGINE_DIALECTS['postgres'] = get_postgres_engine_dialect(load_engine)
+        ENGINE_DIALECTS['bigquery'] = get_bigquery_engine_dialect(load_engine)
+    elif session.config.getoption("big_query"):
+        ENGINE_DIALECTS['bigquery'] = get_bigquery_engine_dialect(load_engine)
+    else:  # default option, don't even check if --postgres is set
+        ENGINE_DIALECTS['postgres'] = get_postgres_engine_dialect(load_engine)
+
+
 def pytest_generate_tests(metafunc: Metafunc):
     # Paramaterize the 'engine' and 'dialect' parameters of tests based on the options specified by the
     # user (see pytest_addoption() for options).
 
     # This function will automatically be called by pytest while it is creating the list of tests to run,
     # see: https://docs.pytest.org/en/6.2.x/reference.html#collection-hooks
-    need_engine = 'engine' in metafunc.fixturenames
     if metafunc.config.getoption("all"):
         engine_dialects = [
-            get_postgres_engine_dialect(need_engine),
-            get_bigquery_engine_dialect(need_engine)
+            ENGINE_DIALECTS['postgres'],
+            ENGINE_DIALECTS['bigquery']
         ]
     elif metafunc.config.getoption("big_query"):
-        engine_dialects = [
-            get_bigquery_engine_dialect(need_engine)
-        ]
+        engine_dialects = [ENGINE_DIALECTS['bigquery']]
     else:  # default option, don't even check if --postgres is set
-        engine_dialects = [
-            get_postgres_engine_dialect(need_engine)
-        ]
+        engine_dialects = [ENGINE_DIALECTS['postgres']]
 
     if 'dialect' in metafunc.fixturenames:
         dialects = [ed.dialect for ed in engine_dialects]
@@ -94,12 +124,7 @@ def pytest_runtest_setup(item: Function):
         raise Exception('Test has both the `db_independent` mark as well as either the `dialect` or '
                         '`engine` parameter. Test can not be both database independent and multi-database.')
 
-# Below: helper functions for pytest_generate_tests
-
-
-class EngineDialect(NamedTuple):
-    engine: Optional[Engine]
-    dialect: Optional[Dialect]
+# Below: helper functions for pytest_sessionstart
 
 
 def get_postgres_engine_dialect(need_engine: bool = True) -> EngineDialect:
