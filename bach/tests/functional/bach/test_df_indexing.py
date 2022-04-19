@@ -78,6 +78,7 @@ def test_index_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
     pdf, df = indexing_dfs
 
     if is_bigquery(df.engine):
+        # TODO: BigQuery
         # indexing with slicing is still not supported for BigQuery
         return
 
@@ -177,6 +178,7 @@ def test_set_item_by_label_diff_node(indexing_dfs: Tuple[pd.DataFrame, DataFrame
 def test_set_item_by_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame], engine) -> None:
     pdf, df = indexing_dfs
     if is_bigquery(df.engine):
+        # TODO: BigQuery
         # indexing with slicing is still not supported for BigQuery
         return
     df = df.sort_index()

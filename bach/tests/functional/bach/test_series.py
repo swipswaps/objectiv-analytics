@@ -691,6 +691,8 @@ def test__set_item_with_merge_w_conflict_names(engine) -> None:
         assert '("b" - "a__data_column") - "c"' == result.expression.to_sql(dialect)
     elif is_bigquery(dialect):
         assert '(`b` - `a__data_column`) - `c`' == result.expression.to_sql(dialect)
+    else:
+        raise Exception()
 
     assert {'a', 'b', 'a__data_column', 'c'} == set(result.base_node.columns)
     assert Expression.table_column_reference('r', 'a') == result.base_node.column_expressions['a__data_column']
@@ -705,6 +707,8 @@ def test__set_item_with_merge_w_conflict_names(engine) -> None:
     elif is_bigquery(dialect):
         assert '((((`b` - `a__data_column`) - `c__other`) + `c`) * `c`) - `c__other`' == result2.expression.to_sql(
             dialect)
+    else:
+        raise Exception()
 
     assert {'a', 'b', 'a__data_column', 'c', 'c__other'} == set(result2.base_node.columns)
 
