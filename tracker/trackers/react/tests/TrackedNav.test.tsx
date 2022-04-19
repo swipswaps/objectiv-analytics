@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
-import { TrackerConsole } from '@objectiv/tracker-core';
+import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
 import React from 'react';
 import { LocationTree, ObjectivProvider, ReactTracker, TrackedNav, usePressEventTracker } from '../src';
@@ -48,7 +48,7 @@ describe('TrackedNav', () => {
         _type: 'PressEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'NavigationContext',
+            _type: LocationContextName.NavigationContext,
             id: 'nav',
           }),
         ]),
@@ -84,7 +84,7 @@ describe('TrackedNav', () => {
         _type: 'PressEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'NavigationContext',
+            _type: LocationContextName.NavigationContext,
             id: 'sidebar-nav',
           }),
         ]),

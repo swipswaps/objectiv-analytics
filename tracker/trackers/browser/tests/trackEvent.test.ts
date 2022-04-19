@@ -5,6 +5,7 @@
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   generateUUID,
+  LocationContextName,
   makeApplicationLoadedEvent,
   makeContentContext,
   makeFailureEvent,
@@ -108,10 +109,10 @@ describe('trackEvent', () => {
         id: matchUUID,
         global_contexts: [],
         location_stack: [
-          expect.objectContaining({ _type: 'ContentContext', id: 'main' }),
-          expect.objectContaining({ _type: 'ContentContext', id: 'parent' }),
-          expect.objectContaining({ _type: 'ContentContext', id: 'child' }),
-          expect.objectContaining({ _type: 'PressableContext', id: 'button' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'main' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'parent' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'child' }),
+          expect.objectContaining({ _type: LocationContextName.PressableContext, id: 'button' }),
         ],
       })
     );
@@ -125,7 +126,7 @@ describe('trackEvent', () => {
         _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'custom' })],
+        location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'custom' })],
       })
     );
 
@@ -138,7 +139,7 @@ describe('trackEvent', () => {
         _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'custom' })],
+        location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'custom' })],
       })
     );
   });
@@ -193,10 +194,10 @@ describe('trackEvent', () => {
       expect.objectContaining({
         ...makePressEvent(),
         location_stack: expect.arrayContaining([
-          expect.objectContaining({ _type: 'ContentContext', id: 'top' }),
-          expect.objectContaining({ _type: 'ContentContext', id: 'mid' }),
-          expect.objectContaining({ _type: 'ContentContext', id: 'div' }),
-          expect.objectContaining({ _type: 'ContentContext', id: 'test' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'top' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'mid' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'div' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'test' }),
         ]),
       })
     );
@@ -227,9 +228,9 @@ describe('trackEvent', () => {
       expect.objectContaining({
         ...makePressEvent(),
         location_stack: expect.arrayContaining([
-          expect.objectContaining({ _type: 'ContentContext', id: 'top' }),
-          expect.objectContaining({ _type: 'ContentContext', id: 'mid' }),
-          expect.objectContaining({ _type: 'ContentContext', id: 'div' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'top' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'mid' }),
+          expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'div' }),
         ]),
       })
     );

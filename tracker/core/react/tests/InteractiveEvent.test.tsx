@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeContentContext, makeInteractiveEvent, Tracker } from '@objectiv/tracker-core';
+import { LocationContextName, makeContentContext, makeInteractiveEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { TrackingContextProvider, trackInteractiveEvent, useInteractiveEventTracker } from '../src';
@@ -79,7 +79,7 @@ describe('InteractiveEvent', () => {
       1,
       expect.objectContaining(
         makeInteractiveEvent({
-          location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'override' })],
+          location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'override' })],
         })
       ),
       undefined

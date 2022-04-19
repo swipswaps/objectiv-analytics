@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
-import { TrackerConsole } from '@objectiv/tracker-core';
+import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import {
@@ -49,7 +49,7 @@ describe('TrackedSwitch', () => {
         _type: 'InputChangeEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'InputContext',
+            _type: LocationContextName.InputContext,
             id: 'test-switch',
           }),
         ]),

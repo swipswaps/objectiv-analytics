@@ -4,6 +4,7 @@
 
 import {
   ContextsConfig,
+  GlobalContextName,
   GlobalContextValidationRule,
   makePathContext,
   TrackerConsole,
@@ -31,7 +32,7 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
     this.validationRules = [
       new GlobalContextValidationRule({
         logPrefix: this.pluginName,
-        contextName: 'PathContext',
+        contextName: GlobalContextName.PathContext,
         once: true,
       }),
     ];
