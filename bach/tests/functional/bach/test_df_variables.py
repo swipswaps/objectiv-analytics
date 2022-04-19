@@ -5,7 +5,7 @@ import pytest
 
 from bach.dataframe import DtypeNamePair, DefinedVariable, DataFrame
 from sql_models.model import CustomSqlModelBuilder
-from sql_models.util import is_bigquery
+from sql_models.util import is_bigquery, is_postgres
 from tests.functional.bach.test_data_and_utils import get_df_with_test_data, assert_equals_data, \
     get_df_with_food_data, get_bt_with_test_data
 
@@ -221,8 +221,15 @@ def test_get_all_variable_usage(engine):
 
     df1.materialize(inplace=True)
     # materialize will change the ref_paths, and migrate the 'second' variable to the base_node
+    str_old_value = 'test'
+
+    if is_postgres(engine):
+        str_old_value = f"'{str_old_value}'"
+    elif is_bigquery(engine):
+        str_old_value = f'"""{str_old_value}"""'
+
     assert df1.get_all_variable_usage() == [
-        DefinedVariable(name='second', dtype='string', value='test', ref_path=(), old_value="'test'"),
+        DefinedVariable(name='second', dtype='string', value='test', ref_path=(), old_value=str_old_value),
         DefinedVariable(name='first', dtype='int64', value=1234, ref_path=('prev',), old_value='1234')
     ]
 
@@ -235,7 +242,7 @@ def test_get_all_variable_usage(engine):
     # df2 a base_node that has one SqlModel after the df1.base_node.
     # df2 has the same variables in the base_node as df1, but it doesn't actually have the values defined.
     assert df2.get_all_variable_usage() == [
-        DefinedVariable(name='second', dtype='string', value=None, ref_path=('model',), old_value="'test'"),
+        DefinedVariable(name='second', dtype='string', value=None, ref_path=('model',), old_value=str_old_value),
         DefinedVariable(name='first', dtype='int64', value=None, ref_path=('model', 'prev'), old_value='1234')
     ]
 
