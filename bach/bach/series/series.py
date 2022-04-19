@@ -1,10 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import warnings
 from abc import ABC, abstractmethod
 from copy import copy
-from datetime import date, datetime, time
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
     TypeVar, Sequence
 from uuid import UUID
@@ -17,8 +15,7 @@ from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_
 
 from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
-    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression, ColumnReferenceToken, \
-    TableColumnReferenceToken
+    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 
 from bach.sql_model import BachSqlModel
 
@@ -875,7 +872,7 @@ class Series(ABC):
         from bach import SeriesBoolean
         return self.copy_override_type(SeriesBoolean).copy_override(expression=expression)
 
-    def fillna(self, other):
+    def fillna(self, other: AllSupportedLiteralTypes):
         """
         Fill any NULL value with the given constant or other compatible Series
 
@@ -894,9 +891,14 @@ class Series(ABC):
             other=other, operation='fillna', fmt_str='COALESCE({}, {})',
             other_dtypes=tuple([self.dtype]))
 
-    def _binary_operation(self, other: 'Series', operation: str, fmt_str: str,
-                          other_dtypes: Tuple[str, ...] = (),
-                          dtype: Union[str, None, Mapping[str, Optional[str]]] = None) -> 'Series':
+    def _binary_operation(
+        self,
+        other: Union[AllSupportedLiteralTypes, 'Series'],
+        operation: str,
+        fmt_str: str,
+        other_dtypes: Tuple[str, ...] = (),
+        dtype: Union[str, None, Mapping[str, Optional[str]]] = None
+    ) -> 'Series':
         """
         The standard way to perform a binary operation
 
@@ -930,9 +932,14 @@ class Series(ABC):
 
         return self_modified.copy_override_dtype(dtype=new_dtype).copy_override(expression=expression)
 
-    def _arithmetic_operation(self, other: 'Series', operation: str, fmt_str: str,
-                              other_dtypes: Tuple[str, ...] = (),
-                              dtype: Union[str, Mapping[str, Optional[str]]] = None) -> 'Series':
+    def _arithmetic_operation(
+        self,
+        other: Union[AllSupportedLiteralTypes, 'Series'],
+        operation: str,
+        fmt_str: str,
+        other_dtypes: Tuple[str, ...] = (),
+        dtype: Union[str, Mapping[str, Optional[str]]] = None
+    ) -> 'Series':
         """
         implement this in a subclass to have boilerplate support for all arithmetic functions
         defined below, but also call this method from specific arithmetic operation implementations
