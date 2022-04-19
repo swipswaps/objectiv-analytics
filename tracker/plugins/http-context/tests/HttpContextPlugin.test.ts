@@ -6,6 +6,7 @@ import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   ContextsConfig,
   generateUUID,
+  GlobalContextName,
   makeHttpContext,
   Tracker,
   TrackerConsole,
@@ -51,7 +52,7 @@ describe('HttpContextPlugin', () => {
         {
           __instance_id: matchUUID,
           __global_context: true,
-          _type: 'HttpContext',
+          _type: GlobalContextName.HttpContext,
           id: 'http_context',
           referrer: 'MOCK_REFERRER',
           remote_address: null,
@@ -85,7 +86,7 @@ describe('HttpContextPlugin', () => {
         {
           __instance_id: matchUUID,
           __global_context: true,
-          _type: 'HttpContext',
+          _type: GlobalContextName.HttpContext,
           id: 'http_context',
           referrer: '',
           remote_address: null,

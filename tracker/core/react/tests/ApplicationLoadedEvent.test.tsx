@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeApplicationLoadedEvent, makeContentContext, Tracker } from '@objectiv/tracker-core';
+import { LocationContextName, makeApplicationLoadedEvent, makeContentContext, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import {
@@ -107,7 +107,7 @@ describe('trackApplicationLoaded', () => {
       1,
       expect.objectContaining(
         makeApplicationLoadedEvent({
-          location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'override' })],
+          location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'override' })],
         })
       ),
       undefined

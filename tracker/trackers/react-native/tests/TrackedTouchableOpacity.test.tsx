@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
-import { TrackerConsole } from '@objectiv/tracker-core';
+import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
@@ -54,7 +54,7 @@ describe('TrackedTouchableOpacity', () => {
         _type: 'PressEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'PressableContext',
+            _type: LocationContextName.PressableContext,
             id: 'trigger-event',
           }),
         ]),

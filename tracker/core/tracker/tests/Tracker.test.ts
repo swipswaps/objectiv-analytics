@@ -16,6 +16,7 @@ import {
   TrackerQueue,
   TrackerQueueMemoryStore,
 } from '../src';
+import { GlobalContextName, LocationContextName } from '../src/ContextNames';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -37,12 +38,12 @@ describe('Tracker', () => {
         validationRules: [
           new GlobalContextValidationRule({
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'ApplicationContext',
+            contextName: GlobalContextName.ApplicationContext,
             once: true,
           }),
           new LocationContextValidationRule({
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'RootLocationContext',
+            contextName: LocationContextName.RootLocationContext,
             once: true,
             position: 0,
           }),
@@ -53,7 +54,7 @@ describe('Tracker', () => {
         applicationContext: {
           __instance_id: matchUUID,
           __global_context: true,
-          _type: 'ApplicationContext',
+          _type: GlobalContextName.ApplicationContext,
           id: 'app-id',
         },
       },
@@ -77,12 +78,12 @@ describe('Tracker', () => {
         validationRules: [
           new GlobalContextValidationRule({
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'ApplicationContext',
+            contextName: GlobalContextName.ApplicationContext,
             once: true,
           }),
           new LocationContextValidationRule({
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'RootLocationContext',
+            contextName: LocationContextName.RootLocationContext,
             once: true,
             position: 0,
           }),
@@ -93,7 +94,7 @@ describe('Tracker', () => {
         applicationContext: {
           __instance_id: matchUUID,
           __global_context: true,
-          _type: 'ApplicationContext',
+          _type: GlobalContextName.ApplicationContext,
           id: 'app-id',
         },
       },
@@ -120,12 +121,12 @@ describe('Tracker', () => {
         validationRules: [
           new GlobalContextValidationRule({
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'ApplicationContext',
+            contextName: GlobalContextName.ApplicationContext,
             once: true,
           }),
           new LocationContextValidationRule({
             logPrefix: 'OpenTaxonomyValidationPlugin',
-            contextName: 'RootLocationContext',
+            contextName: LocationContextName.RootLocationContext,
             once: true,
             position: 0,
           }),
@@ -284,7 +285,7 @@ describe('Tracker', () => {
         { __instance_id: matchUUID, __global_context: true, _type: 'global', id: 'X' },
         { __instance_id: matchUUID, __global_context: true, _type: 'global', id: 'Y' },
         { __instance_id: matchUUID, __global_context: true, _type: 'global', id: 'Z' },
-        { __instance_id: matchUUID, __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+        { __instance_id: matchUUID, __global_context: true, _type: GlobalContextName.ApplicationContext, id: 'app-id' },
       ]);
     });
 

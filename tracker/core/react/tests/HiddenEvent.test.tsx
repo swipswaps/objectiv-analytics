@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeContentContext, makeHiddenEvent, Tracker } from '@objectiv/tracker-core';
+import { LocationContextName, makeContentContext, makeHiddenEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { TrackingContextProvider, trackHiddenEvent, useHiddenEventTracker } from '../src';
@@ -71,7 +71,7 @@ describe('HiddenEvent', () => {
       1,
       expect.objectContaining(
         makeHiddenEvent({
-          location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'override' })],
+          location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'override' })],
         })
       ),
       undefined

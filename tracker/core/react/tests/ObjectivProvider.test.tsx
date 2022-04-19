@@ -4,7 +4,9 @@
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
+  GlobalContextName,
   GlobalContextValidationRule,
+  LocationContextName,
   LocationContextValidationRule,
   makeApplicationLoadedEvent,
   Tracker,
@@ -45,12 +47,12 @@ describe('ObjectivProvider', () => {
             validationRules: [
               new GlobalContextValidationRule({
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'ApplicationContext',
+                contextName: GlobalContextName.ApplicationContext,
                 once: true,
               }),
               new LocationContextValidationRule({
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'RootLocationContext',
+                contextName: LocationContextName.RootLocationContext,
                 once: true,
                 position: 0,
               }),
@@ -60,7 +62,7 @@ describe('ObjectivProvider', () => {
             applicationContext: {
               __instance_id: matchUUID,
               __global_context: true,
-              _type: 'ApplicationContext',
+              _type: GlobalContextName.ApplicationContext,
               id: 'app-id',
             },
             pluginName: 'ApplicationContextPlugin',

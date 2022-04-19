@@ -4,6 +4,7 @@
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
+  GlobalContextName,
   TrackerConsole,
   TrackerEvent,
   TrackerQueue,
@@ -166,15 +167,15 @@ describe('BrowserTracker', () => {
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            _type: 'HttpContext',
+            _type: GlobalContextName.HttpContext,
             id: 'http_context',
           }),
           expect.objectContaining({
-            _type: 'ApplicationContext',
+            _type: GlobalContextName.ApplicationContext,
             id: 'app-id',
           }),
           expect.objectContaining({
-            _type: 'PathContext',
+            _type: GlobalContextName.PathContext,
             id: 'http://localhost/',
           }),
         ])
