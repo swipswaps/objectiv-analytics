@@ -6,15 +6,16 @@ from datetime import datetime
 from urllib.parse import urlparse
 
 
+
 from objectiv_backend.snowplow.schema.ttypes import CollectorPayload  # type: ignore
 
 
-from objectiv_backend.common.config import SnowplowConfig, get_collector_config
+from objectiv_backend.common.config import SnowplowConfig, get_collector_config, AwsMessageType
 from objectiv_backend.common.event_utils import get_context
 from objectiv_backend.common.types import EventDataList, EventData
 from objectiv_backend.schema.validate_events import EventError, ErrorInfo
 
-from thrift.protocol import TBinaryProtocol, TJSONProtocol
+from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 
 # only load imports if needed
@@ -24,6 +25,7 @@ if snowplow_config.gcp_enabled:
 
 if snowplow_config.aws_enabled:
     import boto3
+    import botocore.exceptions
 
 
 def make_snowplow_custom_context(snowplow_event: Dict, config: SnowplowConfig) -> str:
@@ -100,24 +102,22 @@ def objectiv_event_to_snowplow_payload(event: EventData, config: SnowplowConfig)
     )
 
 
-def payload_to_thrift(payload: CollectorPayload, protocol_type: str = 'binary') -> bytes:
+def payload_to_thrift(payload: CollectorPayload) -> bytes:
     """
     Generate Thrift message for payload, based on Thrift schema here:
         https://github.com/snowplow/snowplow/blob/master/2-collectors/thrift-schemas/collector-payload-1/src/main/thrift/collector-payload.thrift
     :param payload: CollectorPayload - class instance representing Thrift message
-    :param protocol_type: str - protocol type to use for Thrift serializer
-    :return: serialized string
+    :return: bytes - serialized string
     """
-    transport = TTransport.TMemoryBuffer()
-    if protocol_type == 'binary':
-        protocol = TBinaryProtocol.TBinaryProtocol(transport)
-    elif protocol_type == 'json':
-        protocol = TJSONProtocol.TJSONProtocol(transport)
-    else:
-        raise ValueError(f'Unknown protocol_type ({protocol_type} requested')
-    payload.write(protocol)
 
-    return transport.getvalue()
+    # use memory buffer as transport layer
+    trans = TTransport.TMemoryBuffer()
+
+    # use the binary encoding protocol
+    oprot = TBinaryProtocol.TBinaryProtocol(trans=trans)
+    payload.write(oprot=oprot)
+
+    return trans.getvalue()
 
 
 def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
@@ -217,11 +217,10 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
 def prepare_data(event: EventData,
                  channel: str,
                  config: SnowplowConfig,
-                 event_errors: List[EventError] = None,
-                 protocol_type: str = 'binary') -> bytes:
+                 event_errors: List[EventError] = None) -> bytes:
     payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
     if channel == 'good':
-        data = payload_to_thrift(payload=payload, protocol_type=protocol_type)
+        data = payload_to_thrift(payload=payload)
     else:
         event_error = None
         # try to find errors for the current event_id
@@ -269,41 +268,41 @@ def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
         stream_name = config.aws_message_topic_bad
 
     # this should be kinesis or sqs
-    client = boto3.client(config.aws_message_type)
+    client = boto3.client(config.aws_message_type.value)
 
     for event in events:
-        #print(f'Writing event {event["id"]} to {config.aws_message_type} -> {stream_name}')
-        if config.aws_message_type == 'kinesis':
-            data = prepare_data(event=event,
-                                channel=channel,
-                                event_errors=event_errors,
-                                config=config,
-                                protocol_type='binary')
+        print(f'Writing event {event["id"]} to {config.aws_message_type} -> {stream_name}')
+        data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
 
-            client.put_record(
-                StreamName=stream_name,
-                Data=data,
-                PartitionKey="load_tstamp")
-        if config.aws_message_type == 'sqs':
-            # sqs doesn't support binary payloads, so in this case
-            # we force the JSON serializer factory from the thrift transport
-            data = prepare_data(event=event,
-                                channel=channel,
-                                event_errors=event_errors,
-                                config=config,
-                                protocol_type='json').decode('utf-8')
+        if config.aws_message_type == AwsMessageType.kinesis:
+            try:
+                client.put_record(
+                    StreamName=stream_name,
+                    Data=data,
+                    PartitionKey='event_id')
+            except client.exceptions.ProvisionedThroughputExceededException as e:
+                print(f'Could not deliver event to Kinesis: throughput exceeded in {stream_name}: {e}')
+            except botocore.exceptions.ClientException as e:
+                print(f'Exception sending event to Kinesis ({stream_name}: {e}')
 
-            payload = str(base64.b64encode(data.encode('UTF-8')), 'UTF-8')
+        if config.aws_message_type == AwsMessageType.sqs:
 
-            print(f'sqs:: sending payload: {payload}')
+            # sqs doesn't support binary payloads, so in this case we base64 encode
+            payload = str(base64.b64encode(data), 'UTF-8')
 
-            client.send_message(QueueUrl=stream_name,
-                                MessageBody=payload,
-                                MessageAttributes={
-                                    'kinesisKey': {
-                                        'StringValue': event['id'],
-                                        'DataType': 'String'
-                                    }
-                                })
+            try:
+                client.send_message(QueueUrl=stream_name,
+                                    MessageBody=payload,
+                                    MessageAttributes={
+                                        #  The sqs message attribute that will be used to set the kinesis partition key
+                                        'kinesisKey': {
+                                            'StringValue': 'event_id',
+                                            'DataType': 'String'
+                                        }
+                                    })
+            except client.exceptions.InvalidMessageContents as e:
+                print(f'Failed to deliver event to SQS: Invalid Message Contents ({stream_name}: {e}')
+            except botocore.exceptions.ClientException as e:
+                print(f'Failed to deliver event to SQS ({stream_name}: {e}')
 
 
