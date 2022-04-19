@@ -7,8 +7,9 @@ from typing import Union, List, Optional, Tuple, TYPE_CHECKING, overload
 from bach.expression import Expression
 
 if TYPE_CHECKING:
-    from bach.dataframe import DataFrame, Scalar
+    from bach.dataframe import DataFrame
     from bach.series.series import Series, SeriesBoolean
+    from bach.types import AllSupportedLiteralTypes
 
 IndexLabel = Union['SeriesBoolean', List[str], List[int]]
 LocKey = Union[IndexLabel, Tuple[Union[IndexLabel, slice], Union[str, slice]]]
@@ -181,7 +182,7 @@ class LocIndexer(BaseLocIndex):
 
         return filtered_index_df
 
-    def __setitem__(self, key: LocKey, value: 'Scalar') -> None:
+    def __setitem__(self, key: LocKey, value: 'AllSupportedLiteralTypes') -> None:
         """
         modifies a subset from the caller based on a key.
         """
