@@ -7,8 +7,9 @@ from typing import List, Any
 import pytest
 from sqlalchemy.engine import Engine
 
+from sql_models.util import is_bigquery
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_food_data, \
-    get_bt_with_test_data, get_df_with_test_data
+    get_bt_with_test_data, get_df_with_test_data, get_df_with_food_data
 
 
 def test_timestamp_data():
@@ -37,6 +38,7 @@ def test_to_pandas():
 
 @pytest.mark.parametrize("asstring", [True, False])
 def test_timestamp_comparator(asstring: bool):
+    # TODO: BigQuery
     mt = get_bt_with_food_data()[['moment']]
     from datetime import datetime
     dt = datetime(2021, 5, 3, 11, 28, 36, 388000)
@@ -164,7 +166,7 @@ def types_plus_min(engine: Engine, data: List[list], base_value: Any, base_type:
             assert bt[f'{base_name}_min_{name}'].dtype == min_type
 
     assert_equals_data(
-        bt[:1],
+        bt.sort_index()[:1],
         expected_columns=list(bt.all_series.keys()),
         expected_data=[
             [1, 93485, *expected],

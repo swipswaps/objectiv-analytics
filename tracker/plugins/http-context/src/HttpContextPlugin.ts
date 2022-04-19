@@ -3,6 +3,7 @@
  */
 
 import {
+  GlobalContextName,
   GlobalContextValidationRule,
   makeHttpContext,
   TrackerConsole,
@@ -27,7 +28,7 @@ export class HttpContextPlugin implements TrackerPluginInterface {
     this.validationRules = [
       new GlobalContextValidationRule({
         logPrefix: this.pluginName,
-        contextName: 'HttpContext',
+        contextName: GlobalContextName.HttpContext,
         once: true,
       }),
     ];
@@ -42,7 +43,7 @@ export class HttpContextPlugin implements TrackerPluginInterface {
     const httpContext = makeHttpContext({
       id: 'http_context',
       referrer: document.referrer ?? '',
-      user_agent: navigator.userAgent ?? ''
+      user_agent: navigator.userAgent ?? '',
     });
     tracker.global_contexts.push(httpContext);
   }

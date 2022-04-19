@@ -2,9 +2,8 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { TrackerConsole, TrackerPluginInterface } from '@objectiv/tracker-core';
+import { makeRootLocationContext, TrackerConsole, TrackerPluginInterface } from '@objectiv/tracker-core';
 import { ContextsConfig, makePathContext } from '@objectiv/tracker-core';
-import { makeRootLocationContext } from '@objectiv/tracker-react-core';
 import { getPathFromState, NavigationContainerRefWithCurrent } from '@react-navigation/native';
 
 /**

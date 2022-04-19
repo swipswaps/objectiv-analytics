@@ -1,15 +1,12 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import warnings
 from copy import copy
-from datetime import date, datetime, time
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
     cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload,
 )
-from uuid import UUID
 
 import numpy
 import pandas
@@ -48,7 +45,6 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - dict of axis labels -> functions, function names or list of such.
 
 Level = Union[int, List[int], str, List[str]]
-Scalar = Union[int, float, str, bool, date, datetime, time, UUID]
 
 
 class SortColumn(NamedTuple):
@@ -1134,7 +1130,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union[AllSupportedLiteralTypes, pandas.Series]):
+                    value: Union[AllSupportedLiteralTypes, 'Series', pandas.Series]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -1879,25 +1875,6 @@ class DataFrame:
             This function queries the database.
         """
         return self.to_pandas(limit=n)
-
-    @property
-    def values(self) -> numpy.ndarray:
-        """
-        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
-
-        .. warning::
-           We recommend using :meth:`DataFrame.to_numpy` instead.
-
-        :returns: Returns the values of the DataFrame as numpy.ndarray.
-
-        .. note::
-            This function queries the database.
-        """
-        warnings.warn(
-            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
-            category=DeprecationWarning,
-        )
-        return self.to_numpy()
 
     def to_numpy(self) -> numpy.ndarray:
         """
@@ -2879,7 +2856,10 @@ class DataFrame:
     def fillna(
         self,
         *,
-        value: Union[Union['Series', Scalar], Dict[str, Union[Scalar, 'Series']]] = None,
+        value: Union[
+            Union['Series', AllSupportedLiteralTypes],
+            Dict[str, Union[AllSupportedLiteralTypes, 'Series']]
+        ] = None,
         method: Optional[str] = None,
         axis: int = 0,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
@@ -2888,8 +2868,8 @@ class DataFrame:
         """
         Fill any NULL value using a method or with a given value.
 
-        :param value: A scalar/series to fill all NULL values on each series
-            or a dictionary specifying which scalar/series to use for each series.
+        :param value: A literal/series to fill all NULL values on each series
+            or a dictionary specifying which literal/series to use for each series.
         :param method: Method to use for filling NULL values on all DataFrame series. Supported values:
            - "ffill"/"pad": Fill missing values by propagating the last non-nullable value in the series.
            - "bfill"/"backfill": Fill missing values with the next non-nullable value in the series.
@@ -3166,7 +3146,10 @@ class DataFrame:
         return MinMaxScaler(training_df=self, feature_range=feature_range).transform()
 
     def unstack(
-        self, level: Union[str, int] = -1, fill_value: Optional[Scalar] = None, aggregation: str = 'max',
+        self,
+        level: Union[str, int] = -1,
+        fill_value: Optional[AllSupportedLiteralTypes] = None,
+        aggregation: str = 'max'
     ) -> 'DataFrame':
         """
         Pivot a level of the index labels.

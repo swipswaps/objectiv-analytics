@@ -2,23 +2,20 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { expectToThrow, MockConsoleImplementation } from '@objectiv/testing-tools';
+import { expectToThrow, matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
+  GlobalContextName,
   GlobalContextValidationRule,
+  LocationContextName,
   LocationContextValidationRule,
+  makeContentContext,
   Tracker,
   TrackerConsole,
+  TrackerPlatform,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import {
-  LocationProvider,
-  makeContentContext,
-  TrackingContextProvider,
-  useLocationStack,
-  useTracker,
-  useTrackingContext,
-} from '../src';
+import { LocationProvider, TrackingContextProvider, useLocationStack, useTracker, useTrackingContext } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -38,6 +35,7 @@ describe('TrackingContextProvider', () => {
   const expectedState = {
     locationStack: [],
     tracker: {
+      platform: TrackerPlatform.CORE,
       active: true,
       applicationId: 'app-id',
       global_contexts: [],
@@ -49,19 +47,24 @@ describe('TrackingContextProvider', () => {
             validationRules: [
               new GlobalContextValidationRule({
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'ApplicationContext',
+                contextName: GlobalContextName.ApplicationContext,
                 once: true,
               }),
               new LocationContextValidationRule({
                 logPrefix: 'OpenTaxonomyValidationPlugin',
-                contextName: 'RootLocationContext',
+                contextName: LocationContextName.RootLocationContext,
                 once: true,
                 position: 0,
               }),
             ],
           },
           {
-            applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+            applicationContext: {
+              __instance_id: matchUUID,
+              __global_context: true,
+              _type: GlobalContextName.ApplicationContext,
+              id: 'app-id',
+            },
             pluginName: 'ApplicationContextPlugin',
           },
         ],

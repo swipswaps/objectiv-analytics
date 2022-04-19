@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { TrackerConsole } from '@objectiv/tracker-core';
+import { GlobalContextName, LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
 import {
   NavigationContextWrapper,
   ObjectivProvider,
@@ -70,17 +70,17 @@ describe('makePressListener', () => {
       1,
       expect.objectContaining({
         _type: 'ApplicationLoadedEvent',
-        global_contexts: [expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' })],
+        global_contexts: [expect.objectContaining({ _type: GlobalContextName.ApplicationContext, id: 'app-id' })],
       })
     );
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
         _type: 'PressEvent',
-        global_contexts: [expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' })],
+        global_contexts: [expect.objectContaining({ _type: GlobalContextName.ApplicationContext, id: 'app-id' })],
         location_stack: [
-          expect.objectContaining({ _type: 'NavigationContext', id: 'bottom-tabs' }),
-          expect.objectContaining({ _type: 'LinkContext', id: 'ScreenA', href: '/ScreenB' }),
+          expect.objectContaining({ _type: LocationContextName.NavigationContext, id: 'bottom-tabs' }),
+          expect.objectContaining({ _type: LocationContextName.LinkContext, id: 'ScreenA', href: '/ScreenB' }),
         ],
       })
     );
@@ -88,10 +88,10 @@ describe('makePressListener', () => {
       3,
       expect.objectContaining({
         _type: 'PressEvent',
-        global_contexts: [expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' })],
+        global_contexts: [expect.objectContaining({ _type: GlobalContextName.ApplicationContext, id: 'app-id' })],
         location_stack: [
-          expect.objectContaining({ _type: 'NavigationContext', id: 'bottom-tabs' }),
-          expect.objectContaining({ _type: 'LinkContext', id: 'ScreenB', href: '/ScreenA' }),
+          expect.objectContaining({ _type: LocationContextName.NavigationContext, id: 'bottom-tabs' }),
+          expect.objectContaining({ _type: LocationContextName.LinkContext, id: 'ScreenB', href: '/ScreenA' }),
         ],
       })
     );

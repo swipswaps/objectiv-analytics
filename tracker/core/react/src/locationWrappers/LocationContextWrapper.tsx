@@ -13,7 +13,6 @@ import { useTracker } from '../hooks/consumers/useTracker';
 import { useOnChange } from '../hooks/useOnChange';
 import { useOnMount } from '../hooks/useOnMount';
 import { useOnUnmount } from '../hooks/useOnUnmount';
-import { LocationContext } from '../types';
 
 /**
  * The props of LocationContextWrapper.
@@ -22,7 +21,7 @@ export type LocationContextWrapperProps = {
   /**
    * A LocationContext instance.
    */
-  locationContext: LocationContext<AbstractLocationContext>;
+  locationContext: AbstractLocationContext;
 
   /**
    * LocationContextWrapper children can also be a function (render props). Provides the combined TrackingContext.
@@ -50,7 +49,7 @@ export const LocationContextWrapper = ({ children, locationContext }: LocationCo
     }
   });
 
-  useOnChange<LocationContext<AbstractLocationContext>>(locationContext, (previousLocationContext) => {
+  useOnChange<AbstractLocationContext>(locationContext, (previousLocationContext) => {
     if (isDevMode()) {
       LocationTree.remove(previousLocationContext);
       LocationTree.add(locationContext, parentLocationContext);

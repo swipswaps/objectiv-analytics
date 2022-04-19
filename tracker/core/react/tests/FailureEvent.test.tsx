@@ -2,10 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeFailureEvent, Tracker } from '@objectiv/tracker-core';
+import { LocationContextName, makeContentContext, makeFailureEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import { makeContentContext, trackFailureEvent, TrackingContextProvider, useFailureEventTracker } from '../src';
+import { trackFailureEvent, TrackingContextProvider, useFailureEventTracker } from '../src';
 
 describe('FailureEvent', () => {
   beforeEach(() => {
@@ -85,7 +85,7 @@ describe('FailureEvent', () => {
       expect.objectContaining(
         makeFailureEvent({
           message: 'ko',
-          location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'override' })],
+          location_stack: [expect.objectContaining({ _type: LocationContextName.ContentContext, id: 'override' })],
         })
       ),
       undefined

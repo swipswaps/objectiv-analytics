@@ -2,8 +2,16 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { ContextsConfig, makeHttpContext, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
+import {
+  ContextsConfig,
+  generateUUID,
+  GlobalContextName,
+  makeHttpContext,
+  Tracker,
+  TrackerConsole,
+  TrackerEvent,
+} from '@objectiv/tracker-core';
 import { HttpContextPlugin } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
@@ -26,12 +34,12 @@ describe('HttpContextPlugin', () => {
     });
     const eventContexts: ContextsConfig = {
       location_stack: [
-        { __location_context: true, _type: 'section', id: 'A' },
-        { __location_context: true, _type: 'section', id: 'B' },
+        { __instance_id: generateUUID(), __location_context: true, _type: 'section', id: 'A' },
+        { __instance_id: generateUUID(), __location_context: true, _type: 'section', id: 'B' },
       ],
       global_contexts: [
-        { __global_context: true, _type: 'GlobalA', id: 'abc' },
-        { __global_context: true, _type: 'GlobalB', id: 'def' },
+        { __instance_id: generateUUID(), __global_context: true, _type: 'GlobalA', id: 'abc' },
+        { __instance_id: generateUUID(), __global_context: true, _type: 'GlobalB', id: 'def' },
       ],
     };
     const testEvent = new TrackerEvent({ _type: 'test-event', ...eventContexts });
@@ -42,8 +50,9 @@ describe('HttpContextPlugin', () => {
     expect(trackedEvent.global_contexts).toEqual(
       expect.arrayContaining([
         {
+          __instance_id: matchUUID,
           __global_context: true,
-          _type: 'HttpContext',
+          _type: GlobalContextName.HttpContext,
           id: 'http_context',
           referrer: 'MOCK_REFERRER',
           remote_address: null,
@@ -75,8 +84,9 @@ describe('HttpContextPlugin', () => {
     expect(trackedEvent.global_contexts).toEqual(
       expect.arrayContaining([
         {
+          __instance_id: matchUUID,
           __global_context: true,
-          _type: 'HttpContext',
+          _type: GlobalContextName.HttpContext,
           id: 'http_context',
           referrer: '',
           remote_address: null,

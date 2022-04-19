@@ -4,6 +4,8 @@
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
+  GlobalContextName,
+  LocationContextName,
   makeApplicationContext,
   makeContentContext,
   makeRootLocationContext,
@@ -19,7 +21,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
     jest.resetAllMocks();
   });
 
-  describe('ApplicationContext', () => {
+  describe(GlobalContextName.ApplicationContext, () => {
     it('should succeed', () => {
       const testOpenTaxonomyValidationPlugin = new OpenTaxonomyValidationPlugin();
       const validEvent = new TrackerEvent({
@@ -75,7 +77,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
     });
   });
 
-  describe('RootLocationContext', () => {
+  describe(LocationContextName.RootLocationContext, () => {
     it('should succeed', () => {
       const testOpenTaxonomyValidationPlugin = new OpenTaxonomyValidationPlugin();
       const validEvent = new TrackerEvent({
