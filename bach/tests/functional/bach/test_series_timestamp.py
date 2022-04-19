@@ -7,16 +7,18 @@ from typing import List, Any
 import pytest
 from sqlalchemy.engine import Engine
 
-from sql_models.util import is_bigquery
-from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_food_data, \
-    get_bt_with_test_data, get_df_with_test_data, get_df_with_food_data
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data,\
+    get_df_with_food_data
 
 
-def test_timestamp_data():
-    mt = get_bt_with_food_data()[['moment']]
+def test_timestamp_data(engine):
+    mt = get_df_with_food_data(engine)[['moment']]
     from datetime import datetime
     assert_equals_data(
         mt,
+        # raw sqlAlchemy will give datetime with timezone UTC on some Databases, because of the used db types
+        # so set use_to_pandas=True to do our data normalization in the DataFrame.to_pandas() function
+        use_to_pandas=True,
         expected_columns=['_index_skating_order', 'moment'],
         expected_data=[
             [1, datetime(2021, 5, 3, 11, 28, 36, 388000)],
@@ -26,8 +28,8 @@ def test_timestamp_data():
     )
 
 
-def test_to_pandas():
-    bt = get_bt_with_test_data()
+def test_to_pandas(engine):
+    bt = get_df_with_test_data(engine)
     bt['dt'] = datetime.datetime(2021, 5, 3, 11, 28, 36, 388000)
     bt[['dt']].to_pandas()
     from numpy import array
@@ -37,9 +39,8 @@ def test_to_pandas():
 
 
 @pytest.mark.parametrize("asstring", [True, False])
-def test_timestamp_comparator(asstring: bool):
-    # TODO: BigQuery
-    mt = get_bt_with_food_data()[['moment']]
+def test_timestamp_comparator(engine, asstring: bool):
+    mt = get_df_with_food_data(engine)[['moment']]
     from datetime import datetime
     dt = datetime(2021, 5, 3, 11, 28, 36, 388000)
 
@@ -49,6 +50,9 @@ def test_timestamp_comparator(asstring: bool):
     result = mt[mt['moment'] == dt]
     assert_equals_data(
         result,
+        # raw sqlAlchemy will give datetime with timezone UTC on some Databases, because of the used db types
+        # so set use_to_pandas=True to do our data normalization in the DataFrame.to_pandas() function
+        use_to_pandas=True,
         expected_columns=['_index_skating_order', 'moment'],
         expected_data=[
             [1, datetime(2021, 5, 3, 11, 28, 36, 388000)]
@@ -57,6 +61,7 @@ def test_timestamp_comparator(asstring: bool):
 
     assert_equals_data(
         mt[mt['moment'] >= dt],
+        use_to_pandas=True,
         expected_columns=['_index_skating_order', 'moment'],
         expected_data=[
             [1, datetime(2021, 5, 3, 11, 28, 36, 388000)],
@@ -67,6 +72,7 @@ def test_timestamp_comparator(asstring: bool):
 
     assert_equals_data(
         mt[mt['moment'] > dt],
+        use_to_pandas=True,
         expected_columns=['_index_skating_order', 'moment'],
         expected_data=[
             [2, datetime(2021, 5, 4, 23, 28, 36, 388000)],
@@ -80,6 +86,7 @@ def test_timestamp_comparator(asstring: bool):
 
     assert_equals_data(
         mt[mt['moment'] <= dt],
+        use_to_pandas=True,
         expected_columns=['_index_skating_order', 'moment'],
         expected_data=[
             [1, datetime(2021, 5, 3, 11, 28, 36, 388000)],
@@ -90,6 +97,7 @@ def test_timestamp_comparator(asstring: bool):
 
     assert_equals_data(
         mt[mt['moment'] < dt],
+        use_to_pandas=True,
         expected_columns=['_index_skating_order', 'moment'],
         expected_data=[
             [1, datetime(2021, 5, 3, 11, 28, 36, 388000)],

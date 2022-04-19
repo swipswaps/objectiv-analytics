@@ -1845,24 +1845,32 @@ class DataFrame:
         .. note::
             This function queries the database.
         """
-        with self.engine.connect() as conn:
-            sql = self.view_sql(limit=limit)
+        db_dialect = DBDialect.from_engine(self.engine)
 
+        sql = self.view_sql(limit=limit)
+
+        series_name_to_dtype = {
+            series.name: series.to_pandas_info.get(db_dialect).dtype
+            for series in self.all_series.values()
+            if series.to_pandas_info.get(db_dialect) is not None
+        }
+
+        with self.engine.connect() as conn:
             # read_sql_query expects a parameterized query, so we need to escape the parameter characters
             sql = escape_parameter_characters(conn, sql)
-            pandas_df = pandas.read_sql_query(sql, conn)
+            pandas_df = pandas.read_sql_query(sql, conn, dtype=series_name_to_dtype)
 
-            # post process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
-            # the strings that the query gives us into UUID objects
-            db_dialect = DBDialect.from_engine(self.engine)
-            for name, series in self.data.items():
-                result_processor = series.query_result_processor.get(db_dialect)
-                if result_processor:
-                    pandas_df[name] = pandas_df[name].apply(result_processor)
+        # post process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
+        # the strings that the query gives us into UUID objects
 
-            if len(self._index):
-                return pandas_df.set_index(list(self._index.keys()))
-            return pandas_df
+        for name, series in self.data.items():
+            to_pandas_info = series.to_pandas_info.get(db_dialect)
+            if to_pandas_info is not None:
+                pandas_df[name] = pandas_df[name].apply(to_pandas_info.function)
+
+        if self.index:
+            pandas_df = pandas_df.set_index(list(self.index.keys()))
+        return pandas_df
 
     def head(self, n: int = 5) -> pandas.DataFrame:
         """

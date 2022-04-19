@@ -7,13 +7,12 @@ from enum import Enum
 from typing import Union, cast, List, Tuple, Optional
 
 import numpy
-import pandas
 from sqlalchemy.engine import Dialect
 
 from bach import DataFrame
 from bach.series import Series, SeriesString, SeriesBoolean, SeriesFloat64, SeriesInt64
 from bach.expression import Expression
-from bach.series.series import WrappedPartition
+from bach.series.series import WrappedPartition, ToPandasInfo
 from bach.types import DtypeOrAlias
 from sql_models.constants import DBDialect
 from sql_models.util import DatabaseNotSupportedException, is_postgres, is_bigquery
@@ -152,21 +151,35 @@ class SeriesAbstractDateTime(Series, ABC):
             return series
 
 
+def bq_timestamp_to_timestamp(value: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
+    if value is None:
+        return None
+    return value.replace(tzinfo=None)
+
+
 class SeriesTimestamp(SeriesAbstractDateTime):
     """
-    A Series that represents the timestamp/datetime type and its specific operations
+    A Series that represents the timestamp/datetime type and its specific operations.
 
+    Timestamps are assumed to be in UTC, or without a timezone, both cases are treated the same.
 
-    Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
-        timestamp without time zone
+    Depending on the database this Series is backed by different database types:
+
+    * On Postgres this utilizes the native 'timestamp without time zone' database type.
+    * On BigQuery this utilizes the generic 'TIMESTAMP' database type.
     """
     dtype = 'timestamp'
     dtype_aliases = ('datetime64', 'datetime64[ns]', numpy.datetime64)
     supported_db_dtype = {
         DBDialect.POSTGRES: 'timestamp without time zone',
-        DBDialect.BIGQUERY: 'DATETIME',  # TODO: use TIMESTAMP instead?
+        DBDialect.BIGQUERY: 'TIMESTAMP',  # TODO: use TIMESTAMP instead?
     }
     supported_value_types = (datetime.datetime, datetime.date, str)
+
+    to_pandas_info = {
+        DBDialect.POSTGRES: ToPandasInfo('datetime64[ns]', lambda x: x),
+        DBDialect.BIGQUERY: ToPandasInfo('datetime64[ns, UTC]', bq_timestamp_to_timestamp)
+    }
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
@@ -300,10 +313,12 @@ class SeriesTime(SeriesAbstractDateTime):
     # python supports no arithmetic on Time
 
 
-def microseconds_to_timedelta(microseconds: int) -> datetime.timedelta:
+def microseconds_to_timedelta(microseconds: Optional[int]) -> Optional[datetime.timedelta]:
     """
     INTERNAL: convert microseconds to timedelta
     """
+    if microseconds is None:
+        return None
     return datetime.timedelta(microseconds=microseconds)
 
 
@@ -325,9 +340,9 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     }
     supported_value_types = (datetime.timedelta, numpy.timedelta64)
 
-    query_result_processor = {
+    to_pandas_info = {
         DBDialect.POSTGRES: None,
-        DBDialect.BIGQUERY: microseconds_to_timedelta
+        DBDialect.BIGQUERY: ToPandasInfo('datetime64[ns, UTC]', bq_timestamp_to_timestamp)
     }
 
     @classmethod
@@ -373,7 +388,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             if numpy.isnat(value):
                 raise ValueError('Not a Time (NaT) is not supported as a value, use None instead.')
             microseconds = round(value / numpy.timedelta64(1, 'us'))
-            return microseconds_to_timedelta(microseconds)
+            return datetime.timedelta(microseconds=microseconds)
         raise ValueError(f'Cannot convert {value} to timedelta. Type {type(value)} not supported.')
 
     @classmethod
