@@ -7,7 +7,7 @@
 
 * Collect model-ready user behavior data and feed it straight into your data warehouse
 * Use the [open analytics taxonomy](https://objectiv.io/docs/taxonomy/) to have well-structured, rich and validated event data
-* Run pre-built models and reuse them between teams or product platforms
+* Run pre-built models and reuse them between teams or products/platforms
 * Use pandas-like operations that run on the full SQL dataset
 * Instantly convert models to SQL to feed all data consumers from a single source of truth
 
