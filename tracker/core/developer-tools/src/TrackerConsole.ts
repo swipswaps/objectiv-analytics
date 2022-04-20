@@ -3,12 +3,13 @@
  */
 
 import { TrackerConsoleImplementation, TrackerConsoleInterface } from '@objectiv/tracker-core';
+import { NoopConsoleImplementation } from "./NoopConsoleImplementation";
 
 /**
  * The default implementation of TrackerConsole. A singleton used pretty much by all other interfaces.
  */
 export const TrackerConsole: TrackerConsoleInterface = {
-  implementation: console,
+  implementation: typeof window !== 'undefined' ? console : NoopConsoleImplementation,
   setImplementation: (implementation: TrackerConsoleImplementation) => (TrackerConsole.implementation = implementation),
   debug: (...args: any[]) => TrackerConsole.implementation.debug(...args),
   error: (...args: any[]) => TrackerConsole.implementation.error(...args),
