@@ -351,4 +351,3 @@ def test_from_pandas_columns_w_nulls(engine) -> None:
             [2, 'c', 2, None, 'None'],
         ],
     )
-
