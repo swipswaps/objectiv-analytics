@@ -3,6 +3,7 @@
  <img src="https://user-images.githubusercontent.com/82152911/159266895-39f52604-83c1-438d-96bd-9a6d66e74b08.svg#gh-dark-mode-only" alt="objectiv_logo_dark" title="Objectiv Logo">
 </div>
 
+### Objectiv
 [Objectiv](https://objectiv.io/) is open-source product analytics infrastructure, built around a generic taxonomy.
 
 * Collect rich, validated user behavior data with a [generic event structure](https://www.objectiv.io/docs/taxonomy)
