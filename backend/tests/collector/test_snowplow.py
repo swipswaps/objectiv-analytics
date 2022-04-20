@@ -22,7 +22,6 @@ config = SnowplowConfig(
     gcp_pubsub_topic_bad='',
 
     aws_enabled=False,
-    aws_region='',
     aws_message_topic_raw='',
     aws_message_topic_bad=''
 )

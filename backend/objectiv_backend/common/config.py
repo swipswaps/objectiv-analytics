@@ -57,7 +57,6 @@ _SP_GCP_PROJECT = os.environ.get('SP_GCP_PROJECT', '')
 _SP_GCP_PUBSUB_TOPIC_RAW = os.environ.get('SP_GCP_PUBSUB_TOPIC_RAW', '')
 _SP_GCP_PUBSUB_TOPIC_BAD = os.environ.get('SP_GCP_PUBSUB_TOPIC_BAD', '')
 
-_SP_AWS_REGION = os.environ.get('SP_AWS_REGION', _AWS_REGION)
 _SP_AWS_MESSAGE_TOPIC_RAW = os.environ.get('SP_AWS_MESSAGE_TOPIC_RAW', '')
 _SP_AWS_MESSAGE_TOPIC_BAD = os.environ.get('SP_AWS_MESSAGE_TOPIC_BAD', '')
 
@@ -99,7 +98,6 @@ class SnowplowConfig(NamedTuple):
     gcp_pubsub_topic_bad: str
 
     aws_enabled: bool
-    aws_region: str
     aws_message_topic_raw: str
     aws_message_topic_bad: str
 
@@ -183,7 +181,6 @@ def get_config_output_snowplow() -> SnowplowConfig:
         gcp_pubsub_topic_bad=_SP_GCP_PUBSUB_TOPIC_BAD,
 
         aws_enabled=(_SP_AWS_MESSAGE_TOPIC_RAW != ''),
-        aws_region=_SP_AWS_REGION,
         aws_message_topic_raw=_SP_AWS_MESSAGE_TOPIC_RAW,
         aws_message_topic_bad=_SP_AWS_MESSAGE_TOPIC_BAD,
 
