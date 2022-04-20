@@ -2,7 +2,7 @@
 The Objectiv Collector can be configured to work with Snowplow on AWS. The Snowplow AWS setup uses either SQS 
 (message queue) or Kinesis to connect various stages in the pipeline. The setup works as follows:
 - Events arrive at the Objectiv Collector, and are validated.
-- Good events are published on the `raw` topic on Kinesis or SQS (which in turn is processes by Enrich)
+- Good events are published on the `raw` topic on Kinesis or SQS (which in turn is processed by Enrich)
 - Bad events (invalid) are published on the `bad` topic on Kinesis.
 
 Before starting up the Objectiv Collector, some preparation is required. The following sections assume there's already
