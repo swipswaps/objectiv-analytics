@@ -16,7 +16,7 @@ To be able to push events into the message queue the following needs to be set u
 Optionally some AWS iAM credentials with permission to publish to the appropriate Kinesis/SQS topics:
   - `AWS_ACCESS_KEY_ID`
   - `AWS_SECRET_ACCESS_KEY`
-  - `AWS_REGION`
+  - `AWS_DEFAULT_REGION`
 These will be used to configure the collector in the next step.
 
 #### Starting the collector
@@ -28,7 +28,7 @@ The output topics of the collector are controlled through environment variables:
 The AWS integration uses the boto3 python library, this means authentication is also provided through that library 
 (As detailed [here](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html)). 
 The simplest way to make it work, is by setting the following environment variables:
-- `AWS_ACCESS_KEY` - iAM key of the account used to access AWS services
+- `AWS_ACCESS_KEY_ID` - iAM key of the account used to access AWS services
 - `AWS_SECRET_ACCESS_KEY` - iAM secret key
 - `AWS_DEFAULT_REGION` - Optionally specify the AWS region in which the Kinesis/SQS resources are deployed.
 
