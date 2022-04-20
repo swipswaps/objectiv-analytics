@@ -9,11 +9,11 @@ import {
   getTracker,
   makeTracker,
   setDefaultTracker,
-  TrackerConsole,
   TrackerRepository,
 } from '../src/';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('globals', () => {
   afterEach(() => {

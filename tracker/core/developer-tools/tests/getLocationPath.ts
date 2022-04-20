@@ -1,8 +1,9 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
-import { getLocationPath, LocationStack, makeContentContext } from '../src';
+import { LocationStack, makeContentContext } from '@objectiv/tracker-core';
+import { getLocationPath } from '../src/getLocationPath';
 
 describe('getLocationPath', () => {
   it('should convert Location Stacks to human readable strings', () => {

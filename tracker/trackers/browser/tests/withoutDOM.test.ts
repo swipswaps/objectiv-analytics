@@ -4,7 +4,7 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { TrackerConsole, TrackerRepository } from '@objectiv/tracker-core';
+import { TrackerRepository } from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import {
   getLocationHref,
@@ -15,7 +15,8 @@ import {
   trackSuccessEvent,
 } from '../src';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Without DOM', () => {
   beforeEach(() => {
@@ -34,7 +35,7 @@ describe('Without DOM', () => {
       {}
     );
 
-    trackApplicationLoadedEvent({ onError: TrackerConsole.error });
+    trackApplicationLoadedEvent({ onError: MockConsoleImplementation.error });
     expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
     expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });
@@ -47,7 +48,7 @@ describe('Without DOM', () => {
       message: 'ok',
     });
 
-    trackSuccessEvent({ message: 'ok', onError: TrackerConsole.error });
+    trackSuccessEvent({ message: 'ok', onError: MockConsoleImplementation.error });
     expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
     expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });
@@ -60,7 +61,7 @@ describe('Without DOM', () => {
       message: 'ko',
     });
 
-    trackFailureEvent({ message: 'ko', onError: TrackerConsole.error });
+    trackFailureEvent({ message: 'ko', onError: MockConsoleImplementation.error });
     expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
     expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });

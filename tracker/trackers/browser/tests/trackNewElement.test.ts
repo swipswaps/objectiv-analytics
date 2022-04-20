@@ -4,18 +4,13 @@
 
 import '@objectiv/developer-tools';
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import {
-  generateUUID,
-  LocationContextName,
-  makeInputContext,
-  makePressableContext,
-  TrackerConsole,
-} from '@objectiv/tracker-core';
+import { generateUUID, LocationContextName, makeInputContext, makePressableContext } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackNewElement } from '../src/mutationObserver/trackNewElement';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('trackNewElement', () => {
   beforeEach(() => {

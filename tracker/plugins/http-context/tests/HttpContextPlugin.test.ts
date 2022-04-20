@@ -7,17 +7,37 @@ import {
   ContextsConfig,
   generateUUID,
   GlobalContextName,
+  makeHttpContext,
   Tracker,
-  TrackerConsole,
   TrackerEvent,
 } from '@objectiv/tracker-core';
 import { HttpContextPlugin } from '../src';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('HttpContextPlugin', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
+  });
+
+  it('should TrackerConsole.error when calling `validate` before `initialize`', () => {
+    const testHttpContextPlugin = new HttpContextPlugin();
+    const validEvent = new TrackerEvent({
+      _type: 'test',
+      global_contexts: [
+        makeHttpContext({
+          id: '/test',
+          user_agent: 'test',
+          referrer: 'test',
+          remote_address: 'test',
+        }),
+      ],
+    });
+    testHttpContextPlugin.validate(validEvent);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
+      '｢objectiv:HttpContextPlugin｣ Cannot validate. Make sure to initialize the plugin first.'
+    );
   });
 
   it('should add the HttpContext to the Event when `initialize` is executed by the Tracker', async () => {
@@ -96,5 +116,69 @@ describe('HttpContextPlugin', () => {
 
     Object.defineProperty(document, 'referrer', { value: originalReferrer });
     Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent });
+  });
+
+  describe('Without developer tools', () => {
+    let objectivGlobal = globalThis.objectiv;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      globalThis.objectiv = undefined;
+    });
+
+    afterEach(() => {
+      globalThis.objectiv = objectivGlobal;
+    });
+
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: [new HttpContextPlugin()],
+      trackApplicationContext: false,
+    });
+
+    it('should return silently  when calling `validate` before `initialize`', () => {
+      const testHttpContextPlugin = new HttpContextPlugin();
+      const validEvent = new TrackerEvent({
+        _type: 'test',
+        global_contexts: [
+          makeHttpContext({
+            id: '/test',
+            user_agent: 'test',
+            referrer: 'test',
+            remote_address: 'test',
+          }),
+        ],
+      });
+      testHttpContextPlugin.validate(validEvent);
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
+    });
+
+    it('should not validate', () => {
+      const testHttpContextPlugin = new HttpContextPlugin();
+      testHttpContextPlugin.initialize(testTracker);
+      const eventWithDuplicatedHttpContext = new TrackerEvent({
+        _type: 'TestEvent',
+        global_contexts: [
+          makeHttpContext({
+            id: '/test',
+            user_agent: 'test',
+            referrer: 'test',
+            remote_address: 'test',
+          }),
+          makeHttpContext({
+            id: '/test',
+            user_agent: 'test',
+            referrer: 'test',
+            remote_address: 'test',
+          }),
+        ],
+      });
+
+      jest.resetAllMocks();
+
+      testHttpContextPlugin.validate(eventWithDuplicatedHttpContext);
+
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
+    });
   });
 });

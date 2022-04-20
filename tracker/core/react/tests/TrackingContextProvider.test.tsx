@@ -8,16 +8,14 @@ import {
   LocationContextName,
   makeContentContext,
   Tracker,
-  TrackerConsole,
   TrackerPlatform,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { LocationProvider, TrackingContextProvider, useLocationStack, useTracker, useTrackingContext } from '../src';
 
-import '@objectiv/developer-tools';
-
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackingContextProvider', () => {
   beforeEach(() => {

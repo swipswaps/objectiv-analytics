@@ -10,9 +10,9 @@ import {
   makeNavigationContext,
   makePressableContext,
   makeRootLocationContext,
-  TrackerConsole,
 } from '@objectiv/tracker-core';
 import { locationNodes, LocationTree, rootNode } from '../src/LocationTree';
+import { TrackerConsole } from '../src/TrackerConsole';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 

@@ -3,13 +3,9 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import {
-  generateUUID,
-  getLocationPath,
-  LocationNode,
-  LocationTreeInterface,
-  TrackerConsole,
-} from '@objectiv/tracker-core';
+import { generateUUID, LocationNode, LocationTreeInterface } from '@objectiv/tracker-core';
+import { getLocationPath } from './getLocationPath';
+import { TrackerConsole } from './TrackerConsole';
 
 /**
  * The Root LocationNode of LocationTree

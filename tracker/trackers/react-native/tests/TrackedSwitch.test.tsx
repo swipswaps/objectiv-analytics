@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
-import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
+import { LocationContextName } from '@objectiv/tracker-core';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import {
@@ -14,13 +14,13 @@ import {
   TrackingContextProvider,
 } from '../src';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedSwitch', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
   const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport });
-  jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
   const TestTrackedSwitch = (props: TrackedSwitchProps & { testID?: string }) => (
     <TrackingContextProvider tracker={tracker}>
@@ -53,7 +53,7 @@ describe('TrackedSwitch', () => {
         ]),
       })
     );
-    expect(console.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
   });
 
   it('should execute onValueChange handler if specified', () => {

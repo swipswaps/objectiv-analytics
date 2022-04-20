@@ -7,10 +7,10 @@ import {
   generateUUID,
   GlobalContextName,
   LocationContextName,
-  TrackerConsole,
   TrackerEvent,
   TrackerPlatform,
 } from '@objectiv/tracker-core';
+import { TrackerConsole } from '../src/TrackerConsole';
 import { makeGlobalContextValidationRule } from '../src/validationRules/makeGlobalContextValidationRule';
 import { makeLocationContextValidationRule } from '../src/validationRules/makeLocationContextValidationRule';
 

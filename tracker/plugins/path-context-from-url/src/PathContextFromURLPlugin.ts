@@ -6,7 +6,6 @@ import {
   ContextsConfig,
   GlobalContextName,
   makePathContext,
-  TrackerConsole,
   TrackerEvent,
   TrackerInterface,
   TrackerPluginInterface,
@@ -43,7 +42,7 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
 
     this.initialized = true;
 
-    TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
+    globalThis.objectiv?.TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
 
   /**
@@ -62,7 +61,7 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
   validate(event: TrackerEvent): void {
     if (this.isUsable()) {
       if (!this.initialized) {
-        TrackerConsole.error(
+        globalThis.objectiv?.TrackerConsole.error(
           `｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`
         );
         return;

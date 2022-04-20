@@ -9,17 +9,21 @@ import {
   generateUUID,
   GlobalContextName,
   Tracker,
-  TrackerConsole,
   TrackerEvent,
 } from '../src';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 const coreTracker = new Tracker({ applicationId: 'app-id' });
 
 describe('ApplicationContextPlugin', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+  });
+
+  it('developers tools should have been imported', async () => {
+    expect(globalThis.objectiv).not.toBeUndefined();
   });
 
   it('should generate an ApplicationContext when initialized', () => {
@@ -64,5 +68,24 @@ describe('ApplicationContextPlugin', () => {
         },
       ])
     );
+  });
+
+  describe('Without developer tools', () => {
+    let objectivGlobal = globalThis.objectiv;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      globalThis.objectiv = undefined;
+    });
+
+    afterEach(() => {
+      globalThis.objectiv = objectivGlobal;
+    });
+
+    it('should return silently when calling `enrich` before `initialize`', () => {
+      const testApplicationContextPlugin = new ApplicationContextPlugin();
+      testApplicationContextPlugin.enrich({ location_stack: [], global_contexts: [] });
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
+    });
   });
 });

@@ -9,14 +9,14 @@ import {
   LocationContextName,
   makeApplicationLoadedEvent,
   Tracker,
-  TrackerConsole,
   TrackerPlatform,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { ObjectivProvider, useTrackingContext } from '../src';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('ObjectivProvider', () => {
   beforeEach(() => {

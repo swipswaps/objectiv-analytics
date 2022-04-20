@@ -1,8 +1,8 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
-import { LocationStack } from './Context';
+import { LocationStack } from '@objectiv/tracker-core';
 
 /**
  * Converts a Location Stack onto its human-readable Location Path

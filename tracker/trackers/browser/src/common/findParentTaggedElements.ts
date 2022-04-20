@@ -2,7 +2,6 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackerConsole } from '@objectiv/tracker-core';
 import { TaggableElement } from '../definitions/TaggableElement';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
@@ -31,7 +30,9 @@ export const findParentTaggedElements = (
     const parentElementId = element.getAttribute(TaggingAttribute.parentElementId);
     const parentElement = document.querySelector(`[${TaggingAttribute.elementId}='${parentElementId}']`);
     if (!isTaggedElement(parentElement)) {
-      TrackerConsole.error(`findParentTaggedElements: missing or invalid Parent Element '${parentElementId}'`);
+      globalThis.objectiv?.TrackerConsole.error(
+        `findParentTaggedElements: missing or invalid Parent Element '${parentElementId}'`
+      );
       return parentElements;
     }
     nextElement = parentElement;

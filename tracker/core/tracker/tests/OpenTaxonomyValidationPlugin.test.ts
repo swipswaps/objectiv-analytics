@@ -11,13 +11,11 @@ import {
   makeRootLocationContext,
   OpenTaxonomyValidationPlugin,
   Tracker,
-  TrackerConsole,
   TrackerEvent,
 } from '../src';
 
-import '@objectiv/developer-tools';
-
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 const coreTracker = new Tracker({ applicationId: 'app-id' });
 
@@ -183,6 +181,30 @@ describe('OpenTaxonomyValidationPlugin', () => {
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
         'color:red'
       );
+    });
+  });
+
+  describe('Without developer tools', () => {
+    let objectivGlobal = globalThis.objectiv;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      globalThis.objectiv = undefined;
+    });
+
+    afterEach(() => {
+      globalThis.objectiv = objectivGlobal;
+    });
+
+    it('should return silently when calling `validate` before `initialize`', () => {
+      const testOpenTaxonomyValidationPlugin = new OpenTaxonomyValidationPlugin();
+      const validEvent = new TrackerEvent({
+        _type: 'TestEvent',
+        global_contexts: [makeApplicationContext({ id: 'test' })],
+        location_stack: [makeRootLocationContext({ id: 'test' })],
+      });
+      testOpenTaxonomyValidationPlugin.validate(validEvent);
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     });
   });
 });

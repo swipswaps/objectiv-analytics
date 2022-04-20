@@ -10,16 +10,14 @@ import {
   LocationContextName,
   Tracker,
   TrackerConfig,
-  TrackerConsole,
   TrackerEvent,
   TrackerPluginInterface,
   TrackerQueue,
   TrackerQueueMemoryStore,
 } from '../src';
 
-import '@objectiv/developer-tools';
-
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Tracker', () => {
   beforeEach(() => {
@@ -623,5 +621,51 @@ describe('Tracker', () => {
       expect(trackerQueue.processingEventIds).toHaveLength(0);
       expect(trackerQueue.processFunction).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('Without developer tools', () => {
+  let objectivGlobal = globalThis.objectiv;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    globalThis.objectiv = undefined;
+  });
+
+  afterEach(() => {
+    globalThis.objectiv = objectivGlobal;
+  });
+
+  it('Tracker should instantiate without validation rules and not log to TrackerConsole', async () => {
+    expect(MockConsoleImplementation.log).not.toHaveBeenCalled();
+    const testTransport = new LogTransport();
+    const testQueue = new TrackerQueue();
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      transport: testTransport,
+      queue: testQueue,
+    });
+    await expect(testTracker.waitForQueue()).resolves.toBe(true);
+    expect(testTracker).toBeInstanceOf(Tracker);
+    expect(testTracker.transport).toStrictEqual(testTransport);
+    expect(testTracker.plugins.plugins).toEqual([
+      {
+        pluginName: 'OpenTaxonomyValidationPlugin',
+        initialized: true,
+        validationRules: [],
+      },
+      {
+        pluginName: 'ApplicationContextPlugin',
+        applicationContext: {
+          __instance_id: matchUUID,
+          __global_context: true,
+          _type: GlobalContextName.ApplicationContext,
+          id: 'app-id',
+        },
+      },
+    ]);
+    expect(testTracker.location_stack).toStrictEqual([]);
+    expect(testTracker.global_contexts).toStrictEqual([]);
+    expect(MockConsoleImplementation.log).not.toHaveBeenCalled();
   });
 });

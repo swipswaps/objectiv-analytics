@@ -2,8 +2,9 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { GlobalContextValidationRuleFactory, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
+import { GlobalContextValidationRuleFactory, TrackerEvent } from '@objectiv/tracker-core';
 import { GlobalContextErrorMessages } from '../ContextErrorMessages';
+import { TrackerConsole } from '../TrackerConsole';
 import { GlobalContextErrorType } from '../types';
 
 /**

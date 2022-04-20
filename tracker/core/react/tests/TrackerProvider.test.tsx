@@ -3,20 +3,13 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import {
-  GlobalContextName,
-  LocationContextName,
-  Tracker,
-  TrackerConsole,
-  TrackerPlatform,
-} from '@objectiv/tracker-core';
+import { GlobalContextName, LocationContextName, Tracker, TrackerPlatform } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { TrackerProvider, useTracker } from '../src';
 
-import '@objectiv/developer-tools';
-
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackerProvider', () => {
   beforeEach(() => {

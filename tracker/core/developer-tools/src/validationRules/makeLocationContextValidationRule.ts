@@ -2,8 +2,9 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { LocationContextValidationRuleFactory, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
+import { LocationContextValidationRuleFactory, TrackerEvent } from '@objectiv/tracker-core';
 import { LocationContextErrorMessages } from '../ContextErrorMessages';
+import { TrackerConsole } from '../TrackerConsole';
 import { LocationContextErrorType } from '../types';
 
 /**

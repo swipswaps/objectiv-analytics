@@ -3,7 +3,6 @@
  */
 
 import { Tracker } from './Tracker';
-import { TrackerConsole } from './TrackerConsole';
 import { TrackerRepositoryInterface } from './TrackerRepositoryInterface';
 
 /**
@@ -15,7 +14,9 @@ export const TrackerRepository = new (class<T extends Tracker> implements Tracke
 
   add(newInstance: T) {
     if (this.trackersMap.has(newInstance.trackerId)) {
-      TrackerConsole.error(`｢objectiv:TrackerRepository｣ Tracker \`${newInstance.trackerId}\` already exists.`);
+      globalThis.objectiv?.TrackerConsole.error(
+        `｢objectiv:TrackerRepository｣ Tracker \`${newInstance.trackerId}\` already exists.`
+      );
       return;
     }
     this.trackersMap.set(newInstance.trackerId, newInstance);
@@ -27,7 +28,7 @@ export const TrackerRepository = new (class<T extends Tracker> implements Tracke
   delete(trackerId: string) {
     if (this.defaultTracker && this.defaultTracker.trackerId === trackerId) {
       if (this.trackersMap.size > 1) {
-        TrackerConsole.error(
+        globalThis.objectiv?.TrackerConsole.error(
           `｢objectiv:TrackerRepository｣ \`${trackerId}\` is the default Tracker. Please set another as default before deleting it.`
         );
         return;
@@ -41,7 +42,7 @@ export const TrackerRepository = new (class<T extends Tracker> implements Tracke
 
   get(trackerId?: string) {
     if (this.trackersMap.size === 0) {
-      TrackerConsole.error(`｢objectiv:TrackerRepository｣ There are no Trackers.`);
+      globalThis.objectiv?.TrackerConsole.error(`｢objectiv:TrackerRepository｣ There are no Trackers.`);
       return;
     }
 
@@ -49,7 +50,7 @@ export const TrackerRepository = new (class<T extends Tracker> implements Tracke
       const trackerInstance = this.trackersMap.get(trackerId);
 
       if (!trackerInstance) {
-        TrackerConsole.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
+        globalThis.objectiv?.TrackerConsole.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
         return;
       }
 
@@ -61,7 +62,7 @@ export const TrackerRepository = new (class<T extends Tracker> implements Tracke
 
   setDefault(trackerId: string) {
     if (!this.trackersMap.has(trackerId)) {
-      TrackerConsole.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
+      globalThis.objectiv?.TrackerConsole.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
       return;
     }
 

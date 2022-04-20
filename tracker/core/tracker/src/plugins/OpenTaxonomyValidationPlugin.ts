@@ -5,7 +5,6 @@
 import { GlobalContextName, LocationContextName } from '../ContextNames';
 import { isDevMode } from '../helpers';
 import { TrackerInterface } from '../Tracker';
-import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerPluginInterface } from '../TrackerPluginInterface';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
@@ -40,10 +39,10 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
           position: 0,
         }),
       ];
+
+      globalThis.objectiv.TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
     }
     this.initialized = true;
-
-    TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
 
   /**
@@ -51,7 +50,9 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    */
   validate(event: TrackerEvent): void {
     if (!this.initialized) {
-      TrackerConsole.error(`｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`);
+      globalThis.objectiv?.TrackerConsole.error(
+        `｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`
+      );
       return;
     }
 

@@ -3,9 +3,10 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { Tracker, TrackerConsole, TrackerRepository } from '../src';
+import { Tracker, TrackerRepository } from '../src';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackerRepository', () => {
   beforeEach(() => {
@@ -176,5 +177,56 @@ describe('TrackerRepository', () => {
     expect(tracker1.flushQueue).toHaveBeenCalledTimes(1);
     expect(tracker2.flushQueue).toHaveBeenCalledTimes(1);
     expect(tracker3.flushQueue).toHaveBeenCalledTimes(1);
+  });
+
+  describe('Without developer tools', () => {
+    let objectivGlobal = globalThis.objectiv;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      globalThis.objectiv = undefined;
+    });
+
+    afterEach(() => {
+      globalThis.objectiv = objectivGlobal;
+    });
+
+    it('should return silently when adding an already existing instance', () => {
+      TrackerRepository.add(new Tracker({ applicationId: 'app-id', trackerId: 'tracker-1' }));
+      TrackerRepository.add(new Tracker({ applicationId: 'tracker-1' }));
+      expect(TrackerRepository.trackersMap.size).toBe(1);
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
+    });
+
+    it('should return silently when attempting to delete the default tracker', () => {
+      TrackerRepository.add(new Tracker({ applicationId: 'app-id-1' }));
+      TrackerRepository.add(new Tracker({ applicationId: 'app-id-2' }));
+      expect(TrackerRepository.trackersMap.size).toBe(2);
+      expect(TrackerRepository.defaultTracker?.applicationId).toBe('app-id-1');
+      TrackerRepository.delete('app-id-1');
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
+    });
+
+    it('should return silently when attempting to get a tracker instance from an empty repository', () => {
+      expect(TrackerRepository.trackersMap.size).toBe(0);
+      expect(TrackerRepository.get()).toBeUndefined();
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
+    });
+
+    it('should return silently when attempting to set a default Tracker that does not exist', () => {
+      TrackerRepository.add(new Tracker({ applicationId: 'app-id-1' }));
+      TrackerRepository.add(new Tracker({ applicationId: 'app-id-2' }));
+      expect(TrackerRepository.trackersMap.size).toBe(2);
+      TrackerRepository.setDefault('app-id-3');
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
+    });
+
+    it('should return silently when attempting to get a Tracker instance that does not exist', () => {
+      TrackerRepository.add(new Tracker({ applicationId: 'app-id-1' }));
+      TrackerRepository.add(new Tracker({ applicationId: 'app-id-2' }));
+      expect(TrackerRepository.trackersMap.size).toBe(2);
+      TrackerRepository.get('app-id-3');
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
+    });
   });
 });

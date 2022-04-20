@@ -3,7 +3,7 @@
  */
 
 import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
-import { LocationContextName, TrackerConsole } from '@objectiv/tracker-core';
+import { LocationContextName } from '@objectiv/tracker-core';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
@@ -15,13 +15,13 @@ import {
   TrackingContextProvider,
 } from '../src';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedTouchableOpacity', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
   const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport });
-  jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
   const TestTrackedTouchableOpacity = (props: TrackedTouchableOpacityProps & { testID?: string }) => (
     <TrackingContextProvider tracker={tracker}>
@@ -58,7 +58,7 @@ describe('TrackedTouchableOpacity', () => {
         ]),
       })
     );
-    expect(console.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
   });
 
   it('should not track Button if PressableContext id cannot be auto-detected', () => {
@@ -75,15 +75,15 @@ describe('TrackedTouchableOpacity', () => {
     expect(spyTransport.handle).not.toHaveBeenCalled();
   });
 
-  it('should console.error if PressableContext id cannot be auto-detected', () => {
+  it('should TrackerConsole.error if PressableContext id cannot be auto-detected', () => {
     render(
       <TestTrackedTouchableOpacity testID="test-touchable-highlight">
         <Text>☹️</Text>
       </TestTrackedTouchableOpacity>
     );
 
-    expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv｣ Could not generate a valid id for PressableContext @ RootLocation:test. Please provide the `id` property manually.'
     );
   });
@@ -99,5 +99,28 @@ describe('TrackedTouchableOpacity', () => {
     fireEvent.press(getByTestId('test-touchable-opacity'));
 
     expect(onPressSpy).toHaveBeenCalledTimes(1);
+  });
+
+  describe('Without developer tools', () => {
+    let objectivGlobal = globalThis.objectiv;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      globalThis.objectiv = undefined;
+    });
+
+    afterEach(() => {
+      globalThis.objectiv = objectivGlobal;
+    });
+
+    it('should not TrackerConsole.error if PressableContext id cannot be auto-detected', () => {
+      render(
+        <TestTrackedTouchableOpacity testID="test-touchable-highlight">
+          <Text>☹️</Text>
+        </TestTrackedTouchableOpacity>
+      );
+
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
+    });
   });
 });

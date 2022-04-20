@@ -3,7 +3,6 @@
  */
 
 import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
-import { getLocationPath, TrackerConsole } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
@@ -16,7 +15,8 @@ import {
   useLocationStack,
 } from '../src';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedSectionList', () => {
   const spyTransport = new SpyTransport();
@@ -61,7 +61,7 @@ describe('TrackedSectionList', () => {
   });
 
   const ListItem = (props: { text: ListItemType }) => {
-    const locationPath = getLocationPath(useLocationStack());
+    const locationPath = globalThis.objectiv?.getLocationPath(useLocationStack());
 
     console.debug(locationPath);
 
