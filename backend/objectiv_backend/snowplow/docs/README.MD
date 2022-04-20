@@ -24,7 +24,9 @@ than for instance Big Query).
 
 ## Setup
 In this setup, we assume you already have a fully functional Snowplow pipeline running, including enrichment, loader 
-and iglu repository. Enabling Objectiv involves two steps:
+and iglu repository. If you haven't, the [Snowplow quickstart for Open Source](https://docs.snowplowanalytics.com/docs/open-source-quick-start/what-is-the-quick-start-for-open-source/) is a good place to start. 
+
+Enabling Objectiv involves two steps:
 1. Add the Objectiv Taxonomy schema to the iglu repository.
 2. Configure the Objectiv Collector output to push events into the appropriate message queue.
 
