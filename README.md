@@ -3,11 +3,12 @@
  <img src="https://user-images.githubusercontent.com/82152911/159266895-39f52604-83c1-438d-96bd-9a6d66e74b08.svg#gh-dark-mode-only" alt="objectiv_logo_dark" title="Objectiv Logo">
 </div>
 
-## Open-source infrastructure for product analytics
+## Open-source product analytics infrastructure, built around a generic taxonomy
 
-* Collect model-ready user behavior data and feed it straight into your data warehouse
-* Use the [open analytics taxonomy](https://objectiv.io/docs/taxonomy/) to have well-structured, rich and validated event data
-* Run pre-built models and reuse them between teams or products/platforms
+* Collect rich, validated user behavior data with a [generic event structure](https://www.objectiv.io/docs/taxonomy)
+* Feed it directly into your data warehouse without cleaning & transformation
+* Take & run pre-built models off the shelf to speed up data projects
+* Reuse and share any model between teams, products and platforms
 * Use pandas-like operations that run on the full SQL dataset
 * Instantly convert models to SQL to feed all data consumers from a single source of truth
 
