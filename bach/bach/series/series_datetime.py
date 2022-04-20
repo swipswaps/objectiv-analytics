@@ -152,6 +152,8 @@ class SeriesTimestamp(SeriesAbstractDateTime):
     A Series that represents the timestamp/datetime type and its specific operations.
 
     Timestamps are assumed to be in UTC, or without a timezone, both cases are treated the same.
+    These timestamps have a microsecond precision at best, in contrast to numpy's datetime64 which supports
+    up to attoseconds precision.
 
     Depending on the database this Series is backed by different database types:
 
@@ -164,7 +166,7 @@ class SeriesTimestamp(SeriesAbstractDateTime):
         DBDialect.POSTGRES: 'timestamp without time zone',
         DBDialect.BIGQUERY: 'TIMESTAMP',
     }
-    supported_value_types = (datetime.datetime, datetime.date, str)
+    supported_value_types = (datetime.datetime, numpy.datetime64, datetime.date, str)
 
     to_pandas_info = {
         DBDialect.POSTGRES: ToPandasInfo('datetime64[ns]', lambda x: x),
@@ -176,9 +178,37 @@ class SeriesTimestamp(SeriesAbstractDateTime):
         return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.datetime]) -> Expression:
-        # TODO: check here already that the string has the correct format
-        str_value = str(value)
+    def supported_value_to_literal(
+            cls,
+            dialect: Dialect,
+            value: Union[datetime.datetime, numpy.datetime64, datetime.date, str, None]
+    ) -> Expression:
+        if value is None:
+            return Expression.raw('NULL')
+        # if value is not a datetime or date, then convert it to datetime first
+        if isinstance(value, str):
+            formats = ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d']
+            for format in formats:
+                try:
+                    value = datetime.datetime.strptime(value, format)
+                    break
+                except ValueError:
+                    continue
+            if not isinstance(value, datetime.datetime):
+                raise ValueError(f'Not a valid datetime string literal: {value}.'
+                                 f'Supported formats: {formats}')
+        if isinstance(value, numpy.datetime64):
+            if numpy.isnat(value):
+                return Expression.raw('NULL')
+            # weird trick: count number of microseconds in datetime, but only works on timedelta, so convert
+            # to a timedelta first, by subtracting 0 (epoch = 1970-01-01 00:00:00)
+            microseconds = round((value - numpy.datetime64('1970', 'us')) / numpy.timedelta64(1, 'us'))
+            value = datetime.datetime.utcfromtimestamp(microseconds / 1_000_000)
+
+        if not isinstance(value, (datetime.datetime, datetime.date)):
+            raise ValueError(f'Not a valid datetime literal: {value}')
+
+        str_value = value.strftime('%Y-%m-%d %H:%M:%S.%f')
         return Expression.string_value(str_value)
 
     @classmethod
