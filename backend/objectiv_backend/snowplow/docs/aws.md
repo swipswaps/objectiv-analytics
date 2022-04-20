@@ -20,8 +20,7 @@ Optionally some AWS iAM credentials with permission to publish to the appropriat
 These will be used to configure the collector in the next step.
 
 #### Starting the collector
-The configuration for the collector is controlled through environment variables. They allow you to configure which outputs
-will be used. Settings specific to the AWS output are
+The output topics of the collector are controlled through environment variables:
 
 - `SP_AWS_MESSAGE_TOPIC_RAW` - this can be either the id of a Kinesis stream (eg. sp-raw-stream) _or_ a URL to an SQS queue
 - `SP_AWS_MESSAGE_TOPIC_BAD` - this should be the id of the Kinesis bad stream (eg. sp-bad-stream)
