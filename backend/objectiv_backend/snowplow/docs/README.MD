@@ -8,8 +8,9 @@ enrichment step.
 The Snowplow pipeline roughly consists of the following components:
 1. `Collector` - http(s) endpoint that receives events
 2. `Enrichment` - process that validates incoming events, potentially enriches them (adds metadata)
-3. `Loader` - final step, where the validated and enriched events are loaded into persistent storage
-4. `iglu` - central repository, used by other components to pull schema to do validation on events, contexts, etc.
+3. `Loader` - final step, where the validated and enriched events are loaded into persistent storage. Depending on your 
+4. choice of platform, this could be Big Query on GCP, Redshift on AWS, etc
+5. `iglu` - central repository, used by other components to pull schema to do validation on events, contexts, etc.
 The Snowplow pipeline uses message queues and Thrift messages to communicate between the components.
 
 Objectiv uses its own collector (which also handles validation), so bypasses the Snowplow collector, but pushes events 
@@ -25,7 +26,7 @@ than for instance Big Query).
 In this setup, we assume you already have a fully functional Snowplow pipeline running, including enrichment, loader 
 and iglu repository. Enabling Objectiv involves two steps:
 1. Add the Objectiv Taxonomy schema to the iglu repository.
-2. Enable the collector output
+2. Configgure the collector output to push events into the appropriate message queue.
 
 ### Add the Objectiv schema to the iglu repo
 This explains how to get the Objectiv schema into iglu. This is necessary, so the Snowplow pipeline (enrichment) can 
@@ -46,85 +47,10 @@ java -jar igluctl static push --public ./schemas https://iglu.example.com myuuid
 
 
 ### Enabling the collector output
-Before starting up the collector, some preparation is required.
+The collector can be configured to push events in to a message queue, using the Snowplow format, using environment 
+variables. Please refer to [AWS](aws.md) or [GCP](gcp.md) for the platform specific instructions.
 
-#### Preparation
-To be able to push events into the message queue the following needs to be set up:
-- A GCP service account (`json`) with permission to write to PubSub
-- The `id` of the GCP project that holds the PubSub topic
-- The `id` of the PubSub raw topic (message queue)
-- The `id` of the PubSub bad topic (message queue)
 
-These will be used to configure the collector in the next step.
-
-#### Starting the collector
-The configuration for the collector is controlled through environment variables. They allow you to configure which outputs
-will be used. Settings specific to the PubSub sin are:
-
-- `SP_GCP_PROJECT` This is the `id` of the project on GCP where the PubSub topic is located
-- `SP_GCP_PUBSUB_TOPIC_RAW` This is the `id` of the PubSub topic to publish events to
-- `SP_GCP_PUBSUB_TOPIC_BAD` This is the `id` of the PubSub topic to publish bad/invalid events to
-- `GOOGLE_APPLICATION_CREDENTIALS` This is the path to a `json` containing a service account on GCP that allows publishing
- to the PubSub topic.
-
-Additionally, the collector checks `SP_GCP_PROJECT`. If it is set, the snowplow sink is automatically enabled.
-
-#### Using docker-compose
-To run this setup in docker, make sure that the aforementioned environment variables are properly set and available in the
-container. Also take care that the path to the credentials is actually available in the container.
-
-When using `docker-compose`, the following yaml snippet would do the trick:
-```yaml
-  objectiv_collector:
-    container_name: objectiv_collector
-    depends_on:
-      - objectiv_postgres
-    image: ${OBJECTIV_CONTAINER_URL-objectiv}/backend:${OBJECTIV_CONTAINER_TAG-latest}
-    working_dir: /services
-    entrypoint: bash -c "objectiv-db-init; ./entry_point.sh"
-    ports:
-      - "127.0.0.1:5000:5000"
-    networks:
-      - obj
-    volumes:
-      - /home/user/secrets/snowplow-pubsub-serviceaccount-askjhda8734.json:/sa.json
-    environment:
-      SP_GCP_PROJECT: some-gcp-project
-      SP_GCP_PUBSUB_TOPIC_RAW: sp-raw
-      SP_GCP_PUBSUB_TOPIC_BAD: sp-bad
-      GOOGLE_APPLICATION_CREDENTIALS: /sa.json
-```
-
-The important parts here are:
-- using a volume to make the service account available inside the container
-- assigning the path of the volume-mapped file correctly to the environment variable
-- setting the 2 GCP/PubSub variables, to make sure the collector knows where to push the events to
-
-#### Running locally
-Running the collector locally, in a dev setup is pretty similar:
-
-```sh
-# setup environment
-virtualenv objectiv-venv
-source objectiv-venv/bin/activate
-pip install -r requirements.in
-
-# start flask app
-cd objectiv_backend
-export PYTHONPATH=.:$PYTHONPATH
-GOOGLE_APPLICATION_CREDENTIALS=path-to-json.json \
- SP_GCP_PROJECT=some-gcp-project \
- SP_GCP_PUBSUB_TOPIC_RAW=sp-raw \
- SP_GCP_PUBSUB_TOPIC_BAD=sp-bad \
- flask run
-```
-
-## Testing
-The collector will display a message if the Snowplow config is loaded:
-`Snowplow config enabled`.
-This indicates that the collector will try to push events. If this fails, logging should hint what's happening. If there 
-are no errors in the collector logs, the events should be successfully pushed into the raw topic, to be picked up by 
-Snowplow's enrichment.
 
 # Maintenance
 
