@@ -38,7 +38,7 @@ class ToPandasInfo(NamedTuple):
     INTERNAL: Used to encode how to go from raw database result to pandas object, see Series.to_pandas_info.
     """
     dtype: str
-    function: Callable[[Any], Any]
+    function: Optional[Callable[[Any], Any]]
 
 
 class Series(ABC):

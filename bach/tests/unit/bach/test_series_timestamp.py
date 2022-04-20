@@ -7,21 +7,13 @@ import numpy
 import pytest
 
 from bach import SeriesTimestamp
-from bach.expression import StringValueToken, Expression
+from bach.expression import Expression
 
 
 def test_supported_value_to_literal(dialect):
     def assert_call(value, expected_token_value: str):
-        """
-        Assert that supported_value_to_literal() for the given value return an expression with a single
-        string token, which has the expected value.
-        """
         result = SeriesTimestamp.supported_value_to_literal(dialect, value)
-        assert isinstance(result, Expression)
-        assert len(result.data) == 1
-        token = result.data[0]
-        assert isinstance(token, StringValueToken)
-        assert token.value == expected_token_value
+        assert result == Expression.string_value(expected_token_value)
 
     # ## datetime
     assert_call(datetime.datetime(1999, 1, 15, 13, 37, 1, 23), '1999-01-15 13:37:01.000023')
@@ -46,8 +38,8 @@ def test_supported_value_to_literal(dialect):
     assert_call(numpy.datetime64('1995-03-31 01:33:37.123456789012', 'us'),     '1995-03-31 01:33:37.123456')
     assert_call(numpy.datetime64('1995-03-31 01:33:37.123456789012', 'ns'),     '1995-03-31 01:33:37.123457')
     # Special case: Not-a-Time will be represented as NULL
-    result_nat = SeriesTimestamp.supported_value_to_literal(dialect, numpy.datetime64('NaT'))
-    assert result_nat == Expression.construct('NULL')
+    nat = numpy.datetime64('NaT')
+    assert SeriesTimestamp.supported_value_to_literal(dialect, nat) == Expression.construct('NULL')
 
     # ## strings
     assert_call('2022-01-01 12:34:56.7800',    '2022-01-01 12:34:56.780000')
@@ -57,16 +49,15 @@ def test_supported_value_to_literal(dialect):
     assert_call('2022-01-03',                  '2022-01-03 00:00:00.000000')
 
     # ## None
-    result_nat = SeriesTimestamp.supported_value_to_literal(dialect, None)
-    assert result_nat == Expression.construct('NULL')
+    assert SeriesTimestamp.supported_value_to_literal(dialect, None) == Expression.construct('NULL')
 
 
 def test_supported_value_to_literal_str_non_happy_path(dialect):
-    with pytest.raises(ValueError, match='Not a valid datetime string literal'):
+    with pytest.raises(ValueError, match='Not a valid timestamp string literal'):
         SeriesTimestamp.supported_value_to_literal(dialect, '2022-01-03 aa:bb')
 
-    with pytest.raises(ValueError, match='Not a valid datetime string literal'):
+    with pytest.raises(ValueError, match='Not a valid timestamp string literal'):
         SeriesTimestamp.supported_value_to_literal(dialect, '01/03/99 12:13:00')
 
-    with pytest.raises(ValueError, match='Not a valid datetime string literal'):
+    with pytest.raises(ValueError, match='Not a valid timestamp string literal'):
         SeriesTimestamp.supported_value_to_literal(dialect, '01/03/99 12:13:00')

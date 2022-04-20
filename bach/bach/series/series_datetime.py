@@ -186,29 +186,32 @@ class SeriesTimestamp(SeriesAbstractDateTime):
         if value is None:
             return Expression.raw('NULL')
         # if value is not a datetime or date, then convert it to datetime first
+        dt_value: Union[datetime.datetime, datetime.date, None] = None
         if isinstance(value, str):
             formats = ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d']
             for format in formats:
                 try:
-                    value = datetime.datetime.strptime(value, format)
+                    dt_value = datetime.datetime.strptime(value, format)
                     break
                 except ValueError:
                     continue
-            if not isinstance(value, datetime.datetime):
-                raise ValueError(f'Not a valid datetime string literal: {value}.'
+            if dt_value is None:
+                raise ValueError(f'Not a valid timestamp string literal: {value}.'
                                  f'Supported formats: {formats}')
-        if isinstance(value, numpy.datetime64):
+        elif isinstance(value, numpy.datetime64):
             if numpy.isnat(value):
                 return Expression.raw('NULL')
             # weird trick: count number of microseconds in datetime, but only works on timedelta, so convert
             # to a timedelta first, by subtracting 0 (epoch = 1970-01-01 00:00:00)
             microseconds = round((value - numpy.datetime64('1970', 'us')) / numpy.timedelta64(1, 'us'))
-            value = datetime.datetime.utcfromtimestamp(microseconds / 1_000_000)
+            dt_value = datetime.datetime.utcfromtimestamp(microseconds / 1_000_000)
+        elif isinstance(value, (datetime.datetime, datetime.date)):
+            dt_value = value
 
-        if not isinstance(value, (datetime.datetime, datetime.date)):
-            raise ValueError(f'Not a valid datetime literal: {value}')
+        if dt_value is None:
+            raise ValueError(f'Not a valid timestamp literal: {value}')
 
-        str_value = value.strftime('%Y-%m-%d %H:%M:%S.%f')
+        str_value = dt_value.strftime('%Y-%m-%d %H:%M:%S.%f')
         return Expression.string_value(str_value)
 
     @classmethod
@@ -333,15 +336,6 @@ class SeriesTime(SeriesAbstractDateTime):
     # python supports no arithmetic on Time
 
 
-def microseconds_to_timedelta(microseconds: Optional[int]) -> Optional[datetime.timedelta]:
-    """
-    INTERNAL: convert microseconds to timedelta
-    """
-    if microseconds is None:
-        return None
-    return datetime.timedelta(microseconds=microseconds)
-
-
 class SeriesTimedelta(SeriesAbstractDateTime):
     """
     A Series that represents the timedelta type and its specific operations.
@@ -349,67 +343,54 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     Depending on the database this Series is backed by different database types:
 
     * On Postgres this utilizes the native 'interval' database type.
-    * On BigQuery this utilizes the generic 'INT64' database type, to store the number of microseconds in
-        the interval
+    * On BigQuery this utilizes the native 'INTERVALE' database type. This type is currently (2022-04-20) in
+        'preview'. Which means it and/or the functions associated with it could still change.
     """
 
     dtype = 'timedelta'
     dtype_aliases = ('interval',)
     supported_db_dtype = {
-        DBDialect.POSTGRES: 'interval'
+        DBDialect.POSTGRES: 'interval',
+        DBDialect.BIGQUERY: 'INTERVAL'
     }
     supported_value_types = (datetime.timedelta, numpy.timedelta64)
 
     to_pandas_info = {
         DBDialect.POSTGRES: None,
-        DBDialect.BIGQUERY: ToPandasInfo('datetime64[ns, UTC]', bq_timestamp_to_timestamp)
+        DBDialect.BIGQUERY: ToPandasInfo('timedelta64[ns, UTC]', None)
     }
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        if is_bigquery(dialect):
-            return SeriesInt64.supported_literal_to_expression(dialect, literal)
-        if is_postgres(dialect):
-            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
-        raise DatabaseNotSupportedException(dialect)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
     def supported_value_to_literal(
             cls,
             dialect: Dialect,
-            value: Union[numpy.timedelta64, datetime.timedelta]
+            value: Union[numpy.timedelta64, datetime.timedelta, None]
     ) -> Expression:
-        # numpy.timedelta64, datetime.timedelta have very different interfaces. Convert to datetime.timedelta
-        td_value = cls._normalize_timedelta(value)
-
-        if is_bigquery(dialect):
-            # Construct an integer with the total number of microsecond in the timedelta
-            total_microseconds = round(td_value / datetime.timedelta(microseconds=1))
-            return SeriesInt64.supported_value_to_literal(dialect, total_microseconds)
-        if is_postgres(dialect):
-            # Construct a string that can be cast to interval [1]. days, seconds and microseconds together
-            # make up the full timedelta, see [2]
-            # [1] https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
-            # [2] https://docs.python.org/3/library/datetime.html#timedelta-objects
-            return Expression.string_value(
-                f'{td_value.days} days {td_value.seconds} seconds {td_value.microseconds} microseconds'
-            )
-        raise DatabaseNotSupportedException(dialect)
-
-    @classmethod
-    def _normalize_timedelta(cls, value: Union[numpy.timedelta64, datetime.timedelta]) -> datetime.timedelta:
-        """
-        Normalize value to timedelta.
-        """
-        # TODO: add tests
-        if isinstance(value, datetime.timedelta):
-            return value
+        if value is None:
+            return Expression.raw('NULL')
         if isinstance(value, numpy.timedelta64):
             if numpy.isnat(value):
-                raise ValueError('Not a Time (NaT) is not supported as a value, use None instead.')
+                return Expression.raw('NULL')
             microseconds = round(value / numpy.timedelta64(1, 'us'))
-            return datetime.timedelta(microseconds=microseconds)
-        raise ValueError(f'Cannot convert {value} to timedelta. Type {type(value)} not supported.')
+            value = datetime.timedelta(microseconds=microseconds)
+
+        if not isinstance(value, datetime.timedelta):
+            raise ValueError(f'Not a valid timedelta literal: {value}')
+
+        # Construct a string that can be cast to interval, see [1][2].
+        # Days, seconds and microseconds together make up the full timedelta, see [3]. So we can set years
+        # and months to 0
+        # [1] https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
+        # [2] https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types#interval_type
+        # [3] https://docs.python.org/3/library/datetime.html#timedelta-objects
+        time_sub_str = datetime.datetime.utcfromtimestamp(value.seconds).strftime('%H:%M:%S')
+        return Expression.string_value(
+            f'0-0 {value.days} {time_sub_str}.{value.microseconds:06}'
+        )
 
     @classmethod
     def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:

@@ -5,7 +5,7 @@ from copy import copy
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
-    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload,
+    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload, Mapping,
 )
 
 import numpy
@@ -773,13 +773,13 @@ class DataFrame:
         self,
         engine: Optional[Engine] = None,
         base_node: Optional[BachSqlModel] = None,
-        index: Optional[Dict[str, 'Series']] = None,
-        series: Optional[Dict[str, 'Series']] = None,
+        index: Optional[Mapping[str, 'Series']] = None,
+        series: Optional[Mapping[str, 'Series']] = None,
         group_by: Optional[Union['GroupBy', NotSet]] = not_set,
         order_by: Optional[List[SortColumn]] = None,
         variables: Optional[Dict[DtypeNamePair, Hashable]] = None,
-        index_dtypes: Optional[Dict[str, str]] = None,
-        series_dtypes: Optional[Dict[str, str]] = None,
+        index_dtypes: Optional[Mapping[str, str]] = None,
+        series_dtypes: Optional[Mapping[str, str]] = None,
         single_value: bool = False,
         savepoints: Optional['Savepoints'] = None,
         **kwargs
@@ -1849,11 +1849,11 @@ class DataFrame:
 
         sql = self.view_sql(limit=limit)
 
-        series_name_to_dtype = {
-            series.name: series.to_pandas_info.get(db_dialect).dtype
-            for series in self.all_series.values()
-            if series.to_pandas_info.get(db_dialect) is not None
-        }
+        series_name_to_dtype = {}
+        for series in self.all_series.values():
+            pandas_info = series.to_pandas_info.get(db_dialect)
+            if pandas_info is not None:
+                series_name_to_dtype[series.name] = pandas_info.dtype
 
         with self.engine.connect() as conn:
             # read_sql_query expects a parameterized query, so we need to escape the parameter characters
