@@ -11,11 +11,11 @@ a running and functional Snowplow pipeline setup on GCP.
 #### Preparation
 To be able to push events into the message queue the following needs to be set up:
 - The `id` of the raw Kinesis stream _or_ the URL to the SQS raw stream topic
-- The `id` og the bad Kinesis stream
+- The `id` of the bad Kinesis stream
 
 Optionally some AWS iAM credentials:
 - AWS credentials with permission to publish to the appropriate Kinesis/SQS topics
-  - `AWS_ACCESS_KEY`
+  - `AWS_ACCESS_KEY_ID`
   - `AWS_SECRET_ACCESS_KEY`
   - `AWS_REGION`
 These will be used to configure the collector in the next step.
@@ -32,7 +32,7 @@ The AWS integration uses the boto3 python library, this means authentication is 
 The simplest way to make it work, is by setting the following environment variables:
 - `AWS_ACCESS_KEY` - iAM key of the account used to access AWS services
 - `AWS_SECRET_ACCESS_KEY` - iAM secret key
-- `AWS_REGION` - Optionally specify the AWS region in which the Kinesis/SQS resources are deployed.
+- `AWS_DEFAULT_REGION` - Optionally specify the AWS region in which the Kinesis/SQS resources are deployed.
 
 Once the appropriate environment variables (TOPICS) have been set, the Objectiv Collector can be started, and the Snowplow AWS 
 output will be enabled.
@@ -55,9 +55,9 @@ When using `docker-compose`, the following yaml snippet would do the trick:
     networks:
       - obj
     environment:
-      AWS_ACCESS_KEY: AKIA-some-key
+      AWS_ACCESS_KEY_ID: AKIA-some-key
       AWS_SECRET_ACCESS_KEY: some-secret-key
-      AWS_REGION: some-awesregion
+      AWS_DEFAULT_REGION: some-aws-region
       SP_AWS_MESSAGE_TOPIC_RAW: sp-raw-topic
       SP_AWS_MESSAGE_TOPIC_BAD: sp-bad-topic
 ```
@@ -85,7 +85,7 @@ SP_AWS_MESSAGE_TOPIC_RAW="https://sqs.someregion.amazonaws.com/123455/sp-raw-que
 
 ## Testing
 The collector will display a message if the Snowplow config is loaded:
-`Enabled Snowplow: AWS pipeline ($SP_AWS_MESSAGE_TOPIC_`.
+`Enabled Snowplow: AWS pipeline ($SP_AWS_MESSAGE_TOPIC)`.
 This indicates that the collector will try to push events. If this fails, logging should hint what's happening. If there 
 are no errors in the collector logs, the events should be successfully pushed into the raw topic, to be picked up by 
 Snowplow's enrichment.
