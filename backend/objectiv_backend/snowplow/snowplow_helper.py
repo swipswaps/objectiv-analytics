@@ -335,7 +335,10 @@ def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
         stream_name = config.aws_message_topic_bad
 
     # this should be kinesis or sqs
-    client = boto3.client(client_type)
+    if client_type == 'kinesis':
+        client = boto3.client('kinesis')
+    else:
+        client = boto3.client('sqs')
 
     for event in events:
         data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
@@ -348,7 +351,7 @@ def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
                     PartitionKey='event_id')
             except client.exceptions.ProvisionedThroughputExceededException as e:
                 print(f'Could not deliver event to Kinesis: throughput exceeded in {stream_name}: {e}')
-            except botocore.exceptions.ClientException as e:
+            except botocore.exceptions.ClientError as e:
                 print(f'Exception sending event to Kinesis ({stream_name}: {e}')
 
         elif client_type == 'sqs':
@@ -367,7 +370,7 @@ def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
                                     })
             except client.exceptions.InvalidMessageContents as e:
                 print(f'Failed to deliver event to SQS: Invalid Message Contents ({stream_name}: {e}')
-            except botocore.exceptions.ClientException as e:
+            except botocore.exceptions.ClientError as e:
                 print(f'Failed to deliver event to SQS ({stream_name}: {e}')
 
         else:
