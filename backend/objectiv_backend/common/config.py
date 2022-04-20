@@ -4,7 +4,6 @@ Copyright 2021 Objectiv B.V.
 
 import os
 from typing import NamedTuple, Optional
-from enum import Enum
 
 # All settings that are controlled through environment variables are listed at the top here, for a
 # complete overview.
@@ -58,8 +57,6 @@ _SP_GCP_PROJECT = os.environ.get('SP_GCP_PROJECT', '')
 _SP_GCP_PUBSUB_TOPIC_RAW = os.environ.get('SP_GCP_PUBSUB_TOPIC_RAW', '')
 _SP_GCP_PUBSUB_TOPIC_BAD = os.environ.get('SP_GCP_PUBSUB_TOPIC_BAD', '')
 
-_SP_AWS_ACCESS_KEY_ID = os.environ.get('SP_AWS_ACCESS_KEY_ID', _AWS_ACCESS_KEY_ID)
-_SP_AWS_SECRET_ACCESS_KEY = os.environ.get('SP_AWS_SECRET_ACCESS_KEY', _AWS_SECRET_ACCESS_KEY)
 _SP_AWS_REGION = os.environ.get('SP_AWS_REGION', _AWS_REGION)
 _SP_AWS_MESSAGE_TOPIC_RAW = os.environ.get('SP_AWS_MESSAGE_TOPIC_RAW', '')
 _SP_AWS_MESSAGE_TOPIC_BAD = os.environ.get('SP_AWS_MESSAGE_TOPIC_BAD', '')
@@ -102,8 +99,6 @@ class SnowplowConfig(NamedTuple):
     gcp_pubsub_topic_bad: str
 
     aws_enabled: bool
-    aws_access_key_id: str
-    aws_secret_access_key: str
     aws_region: str
     aws_message_topic_raw: str
     aws_message_topic_bad: str
@@ -188,8 +183,6 @@ def get_config_output_snowplow() -> SnowplowConfig:
         gcp_pubsub_topic_bad=_SP_GCP_PUBSUB_TOPIC_BAD,
 
         aws_enabled=(_SP_AWS_MESSAGE_TOPIC_RAW != ''),
-        aws_access_key_id=_SP_AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=_SP_AWS_SECRET_ACCESS_KEY,
         aws_region=_SP_AWS_REGION,
         aws_message_topic_raw=_SP_AWS_MESSAGE_TOPIC_RAW,
         aws_message_topic_bad=_SP_AWS_MESSAGE_TOPIC_BAD,
