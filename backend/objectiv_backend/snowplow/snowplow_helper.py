@@ -19,6 +19,7 @@ from thrift.transport import TTransport
 snowplow_config = get_collector_config().output.snowplow
 if snowplow_config.gcp_enabled:
     from google.cloud import pubsub_v1
+    from google.api_core.exceptions import NotFound
 
 if snowplow_config.aws_enabled:
     import boto3
@@ -268,9 +269,9 @@ def prepare_data(event: EventData,
     return data
 
 
-def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
-                         channel: str = 'good',
-                         event_errors: List[EventError] = None) -> None:
+def write_data_to_gcp(events: EventDataList, config: SnowplowConfig,
+                      channel: str = 'good',
+                      event_errors: List[EventError] = None) -> None:
     """
     Write provided list of events to the Snowplow GCP pipeline, using GCP PubSub
     :param events: EventDataList - List of EventData
@@ -294,7 +295,10 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
     for event in events:
         data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
 
-        publisher.publish(topic_path, data)
+        try:
+            publisher.publish(topic_path, data=data)
+        except NotFound as e:
+            print(f'PubSub topic {topic} could not be found! {e}')
 
 
 def is_sqs_url(url: str) -> bool:
@@ -303,7 +307,7 @@ def is_sqs_url(url: str) -> bool:
     :param url:
     :return:
     """
-    return url.startswith('https://')
+    return url.startswith('https://sqs.')
 
 
 def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
@@ -334,7 +338,6 @@ def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
     client = boto3.client(client_type)
 
     for event in events:
-        print(f'Writing event {event["id"]} to {client_type} -> {stream_name}')
         data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
 
         if client_type == 'kinesis':
@@ -349,7 +352,6 @@ def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
                 print(f'Exception sending event to Kinesis ({stream_name}: {e}')
 
         elif client_type == 'sqs':
-
             # sqs doesn't support binary payloads, so in this case we base64 encode
             payload = str(base64.b64encode(data), 'UTF-8')
 

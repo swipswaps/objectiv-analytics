@@ -15,7 +15,7 @@ from typing import List
 from objectiv_backend.common.config import get_collector_config, SnowplowConfig
 from objectiv_backend.common.types import EventDataList
 from objectiv_backend.schema.validate_events import EventError
-from objectiv_backend.snowplow.snowplow_helper import write_data_to_aws, write_data_to_pubsub
+from objectiv_backend.snowplow.snowplow_helper import write_data_to_aws, write_data_to_gcp
 
 if get_collector_config().output.aws:
     import boto3
@@ -85,4 +85,4 @@ def write_data_to_snowplow_if_configured(events: EventDataList,
         write_data_to_aws(events=events, config=config, channel=channel, event_errors=event_errors)
 
     if config.gcp_enabled:
-        write_data_to_pubsub(events=events, config=config, channel=channel, event_errors=event_errors)
+        write_data_to_gcp(events=events, config=config, channel=channel, event_errors=event_errors)
