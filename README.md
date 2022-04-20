@@ -1,19 +1,16 @@
-<div align="center">
-  <img src="https://user-images.githubusercontent.com/82152911/159266790-19e0e3d4-0d10-4c58-9da7-16edde9ec05a.svg#gh-light-mode-only" alt="objectiv_logo_light" title="Objectiv Logo">
- <img src="https://user-images.githubusercontent.com/82152911/159266895-39f52604-83c1-438d-96bd-9a6d66e74b08.svg#gh-dark-mode-only" alt="objectiv_logo_dark" title="Objectiv Logo">
-</div>
+<img src="https://user-images.githubusercontent.com/82152911/159266790-19e0e3d4-0d10-4c58-9da7-16edde9ec05a.svg#gh-light-mode-only" alt="objectiv_logo_light" title="Objectiv Logo">
+<img src="https://user-images.githubusercontent.com/82152911/159266895-39f52604-83c1-438d-96bd-9a6d66e74b08.svg#gh-dark-mode-only" alt="objectiv_logo_dark" title="Objectiv Logo">
 
-### Objectiv
-[Objectiv](https://objectiv.io/) is open-source product analytics infrastructure, built around a generic taxonomy.
+[Objectiv](https://objectiv.io/) is open-source product analytics infrastructure, built around a [generic taxonomy](https://www.objectiv.io/docs/taxonomy).
 
-* Collect rich, validated user behavior data with a [generic event structure](https://www.objectiv.io/docs/taxonomy)
+* Collect rich, validated user behavior data with a generic event structure
 * Feed it directly into your data warehouse without cleaning & transformation
 * Take & run pre-built models off the shelf to speed up data projects
 * Reuse and share any model between teams, products and platforms
 * Use pandas-like operations that run on the full SQL dataset
 * Instantly convert models to SQL to feed all data consumers from a single source of truth
 
-Objectiv is self-hosted, 100% free to use and fully open source.
+Self-hosted, 100% free to use and fully open source.
 
 ### Demo
 
