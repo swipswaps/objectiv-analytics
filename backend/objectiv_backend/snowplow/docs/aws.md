@@ -10,21 +10,21 @@ a running and functional Snowplow pipeline setup on GCP.
 
 #### Preparation
 To be able to push events into the message queue the following needs to be set up:
+- The `id` of the raw Kinesis stream _or_ the URL to the SQS raw stream topic
+- The `id` og the bad Kinesis stream
+
+Optionally some AWS iAM credentials:
 - AWS credentials with permission to publish to the appropriate Kinesis/SQS topics
   - `AWS_ACCESS_KEY`
   - `AWS_SECRET_ACCESS_KEY`
   - `AWS_REGION`
-- The `id` of the raw Kinesis stream _or_ the URL to the SQS raw stream topic
-- The `id` og the bad Kinesis stream
-
-
 These will be used to configure the collector in the next step.
 
 #### Starting the collector
 The configuration for the collector is controlled through environment variables. They allow you to configure which outputs
 will be used. Settings specific to the AWS output are
 
-- `SP_AWS_MESSAGE_TOPIC_RAW` - this can be either the id of a Kinesis stream (eg. sp-raw-stream) _or_ an URL to an SQS queue
+- `SP_AWS_MESSAGE_TOPIC_RAW` - this can be either the id of a Kinesis stream (eg. sp-raw-stream) _or_ a URL to an SQS queue
 - `SP_AWS_MESSAGE_TOPIC_BAD` - this should be the id of the Kinesis bad stream (eg. sp-bad-stream)
 
 The AWS integration uses the boto3 python library, this means authentication is also provided through that library 
@@ -34,7 +34,7 @@ The simplest way to make it work, is by setting the following environment variab
 - `AWS_SECRET_ACCESS_KEY` - iAM secret key
 - `AWS_REGION` - Optionally specify the AWS region in which the Kinesis/SQS resources are deployed.
 
-Once the appropriate environment variables have been set, the Objectiv Collector can be started, and the Snowplow AWS 
+Once the appropriate environment variables (TOPICS) have been set, the Objectiv Collector can be started, and the Snowplow AWS 
 output will be enabled.
 
 #### Using docker-compose

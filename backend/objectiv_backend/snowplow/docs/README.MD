@@ -1,15 +1,15 @@
 # Snowplow pipeline support
 
 The Objectiv collector supports using the Snowplow pipeline as a sink for Objectiv events. Currently, there is support 
-for Google PubSub, using Thrift messages. This means we by-pass the Snowplow collector, but hook directly into the
-enrichment step.
+for Google PubSub and AWS SQS/Kinesis, using Thrift messages. This means we by-pass the Snowplow collector, but hook 
+directly into Snowplows enrichment step.
 
 ## Architecture
 The Snowplow pipeline roughly consists of the following components:
 1. `Collector` - http(s) endpoint that receives events
 2. `Enrichment` - process that validates incoming events, potentially enriches them (adds metadata)
 3. `Loader` - final step, where the validated and enriched events are loaded into persistent storage. Depending on your 
-4. choice of platform, this could be Big Query on GCP, Redshift on AWS, etc
+  choice of platform, this could be Big Query on GCP, Redshift on AWS, etc
 5. `iglu` - central repository, used by other components to pull schema to do validation on events, contexts, etc.
 The Snowplow pipeline uses message queues and Thrift messages to communicate between the components.
 
@@ -26,7 +26,7 @@ than for instance Big Query).
 In this setup, we assume you already have a fully functional Snowplow pipeline running, including enrichment, loader 
 and iglu repository. Enabling Objectiv involves two steps:
 1. Add the Objectiv Taxonomy schema to the iglu repository.
-2. Configgure the collector output to push events into the appropriate message queue.
+2. Configure the Objectiv Collector output to push events into the appropriate message queue.
 
 ### Add the Objectiv schema to the iglu repo
 This explains how to get the Objectiv schema into iglu. This is necessary, so the Snowplow pipeline (enrichment) can 
@@ -47,7 +47,7 @@ java -jar igluctl static push --public ./schemas https://iglu.example.com myuuid
 
 
 ### Enabling the collector output
-The collector can be configured to push events in to a message queue, using the Snowplow format, using environment 
+The collector can be configured to push events into a message queue, using the Snowplow format, using environment 
 variables. Please refer to [AWS](aws.md) or [GCP](gcp.md) for the platform specific instructions.
 
 
