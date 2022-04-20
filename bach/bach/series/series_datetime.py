@@ -21,40 +21,20 @@ _SECONDS_IN_DAY = 24 * 60 * 60
 
 
 class DatePartFormats(Enum):
-    DAYS = 'DD'
-    HOURS = 'HH24'
-    MINUTES = 'MI'
-    SECONDS = 'SS'
-    MILLISECONDS = 'MS'
-    MICROSECONDS = 'US'
+    # TODO: rewrite sensibly
+    DAY = 'DD'
+    HOUR = 'HH24'
+    MINUTE = 'MI'
+    SECOND = 'SS'
+    MILLISECOND = 'MS'
+    MICROSECOND = 'US'
 
 
-class DateTimeOperation:
+class TimedeltaOperation:
+
     def __init__(self, series: 'SeriesAbstractDateTime'):
         self._series = series
 
-    def sql_format(self, format_str: str) -> SeriesString:
-        """
-        Allow formatting of this Series (to a string type).
-
-        :param format_str: The format to apply to the date/time column.
-            Currently, this uses Postgres' data format string syntax:
-            https://www.postgresql.org/docs/14/functions-formatting.html
-
-        .. code-block:: python
-
-            df['year'] = df.some_date_series.dt.sql_format('YYYY')  # return year
-            df['date'] = df.some_date_series.dt.sql_format('YYYYMMDD')  # return date
-
-        :returns: a SeriesString containing the formatted date.
-        """
-        expression = Expression.construct('to_char({}, {})',
-                                          self._series, Expression.string_value(format_str))
-        str_series = self._series.copy_override_type(SeriesString).copy_override(expression=expression)
-        return str_series
-
-
-class TimedeltaOperation(DateTimeOperation):
     @property
     def components(self) -> DataFrame:
         """
@@ -65,10 +45,30 @@ class TimedeltaOperation(DateTimeOperation):
         """
         component_series = {}
         for date_part in DatePartFormats:
-            component_name = date_part.name.lower()
-            component_series[component_name] = (
-                self.sql_format(date_part.value).astype('int64').copy_override(name=component_name)
+            component_name = date_part.name.lower() + 's'
+            field_name = date_part.name
+            expression = Expression.construct(
+                f'extract({field_name} from justify_interval({{}}))', self._series
             )
+            # TODO: fix milliseconds and microseconds, they include whole seconds
+            # see https://www.postgresql.org/docs/current/functions-datetime.html#FUNCTIONS-DATETIME-EXTRACT
+            if is_postgres(self._series.engine):
+                if field_name in ('MILLISECOND', 'MICROSECOND'):
+                    # on Postgres, when extracting ms or us it include the whole seconds. We only want the
+                    # fractional part of seconds, so need to subtract the whole seconds
+                    seconds_expr = Expression.construct(
+                        'extract(SECOND from justify_interval({}))', self._series
+                    )
+                    multiplier = {'MILLISECOND': 1000, 'MICROSECOND': 1_000_000}[field_name]
+                    expression = Expression.construct(
+                        f'{{}} - ({{}} * {multiplier})', expression, seconds_expr
+                    )
+                expression = Expression.construct('cast({} as bigint)', expression)
+
+            component_series[component_name] = self._series\
+                .copy_override(expression=expression)\
+                .copy_override(name=component_name)\
+                .copy_override_type(SeriesInt64)
         return self._series.to_frame().copy_override(series=component_series)
 
     @property
@@ -124,16 +124,6 @@ class SeriesAbstractDateTime(Series, ABC):
 
     On any of the subtypes, you can access date operations through the `dt` accessor.
     """
-    @property
-    def dt(self) -> DateTimeOperation:
-        """
-        Get access to date operations.
-
-        .. autoclass:: bach.series.series_datetime.DateTimeOperation
-            :members:
-
-        """
-        return DateTimeOperation(self)
 
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
@@ -172,7 +162,7 @@ class SeriesTimestamp(SeriesAbstractDateTime):
     dtype_aliases = ('datetime64', 'datetime64[ns]', numpy.datetime64)
     supported_db_dtype = {
         DBDialect.POSTGRES: 'timestamp without time zone',
-        DBDialect.BIGQUERY: 'TIMESTAMP',  # TODO: use TIMESTAMP instead?
+        DBDialect.BIGQUERY: 'TIMESTAMP',
     }
     supported_value_types = (datetime.datetime, datetime.date, str)
 
@@ -430,11 +420,11 @@ class SeriesTimedelta(SeriesAbstractDateTime):
         return self._arithmetic_operation(other, 'div', '({}) / ({})', other_dtypes=('int64', 'float64'))
 
     @property
-    def dt(self) -> DateTimeOperation:
+    def dt(self) -> TimedeltaOperation:
         """
         Get access to date operations.
 
-        .. autoclass:: bach.series.series_datetime.DateTimeOperation
+        .. autoclass:: bach.series.series_datetime.TimedeltaOperation
             :members:
 
         """

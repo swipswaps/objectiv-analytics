@@ -115,7 +115,7 @@ def test_timedelta_operations(pg_engine):
     np.testing.assert_equal(expected.to_numpy(), result.sort_index().to_numpy())
 
 
-def test_timedelta_dt_properties(pg_engine) -> None:
+def test_timedelta_dt_properties(engine) -> None:
     pdf = pd.DataFrame(
         data={
             'start_date': [
@@ -130,7 +130,7 @@ def test_timedelta_dt_properties(pg_engine) -> None:
             ]
         }
     )
-    df = DataFrame.from_pandas(engine=pg_engine, df=pdf, convert_objects=True)
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     pdf['diff'] = pdf['end_date'] - pdf['start_date']
     df['diff'] = df['end_date'] - df['start_date']
@@ -163,28 +163,46 @@ def test_timedelta_dt_properties(pg_engine) -> None:
     )
 
 
-def test_timedelta_dt_components(pg_engine) -> None:
+def test_timedelta_dt_components(engine) -> None:
     pdf = pd.DataFrame(
         data={
             'start_date': [
                 np.datetime64("2022-01-01 12:34:56.7800"),
                 np.datetime64("2022-01-05 01:23:45.6700"),
+                np.datetime64("2022-01-05 01:23:45.1234567"),
+                np.datetime64("2022-01-05 01:23:45.6700"),
+                np.datetime64("2022-01-03"),
             ],
             'end_date': [
                 np.datetime64("2022-01-03"),
                 np.datetime64("2022-01-06"),
+                np.datetime64("2022-01-05 01:23:45.7700"),
+                np.datetime64("1999-12-31 01:23:45.6700"),
+                np.datetime64("2022-01-01 12:34:56.7800"),
             ]
         }
     )
-    df = DataFrame.from_pandas(engine=pg_engine, df=pdf, convert_objects=True)
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     pdf['diff'] = pdf['end_date'] - pdf['start_date']
     df['diff'] = df['end_date'] - df['start_date']
 
-    components = ['days', 'hours', 'minutes', 'seconds', 'milliseconds']
+    components = ['days', 'hours', 'minutes', 'seconds', 'milliseconds', 'microseconds']
     result = df['diff'].dt.components.sort_index().to_pandas()[components]
     expected = pdf['diff'].dt.components[components]
 
+    df_x = df['diff'].dt.components.sort_index()
+    print(f'\n\n{df_x.view_sql()}\n\n')
+    assert_equals_data(
+        df_x,
+        expected_columns=['_index_0'] + components,
+        expected_data=[
+            [0, 1, 11, 25, 3, 220, 220000],
+            [1, 0, 22, 36, 14, 330, 330000],
+            [2, 0, 0, 0, 0, 646, 646543],
+            [3, -8041, 0, 0, 0, 0, 0],
+            [4, -1, -11, -25, -3, -220, -220000]
+        ]
+    )
+    print(pdf['diff'].dt.components)
     pd.testing.assert_frame_equal(expected, result, check_names=False)
-
-
