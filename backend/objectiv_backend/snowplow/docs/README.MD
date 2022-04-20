@@ -10,7 +10,7 @@ The Snowplow pipeline roughly consists of the following components:
 2. `Enrichment` - process that validates incoming events, potentially enriches them (adds metadata)
 3. `Loader` - final step, where the validated and enriched events are loaded into persistent storage. Depending on your 
   choice of platform, this could be Big Query on GCP, Redshift on AWS, etc
-5. `iglu` - central repository, used by other components to pull schema to do validation on events, contexts, etc.
+4. `iglu` - central repository, used by other components to pull schema to do validation on events, contexts, etc.
 The Snowplow pipeline uses message queues and Thrift messages to communicate between the components.
 
 Objectiv uses its own collector (which also handles validation), so bypasses the Snowplow collector, but pushes events 
