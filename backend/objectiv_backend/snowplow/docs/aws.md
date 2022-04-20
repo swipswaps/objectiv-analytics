@@ -60,9 +60,9 @@ When using `docker-compose`, the following yaml snippet would do the trick:
       SP_AWS_MESSAGE_TOPIC_BAD: sp-bad-topic
 ```
 
-The important parts here are:
-- providing the AWS credentials (using the env is only one way of doing so)
-- providing the Kinesis stream id's
+The important part here is setting the correct env:
+- providing the AWS credentials
+- providing the Kinesis stream ids
 
 #### Running locally
 Running the collector locally, in a dev setup is pretty similar:
