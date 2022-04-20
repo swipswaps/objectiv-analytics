@@ -13,8 +13,7 @@ To be able to push events into the message queue the following needs to be set u
 - The `id` of the raw Kinesis stream _or_ the URL to the SQS raw stream topic
 - The `id` of the bad Kinesis stream
 
-Optionally some AWS iAM credentials:
-- AWS credentials with permission to publish to the appropriate Kinesis/SQS topics
+Optionally some AWS iAM credentials with permission to publish to the appropriate Kinesis/SQS topics:
   - `AWS_ACCESS_KEY_ID`
   - `AWS_SECRET_ACCESS_KEY`
   - `AWS_REGION`
