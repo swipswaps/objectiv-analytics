@@ -27,7 +27,7 @@ will be used. Settings specific to the PubSub sin are:
 - `GOOGLE_APPLICATION_CREDENTIALS` This is the path to a `json` containing a service account on GCP that allows publishing
  to the PubSub topic.
 
-Additionally, the collector checks `SP_GCP_PROJECT`. If it is set, the snowplow sink is automatically enabled.
+If these are set, the snowplow sink is automatically enabled.
 
 #### Using docker-compose
 To run this setup in docker, make sure that the aforementioned environment variables are properly set and available in the

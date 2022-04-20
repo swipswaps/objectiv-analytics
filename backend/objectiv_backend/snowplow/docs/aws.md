@@ -32,8 +32,7 @@ The simplest way to make it work, is by setting the following environment variab
 - `AWS_SECRET_ACCESS_KEY` - iAM secret key
 - `AWS_DEFAULT_REGION` - Optionally specify the AWS region in which the Kinesis/SQS resources are deployed.
 
-Once the appropriate environment variables (TOPICS) have been set, the Objectiv Collector can be started, and the Snowplow AWS 
-output will be enabled.
+Once these environment variables have been set, the Objectiv Collector can be started, and the Snowplow AWS output will be enabled.
 
 #### Using docker-compose
 To run this setup in docker, make sure that the aforementioned environment variables are properly set and available in the
