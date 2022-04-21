@@ -50,7 +50,7 @@ java -jar igluctl static push --public ./schemas https://iglu.example.com myuuid
 
 ### Enabling the collector output
 The collector can be configured to push events into a Snowplow message queue, using environment 
-variables. Please refer to [AWS](aws.md) or [GCP](gcp.md) for the platform specific instructions.
+variables. Please refer to [aws.md](aws.md) or [gcp.md](gcp.md) for the platform specific instructions.
 
 
 
