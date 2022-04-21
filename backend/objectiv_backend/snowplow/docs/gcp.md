@@ -37,8 +37,6 @@ When using `docker-compose`, the following yaml snippet would do the trick:
 ```yaml
   objectiv_collector:
     container_name: objectiv_collector
-    depends_on:
-      - objectiv_postgres
     image: ${OBJECTIV_CONTAINER_URL-objectiv}/backend:${OBJECTIV_CONTAINER_TAG-latest}
     working_dir: /services
     entrypoint: bash -c "objectiv-db-init; ./entry_point.sh"
@@ -53,6 +51,7 @@ When using `docker-compose`, the following yaml snippet would do the trick:
       SP_GCP_PUBSUB_TOPIC_RAW: sp-raw
       SP_GCP_PUBSUB_TOPIC_BAD: sp-bad
       GOOGLE_APPLICATION_CREDENTIALS: /sa.json
+      OUTPUT_ENABLE_PG: false
 ```
 
 The important parts here are:
