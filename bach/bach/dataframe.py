@@ -1860,9 +1860,8 @@ class DataFrame:
             sql = escape_parameter_characters(conn, sql)
             pandas_df = pandas.read_sql_query(sql, conn, dtype=series_name_to_dtype)
 
-        # post process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
+        # Post-process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
         # the strings that the query gives us into UUID objects
-
         for name, series in self.data.items():
             to_pandas_info = series.to_pandas_info.get(db_dialect)
             if to_pandas_info is not None and to_pandas_info.function is not None:

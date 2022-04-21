@@ -205,9 +205,10 @@ class SeriesTimestamp(SeriesAbstractDateTime):
         elif isinstance(value, numpy.datetime64):
             if numpy.isnat(value):
                 return Expression.raw('NULL')
-            # weird trick: count number of microseconds in datetime, but only works on timedelta, so convert
+            # Weird trick: count number of microseconds in datetime, but only works on timedelta, so convert
             # to a timedelta first, by subtracting 0 (epoch = 1970-01-01 00:00:00)
-            microseconds = round((value - numpy.datetime64('1970', 'us')) / numpy.timedelta64(1, 'us'))
+            # Rounding can be unpredictable because of limited precision, so always truncate excess precision
+            microseconds = int((value - numpy.datetime64('1970', 'us')) // numpy.timedelta64(1, 'us'))
             dt_value = datetime.datetime.utcfromtimestamp(microseconds / 1_000_000)
         elif isinstance(value, (datetime.datetime, datetime.date)):
             dt_value = value

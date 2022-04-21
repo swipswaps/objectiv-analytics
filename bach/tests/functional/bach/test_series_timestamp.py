@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 import datetime
 from typing import List, Any
 
+import numpy
 import pytest
 from sqlalchemy.engine import Engine
 
@@ -13,17 +14,26 @@ from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df
 
 def test_timestamp_data(engine):
     mt = get_df_with_food_data(engine)[['moment']]
-    from datetime import datetime
+    mt['const1'] = datetime.datetime(1999, 12, 31, 23, 59, 59, 999999)
+    mt['const2'] = numpy.datetime64('2022-02-03 12:34:56.789', 'ns')
+    mt['const3'] = numpy.datetime64('2022-02-03 12:34:56.789123', 'ns')
+    mt['const4'] = numpy.datetime64('2022-02-03 12:34:56.789123456', 'ns')
+    expected_constants = [
+        datetime.datetime(1999, 12, 31, 23, 59, 59, 999999),
+        datetime.datetime(2022,  2,  3, 12, 34, 56, 789000),
+        datetime.datetime(2022,  2,  3, 12, 34, 56, 789123),
+        datetime.datetime(2022,  2,  3, 12, 34, 56, 789123),
+    ]
     assert_equals_data(
         mt,
         # raw sqlAlchemy will give datetime with timezone UTC on some Databases, because of the used db types
         # so set use_to_pandas=True to do our data normalization in the DataFrame.to_pandas() function
         use_to_pandas=True,
-        expected_columns=['_index_skating_order', 'moment'],
+        expected_columns=['_index_skating_order', 'moment', 'const1', 'const2', 'const3', 'const4'],
         expected_data=[
-            [1, datetime(2021, 5, 3, 11, 28, 36, 388000)],
-            [2, datetime(2021, 5, 4, 23, 28, 36, 388000)],
-            [4, datetime(2022, 5, 3, 14, 13, 13, 388000)]
+            [1, datetime.datetime(2021, 5, 3, 11, 28, 36, 388000)] + expected_constants,
+            [2, datetime.datetime(2021, 5, 4, 23, 28, 36, 388000)] + expected_constants,
+            [4, datetime.datetime(2022, 5, 3, 14, 13, 13, 388000)] + expected_constants
         ]
     )
 
@@ -31,11 +41,8 @@ def test_timestamp_data(engine):
 def test_to_pandas(engine):
     bt = get_df_with_test_data(engine)
     bt['dt'] = datetime.datetime(2021, 5, 3, 11, 28, 36, 388000)
-    bt[['dt']].to_pandas()
-    from numpy import array
-    # TODO, this is not great, but at least it does not error when imported into pandas,
-    # and it looks good over there
-    assert bt[['dt']].to_numpy()[0] == [array(['2021-05-03T11:28:36.388000000'], dtype='datetime64[ns]')]
+    result_pdf = bt.to_pandas()
+    assert result_pdf['dt'].to_numpy()[0] == [numpy.array(['2021-05-03T11:28:36.388000000'], dtype='datetime64[ns]')]
 
 
 @pytest.mark.parametrize("asstring", [True, False])

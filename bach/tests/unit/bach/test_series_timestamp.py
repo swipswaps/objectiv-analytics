@@ -32,11 +32,18 @@ def test_supported_value_to_literal(dialect):
     assert_call(numpy.datetime64('2022-01-03'),                                 '2022-01-03 00:00:00.000000')
     assert_call(numpy.datetime64('1995-03-31 01:33:37.123456'),                 '1995-03-31 01:33:37.123456')
     # datetime64 objects with differing precision. We only support up to milliseconds
-    assert_call(numpy.datetime64('1995-03-31 01:33:37.1234567'),                '1995-03-31 01:33:37.123457')
+    assert_call(numpy.datetime64('1995-03-31 01:33:37.1234567'),                '1995-03-31 01:33:37.123456')
     assert_call(numpy.datetime64('1995-03-31 01:33:37.123456789012', 's'),      '1995-03-31 01:33:37.000000')
     assert_call(numpy.datetime64('1995-03-31 01:33:37.123456789012', 'ms'),     '1995-03-31 01:33:37.123000')
     assert_call(numpy.datetime64('1995-03-31 01:33:37.123456789012', 'us'),     '1995-03-31 01:33:37.123456')
-    assert_call(numpy.datetime64('1995-03-31 01:33:37.123456789012', 'ns'),     '1995-03-31 01:33:37.123457')
+    assert_call(numpy.datetime64('1995-03-31 01:33:37.123456789012', 'ns'),     '1995-03-31 01:33:37.123456')
+    # rounding can be a bit unexpected because of limited precision, therefore we always truncate excess precision
+    assert_call(numpy.datetime64('1995-03-31 01:33:37.123456001', 'ns'),        '1995-03-31 01:33:37.123456')
+    assert_call(numpy.datetime64('1995-03-31 01:33:37.123456499', 'ns'),        '1995-03-31 01:33:37.123456')
+    assert_call(numpy.datetime64('1995-03-31 01:33:37.123456500', 'ns'),        '1995-03-31 01:33:37.123456')
+    assert_call(numpy.datetime64('1995-03-31 01:33:37.123456569', 'ns'),        '1995-03-31 01:33:37.123456')
+    assert_call(numpy.datetime64('1995-03-31 01:33:37.123456999', 'ns'),        '1995-03-31 01:33:37.123456')
+
     # Special case: Not-a-Time will be represented as NULL
     nat = numpy.datetime64('NaT')
     assert SeriesTimestamp.supported_value_to_literal(dialect, nat) == Expression.construct('NULL')
