@@ -198,10 +198,12 @@ def get_config_output_snowplow() -> SnowplowConfig:
         schema_schema_violations=_SP_SCHEMA_SCHEMA_VIOLATIONS
     )
     if config.gcp_enabled:
-        print('Enabled snowplow: GCP pipeline')
+        print(f'Enabled snowplow: GCP pipeline (raw:{config.gcp_pubsub_topic_raw} '
+              f'/ bad:{config.gcp_pubsub_topic_bad})')
 
     if config.aws_enabled:
-        print(f'Enabled Snowplow: AWS pipeline ({config.aws_message_topic_raw})')
+        print(f'Enabled Snowplow: AWS pipeline (raw({config.aws_message_raw_type}):{config.aws_message_topic_raw} '
+              f'/ bad:{config.aws_message_topic_bad})')
 
     return config
 
