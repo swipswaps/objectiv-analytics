@@ -7,6 +7,8 @@ import bach
 from bach.series import Series
 from sql_models.constants import NotSet, not_set
 from typing import List, Union, TYPE_CHECKING
+import numpy as np
+from sklearn.linear_model import LogisticRegression
 
 
 if TYPE_CHECKING:
@@ -14,6 +16,84 @@ if TYPE_CHECKING:
 
 
 GroupByType = Union[List[Union[str, Series]], str, Series, NotSet]
+
+
+class LogisticRegression(LogisticRegression):
+
+    def decision_function(self, X, return_bach=False):
+        X_p = X.to_pandas()
+        values = super().decision_function(X_p)
+
+        if return_bach:
+            return self._return_series(X, values, name='confidence_score')
+
+        return values
+
+    def fit(self, X, y, *args, **kwargs):
+        X_p = X.to_pandas()
+        y_p = y.to_pandas()
+
+        return super().fit(X_p, y_p, *args, **kwargs)
+
+    def score(self, X, y):
+        X_p = X.to_pandas()
+        y_p = y.to_pandas()
+
+        return super().score(X, y_p)
+
+    def _return_series(self, X, values, name, classes=False):
+        X_p = X.to_pandas()
+        X_copy = X.copy()
+        if classes:
+            import pandas as pd
+            pdf = pd.DataFrame(values, columns=[name + str(x) for x in self.classes_])
+            for name in pdf.columns:
+                X_p[name] = pdf[name].to_numpy()
+                X_copy[name] = X_p[name]  # todo fix if name already exists (maybe only use index from X)
+            return X_copy[list(pdf.columns)]
+
+        else:
+            X_p['values'] = values
+            X_copy['__values'] = X_p['values']
+            values = X_copy['__values']
+
+            return values.copy_override(name=name)
+
+    def predict(self, X):
+        values = super().predict(X)
+        return self._return_series(X, values, name='labels')
+
+    def predict_log_proba(self, X):
+        values = self.predict_proba(X, return_bach=False)
+        values = np.log(values)
+        return self._return_series(X, values, name='log_probability', classes=True)
+
+    def predict_proba(self, X, return_bach=True):
+        values = super().predict_proba(X)
+
+        if return_bach:
+            return self._return_series(X, values, name='probability', classes=True)
+        return values
+
+    def score(self, X, y, sample_weight=None):
+        from sklearn.metrics import accuracy_score
+
+        y_hat = self.predict(X).to_pandas()
+        y_p = y.to_pandas()
+
+        return accuracy_score(y_p, y_hat, sample_weight=sample_weight)
+
+
+class FeatureImportance:
+    def __init__(self, **kwargs):
+        self._model = LogisticRegression(**kwargs)
+
+    @property
+    def underlyingmodel(self):
+        return self._model
+
+    def get_results(self):
+        return self._model.coef_
 
 
 class Aggregate:
@@ -159,3 +239,41 @@ class Aggregate:
         frequency = total_sessions_user.groupby(['session_id_nunique']).aggregate({'user_id': 'nunique'})
 
         return frequency.user_id_nunique
+
+    def create_feature_usage_data_set(self,
+                                      data: bach.DataFrame,
+                                      name: str,
+                                      feature_column: str,
+                                      partition: str ='user_id'):
+
+        features = data.groupby(partition)[feature_column].value_counts()
+        features_unstacked = features.unstack(fill_value=0)
+
+        # y
+        df_copy = data.copy()
+        df_copy['is_converted'] = self._mh.map.conversions_counter(data=df_copy, name=name,
+                                                                  partition=partition) > 0
+
+        user_conversion = df_copy[['is_converted', partition]].drop_duplicates()
+
+        # combine
+        features_set = features_unstacked.merge(user_conversion, left_index=True, right_on='user_id')
+        # pdf = features_set.to_pandas()
+
+        y = features_set.is_converted
+        X = features_set.drop(columns=['is_converted'])
+
+        return X, y
+
+    def LogisticRegression(self, *args, **kwargs):
+        return LogisticRegression(*args, **kwargs)
+
+    def feature_importance(self, data, name, feature_column, **kwargs):
+        X, y = self._mh.agg.create_feature_usage_data_set(
+            data=data,
+            name=name,
+            feature_column=feature_column)
+        model = FeatureImportance(**kwargs)
+        model.underlyingmodel.fit(X, y)
+
+        return X, y, model
