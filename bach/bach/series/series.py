@@ -109,13 +109,16 @@ class Series(ABC):
 
     to_pandas_info: Mapping[DBDialect, Optional[ToPandasInfo]] = {}
     """
-    TODO: docs, should this be a property or a function? Should we use a NamedTuple
-    INTERNAL: Optional function to process data of this type that the database returns.
-    If defined for a given DBDialect, we use the function in :meth:`DataFrame.to_pandas()` by applying it to
-    columns of the resulting pandas DataFrame, before returning that DataFrame.
+    INTERNAL: Optional information on how to map query-results to pandas types.
 
-    Example usage: UUIDs in BigQuery are represented as strings, we use a query-result-processor to convert
-    these strings to UUID objects in to_pandas().
+    ToPandasInfo defines both the pandas-dtype of the data, and an optional function to apply to query
+    results.
+
+    If defined for a given DBDialect, we use this information in :meth:`DataFrame.to_pandas()`, be setting
+    the dtype and applying the function to columns of the resulting pandas DataFrame.
+
+    Example usage: UUIDs in BigQuery are represented as strings, we convert these strings to UUID objects in
+    to_pandas().
     """
 
     def __init__(self,

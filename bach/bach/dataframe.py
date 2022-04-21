@@ -1865,7 +1865,7 @@ class DataFrame:
 
         for name, series in self.data.items():
             to_pandas_info = series.to_pandas_info.get(db_dialect)
-            if to_pandas_info is not None:
+            if to_pandas_info is not None and to_pandas_info.function is not None:
                 pandas_df[name] = pandas_df[name].apply(to_pandas_info.function)
 
         if self.index:

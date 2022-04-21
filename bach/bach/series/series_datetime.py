@@ -145,7 +145,7 @@ class SeriesAbstractDateTime(Series, ABC):
             return series
 
 
-def bq_timestamp_to_timestamp(value: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
+def dt_strip_timezone(value: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
     if value is None:
         return None
     return value.replace(tzinfo=None)
@@ -173,8 +173,8 @@ class SeriesTimestamp(SeriesAbstractDateTime):
     supported_value_types = (datetime.datetime, numpy.datetime64, datetime.date, str)
 
     to_pandas_info = {
-        DBDialect.POSTGRES: ToPandasInfo('datetime64[ns]', lambda x: x),
-        DBDialect.BIGQUERY: ToPandasInfo('datetime64[ns, UTC]', bq_timestamp_to_timestamp)
+        DBDialect.POSTGRES: ToPandasInfo('datetime64[ns]', None),
+        DBDialect.BIGQUERY: ToPandasInfo('datetime64[ns, UTC]', dt_strip_timezone)
     }
 
     @classmethod
@@ -347,7 +347,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     Depending on the database this Series is backed by different database types:
 
     * On Postgres this utilizes the native 'interval' database type.
-    * On BigQuery this utilizes the native 'INTERVALE' database type. This type is currently (2022-04-20) in
+    * On BigQuery this utilizes the native 'INTERVAL' database type. This type is currently (2022-04-20) in
         'preview'. Which means it and/or the functions associated with it could still change.
     """
 
