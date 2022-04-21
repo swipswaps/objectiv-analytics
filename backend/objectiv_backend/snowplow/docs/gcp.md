@@ -6,7 +6,9 @@ The Objectiv Collector can be configured to work with Snowplow on GCP. The Snowp
 - Bad events (invalid) are published on the `bad` topic on PubSub.
 
 Before starting up the Objectiv Collector, some preparation is required. The following sections assume there's already
-a running and functional Snowplow pipeline setup on GCP.
+a running and functional Snowplow pipeline setup on GCP. If you don't, Snowplow has a 
+[quick start installation guide](https://docs.snowplowanalytics.com/docs/open-source-quick-start/quick-start-installation-guide-on-gcp/)
+to get you up and running.
 
 #### Preparation
 To be able to push events into the message queue the following needs to be set up:
