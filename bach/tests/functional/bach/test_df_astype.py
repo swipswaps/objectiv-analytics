@@ -135,6 +135,7 @@ def test_astype_to_timestamp(engine):
     bt = bt.astype('timestamp')
     assert_equals_data(
         bt,
+        use_to_pandas=True,
         expected_columns=['_index_skating_order', 'd', 's'],
         expected_data=[
             [1, datetime(2022, 3, 31, 0, 0), datetime(2022, 2, 15, 13, 37)],
