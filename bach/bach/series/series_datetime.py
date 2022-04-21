@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import datetime
 from abc import ABC
 from enum import Enum
-from typing import Union, cast, List, Tuple
+from typing import Union, cast, List, Tuple, Optional
 
 import numpy
 from sqlalchemy.engine import Dialect
@@ -12,7 +12,7 @@ from sqlalchemy.engine import Dialect
 from bach import DataFrame
 from bach.series import Series, SeriesString, SeriesBoolean, SeriesFloat64, SeriesInt64
 from bach.expression import Expression
-from bach.series.series import WrappedPartition
+from bach.series.series import WrappedPartition, ToPandasInfo
 from bach.types import DtypeOrAlias
 from sql_models.constants import DBDialect
 from sql_models.util import DatabaseNotSupportedException, is_postgres
@@ -142,39 +142,91 @@ class SeriesAbstractDateTime(Series, ABC):
     @classmethod
     def _cast_to_date_if_dtype_date(cls, series: 'Series') -> 'Series':
         # PG returns timestamp in all cases were we expect date
-        # Make sure we cast properly, and round similar to python datetime
+        # Make sure we cast properly, and round similar to python datetime: add 12 hours and cast to date
         if series.dtype == 'date':
+            td_12_hours = datetime.timedelta(seconds=3600 * 12)
+            series_12_hours = SeriesTimedelta.from_const(base=series, value=td_12_hours, name='tmp')
+            expr_12_hours = series_12_hours.expression
+
             return series.copy_override(
-                expression=Expression.construct("cast({} + '12h'::interval as date)", series)
+                expression=Expression.construct("cast({} + {} as date)", series, expr_12_hours)
             )
         else:
             return series
 
 
+def dt_strip_timezone(value: Optional[datetime.datetime]) -> Optional[datetime.datetime]:
+    if value is None:
+        return None
+    return value.replace(tzinfo=None)
+
+
 class SeriesTimestamp(SeriesAbstractDateTime):
     """
-    A Series that represents the timestamp/datetime type and its specific operations
+    A Series that represents the timestamp/datetime type and its specific operations.
 
+    Timestamps are assumed to be in UTC, or without a timezone, both cases are treated the same.
+    These timestamps have a microsecond precision at best, in contrast to numpy's datetime64 which supports
+    up to attoseconds precision.
 
-    Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
-        timestamp without time zone
+    Depending on the database this Series is backed by different database types:
+
+    * On Postgres this utilizes the native 'timestamp without time zone' database type.
+    * On BigQuery this utilizes the generic 'TIMESTAMP' database type.
     """
     dtype = 'timestamp'
     dtype_aliases = ('datetime64', 'datetime64[ns]', numpy.datetime64)
     supported_db_dtype = {
         DBDialect.POSTGRES: 'timestamp without time zone',
-        DBDialect.BIGQUERY: 'DATETIME',  # TODO: use TIMESTAMP instead?
+        DBDialect.BIGQUERY: 'TIMESTAMP',
     }
-    supported_value_types = (datetime.datetime, datetime.date, str)
+    supported_value_types = (datetime.datetime, numpy.datetime64, datetime.date, str)
+
+    to_pandas_info = {
+        DBDialect.POSTGRES: ToPandasInfo('datetime64[ns]', None),
+        DBDialect.BIGQUERY: ToPandasInfo('datetime64[ns, UTC]', dt_strip_timezone)
+    }
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.datetime]) -> Expression:
-        # TODO: check here already that the string has the correct format
-        str_value = str(value)
+    def supported_value_to_literal(
+            cls,
+            dialect: Dialect,
+            value: Union[datetime.datetime, numpy.datetime64, datetime.date, str, None]
+    ) -> Expression:
+        if value is None:
+            return Expression.raw('NULL')
+        # if value is not a datetime or date, then convert it to datetime first
+        dt_value: Union[datetime.datetime, datetime.date, None] = None
+        if isinstance(value, str):
+            formats = ['%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d %H:%M', '%Y-%m-%d']
+            for format in formats:
+                try:
+                    dt_value = datetime.datetime.strptime(value, format)
+                    break
+                except ValueError:
+                    continue
+            if dt_value is None:
+                raise ValueError(f'Not a valid timestamp string literal: {value}.'
+                                 f'Supported formats: {formats}')
+        elif isinstance(value, numpy.datetime64):
+            if numpy.isnat(value):
+                return Expression.raw('NULL')
+            # Weird trick: count number of microseconds in datetime, but only works on timedelta, so convert
+            # to a timedelta first, by subtracting 0 (epoch = 1970-01-01 00:00:00)
+            # Rounding can be unpredictable because of limited precision, so always truncate excess precision
+            microseconds = int((value - numpy.datetime64('1970', 'us')) // numpy.timedelta64(1, 'us'))
+            dt_value = datetime.datetime.utcfromtimestamp(microseconds / 1_000_000)
+        elif isinstance(value, (datetime.datetime, datetime.date)):
+            dt_value = value
+
+        if dt_value is None:
+            raise ValueError(f'Not a valid timestamp literal: {value}')
+
+        str_value = dt_value.strftime('%Y-%m-%d %H:%M:%S.%f')
         return Expression.string_value(str_value)
 
     @classmethod

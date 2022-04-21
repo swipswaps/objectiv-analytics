@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
-    TypeVar, Sequence
+    TypeVar, Sequence, NamedTuple
 from uuid import UUID
 
 import numpy
@@ -31,6 +31,14 @@ T = TypeVar('T', bound='Series')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
+
+
+class ToPandasInfo(NamedTuple):
+    """
+    INTERNAL: Used to encode how to go from raw database result to pandas object, see Series.to_pandas_info.
+    """
+    dtype: str
+    function: Optional[Callable[[Any], Any]]
 
 
 class Series(ABC):
@@ -99,14 +107,18 @@ class Series(ABC):
     by :meth:`supported_value_to_literal()`.
     """
 
-    query_result_processor: Mapping[DBDialect, Optional[Callable[[Any], Any]]] = {}
+    to_pandas_info: Mapping[DBDialect, Optional[ToPandasInfo]] = {}
     """
-    INTERNAL: Optional function to process data of this type that the database returns.
-    If defined for a given DBDialect, we use the function in :meth:`DataFrame.to_pandas()` by applying it to
-    columns of the resulting pandas DataFrame, before returning that DataFrame.
+    INTERNAL: Optional information on how to map query-results to pandas types.
 
-    Example usage: UUIDs in BigQuery are represented as strings, we use a query-result-processor to convert
-    these strings to UUID objects in to_pandas().
+    ToPandasInfo defines both the pandas-dtype of the data, and an optional function to apply to query
+    results.
+
+    If defined for a given DBDialect, we use this information in :meth:`DataFrame.to_pandas()`, be setting
+    the dtype and applying the function to columns of the resulting pandas DataFrame.
+
+    Example usage: UUIDs in BigQuery are represented as strings, we convert these strings to UUID objects in
+    to_pandas().
     """
 
     def __init__(self,
@@ -152,7 +164,7 @@ class Series(ABC):
         #   properties:
         #   * subclasses MUST override one class property: 'dtype',
         #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype',
-        #       'supported_value_types', and 'query_result_processor'
+        #       'supported_value_types', and 'to_pandas_info'
         # Unfortunately defining these properties as an "abstract-classmethod-property" makes it hard
         # to understand for mypy, sphinx, and python. Therefore, we check here that we are instantiating a
         # proper subclass, instead of just relying on @abstractmethod.
