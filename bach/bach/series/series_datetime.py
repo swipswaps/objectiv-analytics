@@ -132,10 +132,14 @@ class SeriesAbstractDateTime(Series, ABC):
     @classmethod
     def _cast_to_date_if_dtype_date(cls, series: 'Series') -> 'Series':
         # PG returns timestamp in all cases were we expect date
-        # Make sure we cast properly, and round similar to python datetime
+        # Make sure we cast properly, and round similar to python datetime: add 12 hours and cast to date
         if series.dtype == 'date':
+            td_12_hours = datetime.timedelta(seconds=3600 * 12)
+            series_12_hours = SeriesTimedelta.from_const(base=series, value=td_12_hours, name='tmp')
+            expr_12_hours = series_12_hours.expression
+
             return series.copy_override(
-                expression=Expression.construct("cast({} + '12h'::interval as date)", series)
+                expression=Expression.construct("cast({} + {} as date)", series, expr_12_hours)
             )
         else:
             return series
