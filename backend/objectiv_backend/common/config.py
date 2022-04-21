@@ -100,6 +100,7 @@ class SnowplowConfig(NamedTuple):
     aws_enabled: bool
     aws_message_topic_raw: str
     aws_message_topic_bad: str
+    aws_message_raw_type: str
 
     schema_collector_payload: str
     schema_contexts: str
@@ -174,6 +175,11 @@ def get_config_postgres() -> Optional[PostgresConfig]:
 
 
 def get_config_output_snowplow() -> SnowplowConfig:
+    if _SP_AWS_MESSAGE_TOPIC_RAW.startswith('https://sqs.'):
+        aws_message_raw_type = 'sqs'
+    else:
+        aws_message_raw_type = 'kinesis'
+
     config = SnowplowConfig(
         gcp_enabled=(_SP_GCP_PROJECT != ''),
         gcp_project=_SP_GCP_PROJECT,
@@ -183,6 +189,7 @@ def get_config_output_snowplow() -> SnowplowConfig:
         aws_enabled=(_SP_AWS_MESSAGE_TOPIC_RAW != ''),
         aws_message_topic_raw=_SP_AWS_MESSAGE_TOPIC_RAW,
         aws_message_topic_bad=_SP_AWS_MESSAGE_TOPIC_BAD,
+        aws_message_raw_type=aws_message_raw_type,
 
         schema_collector_payload=_SP_SCHEMA_COLLECTOR_PAYLOAD,
         schema_contexts=_SP_SCHEMA_CONTEXTS,

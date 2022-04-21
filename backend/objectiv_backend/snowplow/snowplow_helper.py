@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import base64
 import json
@@ -26,28 +26,29 @@ if snowplow_config.aws_enabled:
     import botocore.exceptions
 
 
-def make_snowplow_custom_context(snowplow_event: Dict, config: SnowplowConfig) -> str:
+def make_snowplow_custom_context(self_describing_event: Dict, config: SnowplowConfig) -> str:
     """
-    Create Snowplow custom context, containing snowplow_event
-    :param snowplow_event:
-    :param config:
-    :return:
+    Create Snowplow custom context, containing snowplow_event, base64 encoded, ready to be inserted into a
+    snowplow event
+    :param self_describing_event: Dict containing a schema and a payload
+    :param config: SnowplowConfig
+    :return: base64 encoded snowplow self-describing custom context
     """
     snowplow_contexts_schema = config.schema_contexts
-    outer_event = {
+    custom_context = {
         'schema': snowplow_contexts_schema,
-        'data': [snowplow_event]
+        'data': [self_describing_event]
     }
-    outer_event_json = json.dumps(outer_event)
-    return str(base64.b64encode(outer_event_json.encode('UTF-8')), 'UTF-8')
+    custom_context_json = json.dumps(custom_context)
+    return str(base64.b64encode(custom_context_json.encode('UTF-8')), 'UTF-8')
 
 
-def objectiv_event_to_snowplow(event: EventData, config: SnowplowConfig) -> Dict:
+def objectiv_event_to_snowplow(event: EventData, config: SnowplowConfig) -> Dict[str, Union[str, EventData]]:
     """
-    Embed objectiv event in self-describing Snowplow object
-    :param event:
-    :param config:
-    :return:
+    Wrap objectiv event in self-describing Snowplow object
+    :param event: EventData
+    :param config: SnowplowConfig
+    :return: Dict containing event and schema describing the event
     """
     objectiv_schema = config.schema_objectiv_taxonomy
 
@@ -88,7 +89,7 @@ def objectiv_event_to_snowplow_payload(event: EventData, config: SnowplowConfig)
     rich_event['cookie_id'] = cookie_context.get('id', '')
 
     snowplow_event = objectiv_event_to_snowplow(event=rich_event, config=config)
-    snowplow_custom_context = make_snowplow_custom_context(snowplow_event=snowplow_event, config=config)
+    snowplow_custom_context = make_snowplow_custom_context(self_describing_event=snowplow_event, config=config)
     payload = {
         "schema": snowplow_payload_data_schema,
         "data": [{
@@ -136,8 +137,8 @@ def payload_to_thrift(payload: CollectorPayload) -> bytes:
     return trans.getvalue()
 
 
-def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
-                              event_error: EventError = None) -> Dict:
+def snowplow_schema_violation_json(payload: CollectorPayload, config: SnowplowConfig,
+                                   event_error: EventError = None) -> Dict[str, Union[str, Dict]]:
     """
     Generate Snowplow schema violation JSON object
     :param payload: CollectorPayload object - representation of Event
@@ -237,22 +238,22 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
     }
 
 
-def prepare_data(event: EventData,
-                 channel: str,
-                 config: SnowplowConfig,
-                 event_errors: List[EventError] = None) -> bytes:
+def prepare_event_for_snowplow_pipeline(event: EventData,
+                                        good: bool,
+                                        config: SnowplowConfig,
+                                        event_errors: List[EventError] = None) -> bytes:
     """
     Transform event into data suitable for writing to the Snowplow Pipeline. If the event is "good" this means a
     CollectorPayload object, binary-encoded using Thrift. If it's a bad event, it's transformed to a JSON-based schema
     violation.
     :param event: EventData
-    :param channel: str - good / bad
+    :param good: bool - True if these events should go to the "good" channel
     :param config: SnowplowConfig
     :param event_errors: list of EventError
-    :return:
+    :return: bytes object to be ingested by Snowplow pipeline
     """
     payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
-    if channel == 'good':
+    if good:
         data = payload_to_thrift(payload=payload)
     else:
         event_error = None
@@ -261,7 +262,7 @@ def prepare_data(event: EventData,
             for ee in event_errors:
                 if ee.event_id == event['id']:
                     event_error = ee
-        failed_event = snowplow_schema_violation(payload=payload, config=config, event_error=event_error)
+        failed_event = snowplow_schema_violation_json(payload=payload, config=config, event_error=event_error)
 
         # serialize (json) and encode to bytestring for publishing
         data = json.dumps(failed_event, separators=(',', ':')).encode('utf-8')
@@ -269,20 +270,19 @@ def prepare_data(event: EventData,
     return data
 
 
-def write_data_to_gcp(events: EventDataList, config: SnowplowConfig,
-                      channel: str = 'good',
-                      event_errors: List[EventError] = None) -> None:
+def write_data_to_gcp_pubsub(events: EventDataList, config: SnowplowConfig, good: bool = True,
+                             event_errors: List[EventError] = None) -> None:
     """
     Write provided list of events to the Snowplow GCP pipeline, using GCP PubSub
     :param events: EventDataList - List of EventData
     :param config:  SnowplowConfig
-    :param channel: good or bad channel
+    :param good: bool - True if these events should go to the "good" channel
     :param event_errors: list of EventErrors
     :return:
     """
 
     project = config.gcp_project
-    if channel == 'good':
+    if good:
         # good events get sent to the raw topic, which means they get processed by snowplow's enrichment
         topic = config.gcp_pubsub_topic_raw
     else:
@@ -293,7 +293,7 @@ def write_data_to_gcp(events: EventDataList, config: SnowplowConfig,
     topic_path = f'projects/{project}/topics/{topic}'
 
     for event in events:
-        data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
+        data = prepare_event_for_snowplow_pipeline(event=event, good=good, event_errors=event_errors, config=config)
 
         try:
             publisher.publish(topic_path, data=data)
@@ -301,38 +301,28 @@ def write_data_to_gcp(events: EventDataList, config: SnowplowConfig,
             print(f'PubSub topic {topic} could not be found! {e}')
 
 
-def is_sqs_url(url: str) -> bool:
-    """
-    Small helper to detect sqs URL's from Kinesis streams. SQS URL's start with https://
-    :param url:
-    :return:
-    """
-    return url.startswith('https://sqs.')
-
-
-def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
-                      channel: str = 'good',
-                      event_errors: List[EventError] = None) -> None:
+def write_data_to_aws_pipeline(events: EventDataList, config: SnowplowConfig,
+                               good: bool = True,
+                               event_errors: List[EventError] = None) -> None:
     """
     Write provided list of events to Snowplow AWS pipeline, either directly to Kinesis, or to SQS
     :param events: EventDataList - List of EventData
     :param config:  SnowplowConfig
-    :param channel: good or bad channel
+    :param good: bool - True if these events should go to the "good" channel
     :param event_errors: list of EventErrors
     :return:
     """
 
-    # default client_type is kinesis.
-    client_type = 'kinesis'
-    if channel == 'good':
+    if good:
         # good events get sent to the raw topic, which means they get processed by snowplow's enrichment
         stream_name = config.aws_message_topic_raw
 
-        # We only support SQS for the raw topic, bad events always go straight to Kinesis
-        if is_sqs_url(stream_name):
-            client_type = 'sqs'
+        # config determines whether we use sqs for raw events
+        client_type = config.aws_message_raw_type
     else:
         stream_name = config.aws_message_topic_bad
+        # the bad stream always goes to kinesis
+        client_type = 'kinesis'
 
     # this should be kinesis or sqs
     if client_type == 'kinesis':
@@ -341,7 +331,7 @@ def write_data_to_aws(events: EventDataList, config: SnowplowConfig,
         client = boto3.client('sqs')
 
     for event in events:
-        data = prepare_data(event=event, channel=channel, event_errors=event_errors, config=config)
+        data = prepare_event_for_snowplow_pipeline(event=event, good=good, event_errors=event_errors, config=config)
 
         if client_type == 'kinesis':
             try:

@@ -15,7 +15,7 @@ from typing import List
 from objectiv_backend.common.config import get_collector_config, SnowplowConfig
 from objectiv_backend.common.types import EventDataList
 from objectiv_backend.schema.validate_events import EventError
-from objectiv_backend.snowplow.snowplow_helper import write_data_to_aws, write_data_to_gcp
+from objectiv_backend.snowplow.snowplow_helper import write_data_to_aws_pipeline, write_data_to_gcp_pubsub
 
 if get_collector_config().output.aws:
     import boto3
@@ -77,12 +77,23 @@ def write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> 
 
 
 def write_data_to_snowplow_if_configured(events: EventDataList,
-                                         channel: str = 'good',
+                                         prefix: str = 'good',
                                          event_errors: List[EventError] = None) -> None:
+    """
+    Write data to Snowplow pipeline if either GCP or AWS for Snowplow if configures
+    :param events: EventDataList
+    :param prefix: should be either OK or NOK
+    :param event_errors: list of errors, if any
+    :return:
+    """
     config: SnowplowConfig = get_collector_config().output.snowplow
 
+    if prefix == 'OK':
+        good = True
+    else:
+        good = False
     if config.aws_enabled:
-        write_data_to_aws(events=events, config=config, channel=channel, event_errors=event_errors)
+        write_data_to_aws_pipeline(events=events, config=config, good=good, event_errors=event_errors)
 
     if config.gcp_enabled:
-        write_data_to_gcp(events=events, config=config, channel=channel, event_errors=event_errors)
+        write_data_to_gcp_pubsub(events=events, config=config, good=good, event_errors=event_errors)
