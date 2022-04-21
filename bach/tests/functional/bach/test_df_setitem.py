@@ -2,7 +2,6 @@
 Copyright 2021 Objectiv B.V.
 """
 import datetime
-import math
 from typing import Type, Any, List
 import pytest
 
@@ -11,10 +10,9 @@ import numpy as np
 from bach import SeriesInt64, SeriesString, SeriesFloat64, SeriesDate, SeriesTimestamp, \
     SeriesTime, SeriesTimedelta, Series, \
     SeriesJsonb, SeriesBoolean
-from sql_models.util import is_postgres
 from tests.conftest import get_postgres_engine_dialect
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_postgres_type, \
-    assert_equals_data, CITIES_INDEX_AND_COLUMNS, get_bt_with_railway_data, get_df_with_test_data, run_query, \
+    assert_equals_data, CITIES_INDEX_AND_COLUMNS, get_bt_with_railway_data, get_df_with_test_data, \
     get_df_with_railway_data
 
 
@@ -32,6 +30,7 @@ def check_set_const(engine, constants: List[Any], expected_series: Type[Series],
 
     assert_equals_data(
         bt,
+        use_to_pandas=True,
         expected_columns=[
             '_index_skating_order',  # index
             'skating_order', 'city', 'municipality', 'inhabitants', 'founding',  # original columns
@@ -88,7 +87,9 @@ def test_set_const_date(engine):
 
 def test_set_const_datetime(engine):
     constants = [
-        datetime.datetime.now()
+        datetime.datetime.now(),
+        datetime.datetime(1999, 1, 15, 13, 37, 1, 23),
+        np.datetime64('2022-01-01 12:34:56.7800'),
     ]
     check_set_const(engine, constants, SeriesTimestamp, 'timestamp without time zone')
 
