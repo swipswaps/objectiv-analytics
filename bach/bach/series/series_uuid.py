@@ -9,7 +9,7 @@ from sqlalchemy.engine import Dialect
 from bach import DataFrameOrSeries
 from bach.series import Series, const_to_series
 from bach.expression import Expression
-from bach.series.series import WrappedPartition
+from bach.series.series import WrappedPartition, ToPandasInfo
 from sql_models.constants import DBDialect
 from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
@@ -35,9 +35,9 @@ class SeriesUuid(Series):
 
     supported_value_types = (UUID, str)
 
-    query_result_processor = {
+    to_pandas_info = {
         DBDialect.POSTGRES: None,
-        DBDialect.BIGQUERY: UUID  # convert the strings to UUID objects to get compatible results
+        DBDialect.BIGQUERY: ToPandasInfo('object', UUID)
     }
 
     @classmethod

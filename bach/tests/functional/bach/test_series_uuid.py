@@ -158,9 +158,9 @@ def test_to_pandas(engine):
     bt = get_df_with_test_data(engine)
     bt['a'] = uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')
     bt['c'] = SeriesUuid.sql_gen_random_uuid(bt)
-    bt[['a', 'c']].to_pandas()
-    assert bt[['a']].to_numpy()[0] == [uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')]
-    assert type(bt[['a']].to_numpy()[0][0]) == type(uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264'))
+    result_pdf = bt[['a', 'c']].to_pandas()
+    assert result_pdf[['a']].to_numpy()[0] == [uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')]
+    assert type(result_pdf[['a']].to_numpy()[0][0]) == type(uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264'))
 
 
 def convert_uuid_expected_data(engine: Engine, data: List[List[Any]]) -> List[List[Any]]:
