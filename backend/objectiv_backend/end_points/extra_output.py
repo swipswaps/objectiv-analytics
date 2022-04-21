@@ -77,7 +77,7 @@ def write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> 
 
 
 def write_data_to_snowplow_if_configured(events: EventDataList,
-                                         prefix: str = 'good',
+                                         good: bool,
                                          event_errors: List[EventError] = None) -> None:
     """
     Write data to Snowplow pipeline if either GCP or AWS for Snowplow if configures
@@ -88,10 +88,6 @@ def write_data_to_snowplow_if_configured(events: EventDataList,
     """
     config: SnowplowConfig = get_collector_config().output.snowplow
 
-    if prefix == 'OK':
-        good = True
-    else:
-        good = False
     if config.aws_enabled:
         write_data_to_aws_pipeline(events=events, config=config, good=good, event_errors=event_errors)
 
