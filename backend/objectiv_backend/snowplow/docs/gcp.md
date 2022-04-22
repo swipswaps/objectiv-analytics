@@ -10,15 +10,6 @@ a running and functional Snowplow pipeline setup on GCP. If you don't, Snowplow 
 [quick start installation guide](https://docs.snowplowanalytics.com/docs/open-source-quick-start/quick-start-installation-guide-on-gcp/)
 to get you up and running.
 
-#### Preparation
-To be able to push events into the message queue the following needs to be set up:
-- A GCP service account (`json`) with permission to write to PubSub
-- The `id` of the GCP project that holds the PubSub topic
-- The `id` of the PubSub raw topic (message queue)
-- The `id` of the PubSub bad topic (message queue)
-
-These will be used to configure the collector in the next step.
-
 #### Starting the collector
 The configuration for the collector is controlled through environment variables. They allow you to configure which outputs
 will be used. Settings specific to the PubSub sin are:

@@ -10,21 +10,10 @@ a running and functional Snowplow pipeline setup on AWS. If you don't, Snowplow 
 [quick start installation guide](https://docs.snowplowanalytics.com/docs/open-source-quick-start/quick-start-installation-guide-on-aws/)
 to get you up and running.
 
-#### Preparation
-To be able to push events into the message queue the following needs to be set up:
-- The `id` of the raw Kinesis stream _or_ the URL to the SQS raw stream topic
-- The `id` of the bad Kinesis stream
-
-Optionally some AWS iAM credentials with permission to publish to the appropriate Kinesis/SQS topics:
-  - `AWS_ACCESS_KEY_ID`
-  - `AWS_SECRET_ACCESS_KEY`
-  - `AWS_DEFAULT_REGION`
-These will be used to configure the collector in the next step.
-
 #### Starting the collector
 The output topics of the collector are controlled through environment variables:
 
-- `SP_AWS_MESSAGE_TOPIC_RAW` - this can be either the id of a Kinesis stream (eg. sp-raw-stream) _or_ a URL to an SQS queue
+- `SP_AWS_MESSAGE_TOPIC_RAW` - this can be either the id of a Kinesis stream (eg. sp-raw-stream) _or_ a URL to an SQS queue (eg. https://sqs.someregion.amazonaws.com/123455/sp-raw-queue)
 - `SP_AWS_MESSAGE_TOPIC_BAD` - this should be the id of the Kinesis bad stream (eg. sp-bad-stream)
 
 The AWS integration uses the boto3 python library, this means authentication is also provided through that library 
@@ -52,8 +41,8 @@ When using `docker-compose`, the following yaml snippet would do the trick:
       AWS_ACCESS_KEY_ID: AKIA-some-key
       AWS_SECRET_ACCESS_KEY: some-secret-key
       AWS_DEFAULT_REGION: some-aws-region
-      SP_AWS_MESSAGE_TOPIC_RAW: sp-raw-topic
-      SP_AWS_MESSAGE_TOPIC_BAD: sp-bad-topic
+      SP_AWS_MESSAGE_TOPIC_RAW: sp-raw-stream
+      SP_AWS_MESSAGE_TOPIC_BAD: sp-bad-stream
       OUTPUT_ENABLE_PG: false
 ```
 
@@ -73,8 +62,8 @@ pip install -r requirements.in
 # start flask app, using SQS queue
 cd objectiv_backend
 export PYTHONPATH=.:$PYTHONPATH
-SP_AWS_MESSAGE_TOPIC_RAW="https://sqs.someregion.amazonaws.com/123455/sp-raw-queue" \
-  SP_AWS_MESSAGE_TOPIC_BAD=sp-bad-topic \
+SP_AWS_MESSAGE_TOPIC_RAW=sp-raw-stream \
+  SP_AWS_MESSAGE_TOPIC_BAD=sp-bad-stream \
   flask run
 ```
 
