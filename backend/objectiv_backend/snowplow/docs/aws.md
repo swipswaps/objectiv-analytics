@@ -73,3 +73,5 @@ The collector will display a message if the Snowplow config is loaded:
 This indicates that the collector will try to push events. If this fails, logging should hint what's happening. If there 
 are no errors in the collector logs, the events should be successfully pushed into the raw topic, to be picked up by 
 Snowplow's enrichment.
+To check if the messages have successfully arrived in the queue, please review to monitoring in the AWS console. Events 
+should show up as either `PutRecords` (Kinesis) or `Number of messages received (SQS) 

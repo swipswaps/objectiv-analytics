@@ -74,3 +74,5 @@ The collector will display a message if the Snowplow config is loaded:
 This indicates that the collector will try to push events. If this fails, logging should hint what's happening. If there 
 are no errors in the collector logs, the events should be successfully pushed into the raw topic, to be picked up by 
 Snowplow's enrichment.
+To check if messages have been successfully received by the PuSub topic, please refer to the monitoring of that specific 
+topic in the GCP console. The `Publish message request count` monitoring topic should show more than 0 requests/sec.
