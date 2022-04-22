@@ -6,7 +6,7 @@ The Objectiv Collector can be configured to work with Snowplow on AWS. The Snowp
 - Bad events (invalid) are published on the `bad` topic on Kinesis.
 
 Before starting up the Objectiv Collector, some preparation is required. The following sections assume there's already
-a running and functional Snowplow pipeline setup on GCP. If you don't, Snowplow has a 
+a running and functional Snowplow pipeline setup on AWS. If you don't, Snowplow has a 
 [quick start installation guide](https://docs.snowplowanalytics.com/docs/open-source-quick-start/quick-start-installation-guide-on-aws/)
 to get you up and running.
 
