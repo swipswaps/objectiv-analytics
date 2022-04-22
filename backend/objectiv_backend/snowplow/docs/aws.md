@@ -44,13 +44,10 @@ When using `docker-compose`, the following yaml snippet would do the trick:
 ```yaml
   objectiv_collector:
     container_name: objectiv_collector
-    image: ${OBJECTIV_CONTAINER_URL-objectiv}/backend:${OBJECTIV_CONTAINER_TAG-latest}
+    image: objectiv/backend
     working_dir: /services
-    entrypoint: bash -c "objectiv-db-init; ./entry_point.sh"
     ports:
       - "127.0.0.1:5000:5000"
-    networks:
-      - obj
     environment:
       AWS_ACCESS_KEY_ID: AKIA-some-key
       AWS_SECRET_ACCESS_KEY: some-secret-key
