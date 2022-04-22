@@ -324,7 +324,6 @@ def write_data_to_aws_pipeline(events: EventDataList, config: SnowplowConfig,
         # the bad stream always goes to kinesis
         client_type = 'kinesis'
 
-    # this should be kinesis or sqs
     if client_type == 'kinesis':
         client = boto3.client('kinesis')
     else:
