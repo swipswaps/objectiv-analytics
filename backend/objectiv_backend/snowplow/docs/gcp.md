@@ -44,7 +44,7 @@ When using `docker-compose`, the following yaml snippet would do the trick:
     ports:
       - "127.0.0.1:5000:5000"
     volumes:
-      - /home/user/secrets/snowplow-pubsub-serviceaccount-askjhda8734.json:/sa.json
+      - /path/to/YOUR_SERVICE_ACCOUNT.json:/sa.json
     environment:
       SP_GCP_PROJECT: some-gcp-project
       SP_GCP_PUBSUB_TOPIC_RAW: sp-raw
@@ -70,7 +70,7 @@ pip install -r requirements.in
 # start flask app
 cd objectiv_backend
 export PYTHONPATH=.:$PYTHONPATH
-GOOGLE_APPLICATION_CREDENTIALS=path-to-json.json \
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/YOUR_SERVICE_ACCOUNT.json \
  SP_GCP_PROJECT=some-gcp-project \
  SP_GCP_PUBSUB_TOPIC_RAW=sp-raw \
  SP_GCP_PUBSUB_TOPIC_BAD=sp-bad \
