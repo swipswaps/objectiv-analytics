@@ -1347,10 +1347,14 @@ class Series(ABC):
         """
         from bach.partitioning import Window
 
-        if not window:
+        if not window and not self.group_by:
             raise ValueError(f'Cannot apply {agg_function.value} function without a window clause')
 
-        window_cp = copy(window) if isinstance(window, Window) else window.group_by
+        if not window:
+            # use series group_by attribute (e.g window.series_a.window_row_number())
+            window_cp = self.group_by
+        else:
+            window_cp = copy(window) if isinstance(window, Window) else window.group_by
         if (
             isinstance(window_cp, Window)
             and not agg_function.supports_window_frame_clause(dialect=self.engine.dialect)
