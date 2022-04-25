@@ -8,6 +8,7 @@ import pytest
 
 from bach import Series, SeriesAbstractNumeric
 from bach.partitioning import GroupingList, GroupingSet, Rollup, Cube
+from bach.utils import WindowFunction
 from sql_models.util import is_postgres
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
@@ -688,3 +689,50 @@ def test_materialize_on_double_aggregation(engine):
     value = btg_materialized_mean.to_numpy()[0]
     # avg() of BigQuery gives a slightly different result than Postgres or python, so use assert_almost_equal
     numpy.testing.assert_almost_equal(value, 2413.5)
+
+
+def test_groupby_w_window_functions(engine) -> None:
+    bt = get_df_with_test_data(engine, full_data_set=True)[['city', 'municipality', 'inhabitants']]
+    bt = bt.reset_index(drop=True).sort_values(by=['municipality', 'city'], ascending=True)
+
+    # cannot test this since creates conflict with the rest of the functions
+    fn_with_extra_params = ('nth_value', 'ntile', 'lag', 'lead')
+    fn_to_test = [f'window_{fn}' for fn in WindowFunction.ALL_FUNCTIONS.value if fn not in fn_with_extra_params]
+    result = bt.groupby('municipality').agg(fn_to_test)
+
+    expected_columns = [
+        'municipality',
+        'city_window_first_value',
+        'city_window_last_value',
+        'city_window_rank',
+        'city_window_dense_rank',
+        'city_window_percent_rank',
+        'city_window_cume_dist',
+        'city_window_row_number',
+        'inhabitants_window_first_value',
+        'inhabitants_window_last_value',
+        'inhabitants_window_rank',
+        'inhabitants_window_dense_rank',
+        'inhabitants_window_percent_rank',
+        'inhabitants_window_cume_dist',
+        'inhabitants_window_row_number',
+    ]
+
+    assert_equals_data(
+        result,
+        expected_columns=expected_columns,
+        expected_data=[
+            ['De Friese Meren', 'Sleat', 'Sleat', 1, 1, 0.0, 1.0, 1, 700, 700, 1, 1, 0.0, 1.0, 1],
+            ['Harlingen', 'Harns', 'Harns', 1, 1, 0.0, 1.0, 1, 14740, 14740, 1, 1, 0.0, 1.0, 1],
+            ['Leeuwarden', 'Ljouwert', 'Ljouwert', 1, 1, 0.0, 1.0, 1, 93485, 93485, 1, 1, 0.0, 1.0, 1],
+            ['Noardeast-Fryslân', 'Dokkum', 'Dokkum', 1, 1, 0.0, 1.0, 1, 12675, 12675, 1, 1, 0.0, 1.0, 1],
+            ['Súdwest-Fryslân', 'Warkum', 'Boalsert', 6, 6, 1.0, 1.0, 6, 33520, 10120, 2, 2, 0.2, 0.3333, 2],
+            ['Súdwest-Fryslân', 'Warkum', 'Drylts', 5, 5, 0.8, 0.8333, 5, 33520, 3055, 4, 4, 0.6, 0.6667, 4],
+            ['Súdwest-Fryslân', 'Warkum', 'Hylpen', 4, 4, 0.6, 0.6667, 4, 33520, 870, 6, 6, 1.0, 1.0, 6],
+            ['Súdwest-Fryslân', 'Warkum', 'Snits', 3, 3, 0.4, 0.5, 3, 33520, 33520, 1, 1, 0.0, 0.1667, 1],
+            ['Súdwest-Fryslân', 'Warkum', 'Starum', 2, 2, 0.2, 0.3333, 2, 33520, 960, 5, 5, 0.8, 0.8333, 5],
+            ['Súdwest-Fryslân', 'Warkum', 'Warkum', 1, 1, 0.0, 0.1667, 1, 33520, 4440, 3, 3, 0.4, 0.5, 3],
+            ['Waadhoeke', 'Frjentsjer', 'Frjentsjer', 1, 1, 0.0, 1.0, 1, 12760, 12760, 1, 1, 0.0, 1.0, 1],
+        ],
+        round_decimals=True,
+    )

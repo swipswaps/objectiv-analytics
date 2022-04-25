@@ -258,9 +258,9 @@ class Window(GroupBy):
                  group_by_columns: List['Series'],
                  order_by: List[SortColumn],
                  mode: WindowFrameMode = WindowFrameMode.RANGE,
-                 start_boundary: WindowFrameBoundary = WindowFrameBoundary.PRECEDING,
+                 start_boundary: Optional[WindowFrameBoundary] = WindowFrameBoundary.PRECEDING,
                  start_value: int = None,
-                 end_boundary: WindowFrameBoundary = WindowFrameBoundary.CURRENT_ROW,
+                 end_boundary: Optional[WindowFrameBoundary] = WindowFrameBoundary.CURRENT_ROW,
                  end_value: int = None,
                  min_values: int = None):
         """
@@ -273,8 +273,8 @@ class Window(GroupBy):
         if mode is None:
             raise ValueError("Mode needs to be defined")
 
-        if start_boundary is None:
-            raise ValueError("At least start_boundary needs to be defined")
+        if start_boundary is None and end_boundary is not None:
+            raise ValueError("start_boundary needs to be defined if end_boundary is present.")
 
         if start_boundary == WindowFrameBoundary.FOLLOWING and start_value is None:
             raise ValueError("Start of frame can not be unbounded following")
@@ -290,7 +290,7 @@ class Window(GroupBy):
                 and (start_value is not None or end_value is not None):
             raise ValueError("start_value or end_value cases only supported in ROWS mode.")
 
-        if end_boundary is not None:
+        if start_boundary is not None and end_boundary is not None:
             if start_boundary.value > end_boundary.value:
                 raise ValueError("frame boundaries defined in wrong order.")
 
@@ -316,10 +316,10 @@ class Window(GroupBy):
         self._min_values = 0 if min_values is None else min_values
 
         # TODO This should probably be an expression
-        self._frame_clause: str
-        if end_boundary is None:
+        self._frame_clause: str = ''
+        if start_boundary and end_boundary is None:
             self._frame_clause = f'{mode.name} {start_boundary.frame_clause(start_value)}'
-        else:
+        elif start_boundary and end_boundary:
             self._frame_clause = f'{mode.name} BETWEEN {start_boundary.frame_clause(start_value)}'\
                                 f' AND {end_boundary.frame_clause(end_value)}'
 
@@ -341,10 +341,10 @@ class Window(GroupBy):
                          mode:
                          WindowFrameMode = WindowFrameMode.RANGE,
                          start_boundary:
-                         WindowFrameBoundary = WindowFrameBoundary.PRECEDING,
+                         Optional[WindowFrameBoundary] = WindowFrameBoundary.PRECEDING,
                          start_value: int = None,
                          end_boundary:
-                         WindowFrameBoundary = WindowFrameBoundary.CURRENT_ROW,
+                         Optional[WindowFrameBoundary] = WindowFrameBoundary.CURRENT_ROW,
                          end_value: int = None) -> 'Window':
         """
         Convenience function to clone this window with new frame parameters
