@@ -8,7 +8,6 @@ specified on the commandline, then it will (also) get a BigQuery dialect or engi
 
 Additionally we define a 'pg_engine' fixture here that always return a Postgres engine.
 """
-import logging
 import os
 from typing import NamedTuple, Optional, Dict
 
@@ -62,11 +61,8 @@ def pytest_sessionstart(session: Session):
     # https://pytest-xdist.readthedocs.io/en/latest/distribution.html
     # https://docs.pytest.org/en/6.2.x/reference.html#pytest.hookspec.pytest_sessionstart
     load_engine = True
-    if (
-        ('tests/unit' in session.config.args and len(session.config.args) == 1)
-        or session.config.getoption('markexpr') == 'db_independent'
-    ):
-        # create dialect only if we are running unit tests or db independent tests
+    if session.config.args == ['tests/unit']:
+        # create dialect, only if we are running unit tests
         load_engine = False
 
     if session.config.getoption("all"):
@@ -84,16 +80,7 @@ def pytest_generate_tests(metafunc: Metafunc):
 
     # This function will automatically be called by pytest while it is creating the list of tests to run,
     # see: https://docs.pytest.org/en/6.2.x/reference.html#collection-hooks
-    if metafunc.config.getoption("all"):
-        engine_dialects = [
-            ENGINE_DIALECTS['postgres'],
-            ENGINE_DIALECTS['bigquery']
-        ]
-    elif metafunc.config.getoption("big_query"):
-        engine_dialects = [ENGINE_DIALECTS['bigquery']]
-    else:  # default option, don't even check if --postgres is set
-        engine_dialects = [ENGINE_DIALECTS['postgres']]
-
+    engine_dialects = list(ENGINE_DIALECTS.values())
     if 'dialect' in metafunc.fixturenames:
         dialects = [ed.dialect for ed in engine_dialects]
         metafunc.parametrize("dialect", dialects)
