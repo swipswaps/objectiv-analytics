@@ -6,6 +6,7 @@ tests for:
  * DataFrame.from_model()
 
 """
+import pytest
 from sqlalchemy.engine import Engine
 
 from bach import DataFrame
@@ -26,6 +27,7 @@ def _create_test_table(engine: Engine, table_name: str):
         conn.execute(sql)
 
 
+@pytest.mark.xdist_group(name="test_table_writers")
 def test_from_table_basic(engine):
     table_name = 'test_df_from_table'
     _create_test_table(engine, table_name)
@@ -49,6 +51,7 @@ def test_from_table_basic(engine):
     assert df == df_all_dtypes
 
 
+@pytest.mark.xdist_group(name="test_table_writers")
 def test_from_model_basic(pg_engine):
     # This is essentially the same test as test_from_table_basic(), but tests creating the dataframe with
     # from_model instead of from_table
@@ -76,6 +79,7 @@ def test_from_model_basic(pg_engine):
     assert df == df_all_dtypes
 
 
+@pytest.mark.xdist_group(name="test_table_writers")
 def test_from_table_column_ordering(engine):
     # Create a Dataframe in which the index is not the first column in the table.
     table_name = 'test_df_from_table'
@@ -99,6 +103,7 @@ def test_from_table_column_ordering(engine):
     assert df == df_all_dtypes
 
 
+@pytest.mark.xdist_group(name="test_table_writers")
 def test_from_model_column_ordering(pg_engine):
     # This is essentially the same test as test_from_table_model_ordering(), but tests creating the dataframe with
     # from_model instead of from_table
