@@ -24,6 +24,7 @@ model hub uses this DataFrame for its models. For a general introduction to Bach
 
     modelhub_basics
     product_analytics
+    user_intent
     open_taxonomy
     feature_engineering
     machine_learning
@@ -71,6 +72,7 @@ introduction examples are :ref:`here <bach_examples>` in the Bach docs.
 
 * :ref:`Open model hub basics <example_modelhub_basics>`
 * :ref:`Basic product analytics <example_product_analytics>`
+* :ref:`Basic user intent analysis <example_user_intent>`
 * :ref:`Open taxonomy how-to <example_open_taxonomy>`
 * :ref:`Feature engineering with Bach <example_feature_engineering>`
 * :ref:`Bach and sklearn <example_machine_learning>`

@@ -42,7 +42,7 @@ def test_timedelta_arithmetic2():
     assert [s.dtype for s in list(bt.all_series.values())[2:]] == expected_types
 
     assert_equals_data(
-        bt[:1],
+        bt.sort_index()[:1],
         expected_columns=list(bt.all_series.keys()),
         expected_data=[
             [1, 93485, *expected],

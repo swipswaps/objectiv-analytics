@@ -1,15 +1,12 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import warnings
 from copy import copy
-from datetime import date, datetime, time
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
     cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload,
 )
-from uuid import UUID
 
 import numpy
 import pandas
@@ -18,7 +15,7 @@ from sqlalchemy.engine import Engine
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
-from bach.types import get_series_type_from_dtype
+from bach.types import get_series_type_from_dtype, AllSupportedLiteralTypes
 from bach.utils import escape_parameter_characters
 from sql_models.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
@@ -48,7 +45,6 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - dict of axis labels -> functions, function names or list of such.
 
 Level = Union[int, List[int], str, List[str]]
-Scalar = Union[int, float, str, bool, date, datetime, time, UUID]
 
 
 class SortColumn(NamedTuple):
@@ -1134,7 +1130,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['DataFrame', 'Series', int, str, float, UUID, pandas.Series]):
+                    value: Union[AllSupportedLiteralTypes, 'Series', pandas.Series]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -2854,7 +2850,10 @@ class DataFrame:
     def fillna(
         self,
         *,
-        value: Union[Union['Series', Scalar], Dict[str, Union[Scalar, 'Series']]] = None,
+        value: Union[
+            Union['Series', AllSupportedLiteralTypes],
+            Dict[str, Union[AllSupportedLiteralTypes, 'Series']]
+        ] = None,
         method: Optional[str] = None,
         axis: int = 0,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
@@ -2863,8 +2862,8 @@ class DataFrame:
         """
         Fill any NULL value using a method or with a given value.
 
-        :param value: A scalar/series to fill all NULL values on each series
-            or a dictionary specifying which scalar/series to use for each series.
+        :param value: A literal/series to fill all NULL values on each series
+            or a dictionary specifying which literal/series to use for each series.
         :param method: Method to use for filling NULL values on all DataFrame series. Supported values:
            - "ffill"/"pad": Fill missing values by propagating the last non-nullable value in the series.
            - "bfill"/"backfill": Fill missing values with the next non-nullable value in the series.
@@ -3141,7 +3140,10 @@ class DataFrame:
         return MinMaxScaler(training_df=self, feature_range=feature_range).transform()
 
     def unstack(
-        self, level: Union[str, int] = -1, fill_value: Optional[Scalar] = None, aggregation: str = 'max',
+        self,
+        level: Union[str, int] = -1,
+        fill_value: Optional[AllSupportedLiteralTypes] = None,
+        aggregation: str = 'max'
     ) -> 'DataFrame':
         """
         Pivot a level of the index labels.

@@ -40,7 +40,7 @@ def helper_test_simple_arithmetic(engine: Engine, a: Union[int, float], b: Union
     assert all(s.expression.is_constant for s in list(bt.data.values())[-8:])
 
     assert_equals_data(
-        bt[:1],
+        bt.sort_index()[:1],
         expected_columns=list(bt.all_series.keys()),
         expected_data=[
             [1, 93485, *expected],
