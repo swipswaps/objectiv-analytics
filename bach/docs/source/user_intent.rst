@@ -86,13 +86,13 @@ We think that users that spent most time (90th percentile) and specifically in o
      - *any time spent*
    * - 1 - Inform
      - Docs: modeling, taxonomy, tracking, home
-     - less than 2 minutes
+     - less than 1:40
    * - 2 - Explore
      - Docs: modeling, taxonomy, tracking, home
-     - between 2 and 19 minutes
+     - between 1:40 and 11:30
    * - 3 - Implement
      - Docs: modeling, taxonomy, tracking, home
-     - more than 19 minutes
+     - more than 11:30
 
 This is just for illustration purposes, you can adjust these definitions based on your own collected data.
 
