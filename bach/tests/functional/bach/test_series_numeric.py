@@ -7,8 +7,10 @@ import pandas as pd
 from psycopg2._range import NumericRange
 from sqlalchemy.engine import Engine
 
-from tests.functional.bach.test_data_and_utils import get_from_df, assert_equals_data,\
-    get_df_with_test_data, get_bt_with_test_data
+from bach import DataFrame
+from tests.functional.bach.test_data_and_utils import (
+    assert_equals_data, get_df_with_test_data, get_bt_with_test_data
+)
 
 
 def helper_test_simple_arithmetic(engine: Engine, a: Union[int, float], b: Union[int, float]):
@@ -38,7 +40,7 @@ def helper_test_simple_arithmetic(engine: Engine, a: Union[int, float], b: Union
     assert all(s.expression.is_constant for s in list(bt.data.values())[-8:])
 
     assert_equals_data(
-        bt[:1],
+        bt.sort_index()[:1],
         expected_columns=list(bt.all_series.keys()),
         expected_data=[
             [1, 93485, *expected],
@@ -46,58 +48,58 @@ def helper_test_simple_arithmetic(engine: Engine, a: Union[int, float], b: Union
     )
 
 
-def test_round():
+def test_round(engine):
     values = [1.9, 3.0, 4.123, 6.425124, 2.00000000001, 2.1, np.nan, 7.]
-    pdf = pd.DataFrame(data=values)
-    bt = get_from_df('test_round', pdf)
+    pdf = pd.DataFrame(data={'num': values})
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     bt['const'] = 14.12345
     assert bt.const.expression.is_constant
 
     for i in 0, 3, 5, 9:
         assert bt.const.round(i).expression.is_constant
-        assert not bt['0'].round(i).expression.is_constant
-        np.testing.assert_equal(pdf[0].round(i).to_numpy(), bt['0'].round(i).to_numpy())
-        np.testing.assert_equal(pdf[0].round(decimals=i).to_numpy(), bt['0'].round(decimals=i).to_numpy())
+        assert not bt['num'].round(i).expression.is_constant
+        np.testing.assert_equal(pdf['num'].round(i).to_numpy(), bt['num'].round(i).to_numpy())
+        np.testing.assert_equal(pdf['num'].round(decimals=i).to_numpy(), bt['num'].round(decimals=i).to_numpy())
 
 
-def test_round_integer():
+def test_round_integer(engine):
     values = [1, 3, 4, 6, 2, 2, 6, 7]
-    pdf = pd.DataFrame(data=values)
-    bt = get_from_df('test_round', pdf)
+    pdf = pd.DataFrame(data={'num': values})
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     for i in 0, 3, 5, 9:
-        result = bt['0'].round(i).sort_values().to_pandas()
-        expected = pdf[0].round(i).sort_values()
+        result = bt['num'].round(i).sort_values().to_pandas()
+        expected = pdf['num'].round(i).sort_values()
         pd.testing.assert_series_equal(expected, result, check_names=False, check_index=False)
 
-        result2 = bt['0'].round(decimals=i).sort_values().to_pandas()
-        expected2 = pdf[0].round(decimals=i).sort_values()
+        result2 = bt['num'].round(decimals=i).sort_values().to_pandas()
+        expected2 = pdf['num'].round(decimals=i).sort_values()
         pd.testing.assert_series_equal(expected2, result2, check_names=False, check_index=False)
 
 
-def test_aggregations_simple_tests():
+def test_aggregations_simple_tests(engine):
     values = [1, 3, 4, 6, 2, 2, np.nan, 7, 8]
-    pdf = pd.DataFrame(data=values)
-    bt = get_from_df('test_aggregations_simple_tests', pdf)
+    pdf = pd.DataFrame(data={'num': values})
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     numeric_agg = ['sum', 'mean']
     stats_agg = ['sem', 'std', 'var']
     for agg in numeric_agg + stats_agg:
-        pd_agg = pdf[0].agg(agg)
-        bt_agg = bt['0'].agg(agg)
+        pd_agg = pdf['num'].agg(agg)
+        bt_agg = bt['num'].agg(agg)
         assert bt_agg.expression.has_aggregate_function
         assert not bt_agg.expression.is_constant
         assert bt_agg.expression.is_single_value
         assert pd_agg == bt_agg.value
 
 
-def test_aggregations_sum_mincount():
-    pdf = pd.DataFrame(data=[1, np.nan, 7, 8])
-    bt = get_from_df('test_aggregations_sum_mincount', pdf)
+def test_aggregations_sum_mincount(engine):
+    pdf = pd.DataFrame(data={'num': [1, np.nan, 7, 8]})
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     for i in [5, 4, 3]:
-        pd_agg = pdf.sum(min_count=i)[0]
-        bt_agg = bt.sum(min_count=i)['0_sum']
+        pd_agg = pdf.sum(min_count=i)['num']
+        bt_agg = bt.sum(min_count=i)['num_sum']
 
         # since sum is wrapped in a CASE WHEN, we need to make sure that these are still valid:
         assert bt_agg.expression.has_aggregate_function
@@ -110,9 +112,10 @@ def test_aggregations_sum_mincount():
         assert (math.isnan(pd_agg) and bt_agg_value is None) or bt_agg_value == pd_agg
 
 
-def test_aggregations_quantile():
+def test_aggregations_quantile(pg_engine):
+    engine = pg_engine # TODO: BigQuery
     pdf = pd.DataFrame(data={'a': range(5), 'b': [1, 3, 5, 7, 9]})
-    bt = get_from_df('test_aggregations_quantile', pdf)
+    bt = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     quantiles = [0.25, 0.3, 0.5, 0.75, 0.86]
 
@@ -278,5 +281,34 @@ def test_series_scale() -> None:
         result.to_frame(),
         expected_columns=['_index_skating_order', 'inhabitants'],
         expected_data=expected_data_w_mean_std,
+        round_decimals=True,
+    )
+
+
+def test_series_minmax_scale() -> None:
+    inhabitants = get_bt_with_test_data(full_data_set=True)['inhabitants']
+    result = inhabitants.minmax_scale()
+
+    min_inh = 700
+    max_inh = 93485
+    diff_inh = max_inh - min_inh
+
+    expected_data_default = [
+        [1, (93485 - min_inh) / diff_inh],
+        [2, (33520 - min_inh) / diff_inh],
+        [3, (3055 - min_inh) / diff_inh],
+        [4, (700 - min_inh) / diff_inh],
+        [5, (960 - min_inh) / diff_inh],
+        [6, (870 - min_inh) / diff_inh],
+        [7, (4440 - min_inh) / diff_inh],
+        [8, (10120 - min_inh) / diff_inh],
+        [9, (14740 - min_inh) / diff_inh],
+        [10, (12760 - min_inh) / diff_inh],
+        [11, (12675 - min_inh) / diff_inh],
+    ]
+    assert_equals_data(
+        result.to_frame(),
+        expected_columns=['_index_skating_order', 'inhabitants'],
+        expected_data=expected_data_default,
         round_decimals=True,
     )

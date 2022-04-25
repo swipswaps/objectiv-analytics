@@ -1,12 +1,10 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import warnings
 from abc import ABC, abstractmethod
 from copy import copy
-from datetime import date, datetime, time
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
-    TypeVar, Sequence
+    TypeVar, Sequence, NamedTuple
 from uuid import UUID
 
 import numpy
@@ -17,12 +15,11 @@ from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_
 
 from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
-    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression, ColumnReferenceToken, \
-    TableColumnReferenceToken
+    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype, DtypeOrAlias
+from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 
@@ -34,6 +31,14 @@ T = TypeVar('T', bound='Series')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
+
+
+class ToPandasInfo(NamedTuple):
+    """
+    INTERNAL: Used to encode how to go from raw database result to pandas object, see Series.to_pandas_info.
+    """
+    dtype: str
+    function: Optional[Callable[[Any], Any]]
 
 
 class Series(ABC):
@@ -102,6 +107,20 @@ class Series(ABC):
     by :meth:`supported_value_to_literal()`.
     """
 
+    to_pandas_info: Mapping[DBDialect, Optional[ToPandasInfo]] = {}
+    """
+    INTERNAL: Optional information on how to map query-results to pandas types.
+
+    ToPandasInfo defines both the pandas-dtype of the data, and an optional function to apply to query
+    results.
+
+    If defined for a given DBDialect, we use this information in :meth:`DataFrame.to_pandas()`, be setting
+    the dtype and applying the function to columns of the resulting pandas DataFrame.
+
+    Example usage: UUIDs in BigQuery are represented as strings, we convert these strings to UUID objects in
+    to_pandas().
+    """
+
     def __init__(self,
                  engine: Engine,
                  base_node: BachSqlModel,
@@ -144,8 +163,8 @@ class Series(ABC):
         # Series is an abstract class, besides the abstractmethods subclasses must/may override some
         #   properties:
         #   * subclasses MUST override one class property: 'dtype',
-        #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype', and
-        #       'supported_value_types'.
+        #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype',
+        #       'supported_value_types', and 'to_pandas_info'
         # Unfortunately defining these properties as an "abstract-classmethod-property" makes it hard
         # to understand for mypy, sphinx, and python. Therefore, we check here that we are instantiating a
         # proper subclass, instead of just relying on @abstractmethod.
@@ -181,14 +200,6 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
-
-    @property
-    def dtype_to_pandas(self) -> Optional[str]:
-        """
-        INTERNAL: The dtype of this Series in a pandas.Series. Defaults to None
-        Override to cast specifically, and set to None to let pandas choose.
-        """
-        return None
 
     @classmethod
     @abstractmethod
@@ -606,23 +617,6 @@ class Series(ABC):
         return self.to_pandas(limit=n)
 
     @property
-    def values(self):
-        """
-        .values property accessor akin pandas.Series.values
-
-        .. warning::
-           We recommend using :meth:`Series.to_numpy` instead.
-
-        .. note::
-            This function queries the database.
-        """
-        warnings.warn(
-            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
-            category=DeprecationWarning,
-        )
-        return self.to_numpy()
-
-    @property
     def value(self):
         """
         Retrieve the actual single value of this series. If it's not sure that there is only one value,
@@ -892,7 +886,7 @@ class Series(ABC):
         from bach import SeriesBoolean
         return self.copy_override_type(SeriesBoolean).copy_override(expression=expression)
 
-    def fillna(self, other):
+    def fillna(self, other: AllSupportedLiteralTypes):
         """
         Fill any NULL value with the given constant or other compatible Series
 
@@ -911,9 +905,14 @@ class Series(ABC):
             other=other, operation='fillna', fmt_str='COALESCE({}, {})',
             other_dtypes=tuple([self.dtype]))
 
-    def _binary_operation(self, other: 'Series', operation: str, fmt_str: str,
-                          other_dtypes: Tuple[str, ...] = (),
-                          dtype: Union[str, None, Mapping[str, Optional[str]]] = None) -> 'Series':
+    def _binary_operation(
+        self,
+        other: Union[AllSupportedLiteralTypes, 'Series'],
+        operation: str,
+        fmt_str: str,
+        other_dtypes: Tuple[str, ...] = (),
+        dtype: Union[str, None, Mapping[str, Optional[str]]] = None
+    ) -> 'Series':
         """
         The standard way to perform a binary operation
 
@@ -947,9 +946,14 @@ class Series(ABC):
 
         return self_modified.copy_override_dtype(dtype=new_dtype).copy_override(expression=expression)
 
-    def _arithmetic_operation(self, other: 'Series', operation: str, fmt_str: str,
-                              other_dtypes: Tuple[str, ...] = (),
-                              dtype: Union[str, Mapping[str, Optional[str]]] = None) -> 'Series':
+    def _arithmetic_operation(
+        self,
+        other: Union[AllSupportedLiteralTypes, 'Series'],
+        operation: str,
+        fmt_str: str,
+        other_dtypes: Tuple[str, ...] = (),
+        dtype: Union[str, Mapping[str, Optional[str]]] = None
+    ) -> 'Series':
         """
         implement this in a subclass to have boilerplate support for all arithmetic functions
         defined below, but also call this method from specific arithmetic operation implementations
@@ -1606,7 +1610,7 @@ class Series(ABC):
 
 
 def const_to_series(base: Union[Series, DataFrame],
-                    value: Optional[Union[Series, int, float, str, bool, date, datetime, time, UUID]],
+                    value: Union[AllSupportedLiteralTypes, Series],
                     name: str = None) -> Series:
     """
     INTERNAL: Take a value and return a Series representing a column with that value.
@@ -1629,7 +1633,11 @@ def const_to_series(base: Union[Series, DataFrame],
     return series_type.from_const(base=base, value=value, name=name)
 
 
-def variable_series(base: Union[Series, DataFrame], value: Any, name: str) -> Series:
+def variable_series(
+    base: Union[Series, DataFrame],
+    value: Union[AllSupportedLiteralTypes, Series],
+    name: str
+) -> Series:
     """
     INTERNAL: Return a series with the same dtype as the value, but with a VariableToken instead of the
     value's literal in the series.expression.

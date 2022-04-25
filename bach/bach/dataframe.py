@@ -1,15 +1,12 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import warnings
 from copy import copy
-from datetime import date, datetime, time
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
-    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload,
+    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload, Mapping,
 )
-from uuid import UUID
 
 import numpy
 import pandas
@@ -18,9 +15,9 @@ from sqlalchemy.engine import Engine
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
-from bach.types import get_series_type_from_dtype
+from bach.types import get_series_type_from_dtype, AllSupportedLiteralTypes
 from bach.utils import escape_parameter_characters
-from sql_models.constants import NotSet, not_set
+from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
@@ -48,7 +45,6 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - dict of axis labels -> functions, function names or list of such.
 
 Level = Union[int, List[int], str, List[str]]
-Scalar = Union[int, float, str, bool, date, datetime, time, UUID]
 
 
 class SortColumn(NamedTuple):
@@ -777,13 +773,13 @@ class DataFrame:
         self,
         engine: Optional[Engine] = None,
         base_node: Optional[BachSqlModel] = None,
-        index: Optional[Dict[str, 'Series']] = None,
-        series: Optional[Dict[str, 'Series']] = None,
+        index: Optional[Mapping[str, 'Series']] = None,
+        series: Optional[Mapping[str, 'Series']] = None,
         group_by: Optional[Union['GroupBy', NotSet]] = not_set,
         order_by: Optional[List[SortColumn]] = None,
         variables: Optional[Dict[DtypeNamePair, Hashable]] = None,
-        index_dtypes: Optional[Dict[str, str]] = None,
-        series_dtypes: Optional[Dict[str, str]] = None,
+        index_dtypes: Optional[Mapping[str, str]] = None,
+        series_dtypes: Optional[Mapping[str, str]] = None,
         single_value: bool = False,
         savepoints: Optional['Savepoints'] = None,
         **kwargs
@@ -1134,7 +1130,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['DataFrame', 'Series', int, str, float, UUID, pandas.Series]):
+                    value: Union[AllSupportedLiteralTypes, 'Series', pandas.Series]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -1849,18 +1845,31 @@ class DataFrame:
         .. note::
             This function queries the database.
         """
-        with self.engine.connect() as conn:
-            sql = self.view_sql(limit=limit)
-            dtype = {name: series.dtype_to_pandas for name, series in self.all_series.items()
-                     if series.dtype_to_pandas is not None}
+        db_dialect = DBDialect.from_engine(self.engine)
 
+        sql = self.view_sql(limit=limit)
+
+        series_name_to_dtype = {}
+        for series in self.all_series.values():
+            pandas_info = series.to_pandas_info.get(db_dialect)
+            if pandas_info is not None:
+                series_name_to_dtype[series.name] = pandas_info.dtype
+
+        with self.engine.connect() as conn:
             # read_sql_query expects a parameterized query, so we need to escape the parameter characters
             sql = escape_parameter_characters(conn, sql)
-            pandas_df = pandas.read_sql_query(sql, conn).astype(dtype)
+            pandas_df = pandas.read_sql_query(sql, conn, dtype=series_name_to_dtype)
 
-            if len(self._index):
-                return pandas_df.set_index(list(self._index.keys()))
-            return pandas_df
+        # Post-process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
+        # the strings that the query gives us into UUID objects
+        for name, series in self.data.items():
+            to_pandas_info = series.to_pandas_info.get(db_dialect)
+            if to_pandas_info is not None and to_pandas_info.function is not None:
+                pandas_df[name] = pandas_df[name].apply(to_pandas_info.function)
+
+        if self.index:
+            pandas_df = pandas_df.set_index(list(self.index.keys()))
+        return pandas_df
 
     def head(self, n: int = 5) -> pandas.DataFrame:
         """
@@ -1873,25 +1882,6 @@ class DataFrame:
             This function queries the database.
         """
         return self.to_pandas(limit=n)
-
-    @property
-    def values(self) -> numpy.ndarray:
-        """
-        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
-
-        .. warning::
-           We recommend using :meth:`DataFrame.to_numpy` instead.
-
-        :returns: Returns the values of the DataFrame as numpy.ndarray.
-
-        .. note::
-            This function queries the database.
-        """
-        warnings.warn(
-            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
-            category=DeprecationWarning,
-        )
-        return self.to_numpy()
 
     def to_numpy(self) -> numpy.ndarray:
         """
@@ -2873,7 +2863,10 @@ class DataFrame:
     def fillna(
         self,
         *,
-        value: Union[Union['Series', Scalar], Dict[str, Union[Scalar, 'Series']]] = None,
+        value: Union[
+            Union['Series', AllSupportedLiteralTypes],
+            Dict[str, Union[AllSupportedLiteralTypes, 'Series']]
+        ] = None,
         method: Optional[str] = None,
         axis: int = 0,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
@@ -2882,8 +2875,8 @@ class DataFrame:
         """
         Fill any NULL value using a method or with a given value.
 
-        :param value: A scalar/series to fill all NULL values on each series
-            or a dictionary specifying which scalar/series to use for each series.
+        :param value: A literal/series to fill all NULL values on each series
+            or a dictionary specifying which literal/series to use for each series.
         :param method: Method to use for filling NULL values on all DataFrame series. Supported values:
            - "ffill"/"pad": Fill missing values by propagating the last non-nullable value in the series.
            - "bfill"/"backfill": Fill missing values with the next non-nullable value in the series.
@@ -3118,8 +3111,52 @@ class DataFrame:
         from bach.preprocessing.scalers import StandardScaler
         return StandardScaler(training_df=self, with_mean=with_mean, with_std=with_std).transform()
 
+    def minmax_scale(self, feature_range: Tuple[int, int] = (0, 1)) -> 'DataFrame':
+        """
+        Scales all numeric series based on a given range.
+
+        :param feature_range: ``tuple(min, max)`` desired range to use for scaling.
+        :return: DataFrame
+
+        Each transformation per feature is performed as follows:
+
+        .. testsetup:: minmax_scale
+           :skipif: engine is None
+
+           import pandas
+           data = {'index': ['a', 'b', 'c', 'd'], 'feature': [1, 2, 3, 4]}
+           pdf = pandas.DataFrame(data)
+
+           df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+           df = df.set_index('index')
+           agg_df = df.agg(['min', 'max'], numeric_only=True)
+           agg_df = agg_df.merge(df, how='cross')
+
+           feature = df['feature']
+           min_feature = agg_df['feature_min']
+           max_feature = agg_df['feature_max']
+
+        .. doctest:: minmax_scale
+            :skipif: engine is None
+
+            >>> range_min,  = (0, 1)
+            >>> feature_std = (feature - min_feature) / (max_feature - min_feature)
+            >>> scaled_feature = feature_std * (range_max - range_min) + range_min
+
+        Where:
+            * ``feature`` is the series to be scaled
+            * ``feature_min`` is the minimum value of ``feature``
+            * ``feature_max`` is the maximum value of ``feature``
+            * ``range_min, range_max`` = ``feature_range``
+        """
+        from bach.preprocessing.scalers import MinMaxScaler
+        return MinMaxScaler(training_df=self, feature_range=feature_range).transform()
+
     def unstack(
-        self, level: Union[str, int] = -1, fill_value: Optional[Scalar] = None, aggregation: str = 'max',
+        self,
+        level: Union[str, int] = -1,
+        fill_value: Optional[AllSupportedLiteralTypes] = None,
+        aggregation: str = 'max'
     ) -> 'DataFrame':
         """
         Pivot a level of the index labels.

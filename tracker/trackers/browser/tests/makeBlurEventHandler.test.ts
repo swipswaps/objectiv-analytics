@@ -3,7 +3,7 @@
  */
 
 import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
-import { generateUUID, makeInputChangeEvent, TrackerConsole } from '@objectiv/tracker-core';
+import { generateUUID, LocationContextName, makeInputChangeEvent, TrackerConsole } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker } from '../src/';
 import { makeBlurEventHandler } from '../src/mutationObserver/makeBlurEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
@@ -81,7 +81,9 @@ describe('makeBlurEventHandler', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(
-        makeInputChangeEvent({ location_stack: [expect.objectContaining({ _type: 'InputContext', id: 'input' })] })
+        makeInputChangeEvent({
+          location_stack: [expect.objectContaining({ _type: LocationContextName.InputContext, id: 'input' })],
+        })
       )
     );
   });

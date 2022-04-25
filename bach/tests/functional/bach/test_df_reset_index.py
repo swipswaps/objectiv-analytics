@@ -167,4 +167,5 @@ def test_reset_index_materialize(engine):
                 ['Leeuwarden', 1, 93485],
                 ['Súdwest-Fryslân', 5, 36575],
             ],
+            order_by=['_index_skating_order_sum'],
         )

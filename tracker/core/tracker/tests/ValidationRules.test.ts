@@ -3,7 +3,13 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { GlobalContextValidationRule, LocationContextValidationRule, TrackerConsole, TrackerEvent } from '../src';
+import {
+  generateUUID,
+  GlobalContextValidationRule,
+  LocationContextValidationRule,
+  TrackerConsole,
+  TrackerEvent,
+} from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -54,8 +60,8 @@ describe('Validation Rules', () => {
         new TrackerEvent({
           _type: 'PressEvent',
           global_contexts: [
-            { __global_context: true, _type: 'Context', id: 'test' },
-            { __global_context: true, _type: 'Context', id: 'test' },
+            { __instance_id: generateUUID(), __global_context: true, _type: 'Context', id: 'test' },
+            { __instance_id: generateUUID(), __global_context: true, _type: 'Context', id: 'test' },
           ],
         })
       );
@@ -114,8 +120,8 @@ describe('Validation Rules', () => {
         new TrackerEvent({
           _type: 'PressEvent',
           location_stack: [
-            { __location_context: true, _type: 'Context', id: 'test' },
-            { __location_context: true, _type: 'Context', id: 'test' },
+            { __instance_id: generateUUID(), __location_context: true, _type: 'Context', id: 'test' },
+            { __instance_id: generateUUID(), __location_context: true, _type: 'Context', id: 'test' },
           ],
         })
       );
@@ -140,8 +146,8 @@ describe('Validation Rules', () => {
         new TrackerEvent({
           _type: 'PressEvent',
           location_stack: [
-            { __location_context: true, _type: 'OtherContext', id: 'test' },
-            { __location_context: true, _type: 'Context', id: 'test' },
+            { __instance_id: generateUUID(), __location_context: true, _type: 'OtherContext', id: 'test' },
+            { __instance_id: generateUUID(), __location_context: true, _type: 'Context', id: 'test' },
           ],
         })
       );

@@ -16,3 +16,4 @@ Reference
     SeriesString
     SeriesJsonb
     SeriesJson
+    SeriesUuid

@@ -74,8 +74,7 @@ explicit call is made to one of the functions that transfers data:
  * :py:meth:`DataFrame.head()`
  * :py:meth:`DataFrame.to_pandas()`
  * :py:meth:`DataFrame.get_sample()`
- * The property accessors :py:attr:`DataFrame.values`, :py:attr:`bach.Series.array` and
-   :py:attr:`bach.Series.value` (Series only),
+ * The property accessor :py:attr:`bach.Series.array`
 
 Other functions will not transfer data, nor will they trigger any operations to run on the database.
 Operations on the DataFrame are combined and translated to a single SQL query, which is executed
@@ -83,4 +82,3 @@ only when one of the above mentioned data-transfer functions is called.
 
 The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
 DataFrames see https://pandas.pydata.org/docs/reference/frame.html
-

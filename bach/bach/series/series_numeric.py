@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from abc import ABC
-from typing import cast, Union, TYPE_CHECKING, Optional, List
+from typing import cast, Union, TYPE_CHECKING, Optional, List, Tuple
 
 import numpy
 from sqlalchemy.engine import Dialect
@@ -192,6 +192,15 @@ class SeriesAbstractNumeric(Series, ABC):
         :return: Series
         """
         return self.to_frame().scale(with_mean, with_std)[self.name]
+
+    def minmax_scale(self, feature_range: Tuple[int, int] = (0, 1)) -> 'Series':
+        """
+        Scales series based on a given range.
+
+        :param feature_range: ``tuple(min, max)`` desired range to use for scaling.
+        :return: Series
+        """
+        return self.to_frame().minmax_scale(feature_range)[self.name]
 
 
 class SeriesInt64(SeriesAbstractNumeric):

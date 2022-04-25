@@ -1,3 +1,5 @@
+.. _modelhub_intro:
+
 ============
 Introduction
 ============

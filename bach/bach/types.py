@@ -20,6 +20,24 @@ if TYPE_CHECKING:
     from bach.series import Series
 
 
+AllSupportedLiteralTypes = Union[
+    int, numpy.int64,
+    float, numpy.float64,
+    bool,
+    None,
+    str,
+    datetime.date, datetime.time, datetime.datetime, numpy.datetime64, datetime.timedelta, numpy.timedelta64,
+    UUID,
+    dict,
+    list
+]
+"""
+AllSupportedLiteralTypes are all the types for which a Series is registered to interpret the literal.
+Of course when custom types are added, this definition will be incomplete, but as this is just for mypy
+usage, that is fine.
+"""
+
+
 DtypeOrAlias = Union[Type, str]
 
 
@@ -121,6 +139,7 @@ class TypeRegistry:
         # A type might match multiple entries in the list, because it can be an instance of multiple (super)
         # classes. E.g. a `bool` is also an `int`
         # Therefore this list is hardcoded here, and not automatically derived from the base_types classes
+        # When adding an item here, make sure to update AllSupportedLiteralTypes above
         self._register_value_klass(int, SeriesInt64)
         self._register_value_klass(numpy.int64, SeriesInt64)
         self._register_value_klass(float, SeriesFloat64)
@@ -131,6 +150,7 @@ class TypeRegistry:
         self._register_value_klass(datetime.date, SeriesDate)
         self._register_value_klass(datetime.time, SeriesTime)
         self._register_value_klass(datetime.datetime, SeriesTimestamp)
+        self._register_value_klass(numpy.datetime64, SeriesTimestamp)
         self._register_value_klass(datetime.timedelta, SeriesTimedelta)
         self._register_value_klass(numpy.timedelta64, SeriesTimedelta)
         self._register_value_klass(UUID, SeriesUuid)

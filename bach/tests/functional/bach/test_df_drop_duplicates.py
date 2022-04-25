@@ -1,10 +1,11 @@
 import pandas as pd
 import pytest
 
-from tests.functional.bach.test_data_and_utils import assert_equals_data, get_from_df
+from bach import DataFrame
+from tests.functional.bach.test_data_and_utils import assert_equals_data
 
 
-def test_df_basic_drop_duplicates() -> None:
+def test_df_basic_drop_duplicates(engine) -> None:
     pdf = pd.DataFrame(
         data={
             'a': [1, 1, 2, 3, 4, 4, 5],
@@ -12,7 +13,7 @@ def test_df_basic_drop_duplicates() -> None:
         }
     )
 
-    df = get_from_df('drop_dup_table', pdf)
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     result = df.drop_duplicates().sort_index()
 
     expected_pdf = pd.DataFrame(
@@ -47,7 +48,7 @@ def test_df_basic_drop_duplicates() -> None:
     )
 
 
-def test_df_basic_w_subset_drop_duplicates() -> None:
+def test_df_basic_w_subset_drop_duplicates(engine) -> None:
     pdf = pd.DataFrame(
         data={
             'a': [1, 1, 2, 3, 4, 4, 5],
@@ -56,7 +57,7 @@ def test_df_basic_w_subset_drop_duplicates() -> None:
         }
     )
     subset = ['a', 'b']
-    df = get_from_df('drop_dup_table', pdf)
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     result = df.drop_duplicates(subset=subset).sort_index()
 
     expected_pdf = pd.DataFrame(
@@ -91,14 +92,14 @@ def test_df_basic_w_subset_drop_duplicates() -> None:
     )
 
 
-def test_df_keep_last_drop_duplicates() -> None:
+def test_df_keep_last_drop_duplicates(engine) -> None:
     pdf = pd.DataFrame(
         data={
             'a': [1, 1, 1, 3, 4, 1, 1],
             'b': ['a', 'b', 'b', 'c', 'd', 'a', 'a'],
         }
     )
-    df = get_from_df('drop_dup_table', pdf)
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     result = df.drop_duplicates(keep='last').sort_index()
 
     expected_df = pd.DataFrame(
@@ -136,14 +137,14 @@ def test_df_keep_last_drop_duplicates() -> None:
     )
 
 
-def test_df_drop_all_duplicates() -> None:
+def test_df_drop_all_duplicates(engine) -> None:
     pdf = pd.DataFrame(
         data={
             'a': [1, 1, 1, 3, 4, 1, 1],
             'b': ['a', 'b', 'b', 'c', 'd', 'a', 'a'],
         }
     )
-    df = get_from_df('drop_dup_table', pdf)
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
 
     result = df.drop_duplicates(keep=False).sort_index()
 
@@ -173,7 +174,7 @@ def test_df_drop_all_duplicates() -> None:
     )
 
 
-def test_drop_duplicates_w_sorting() -> None:
+def test_drop_duplicates_w_sorting(engine) -> None:
     pdf = pd.DataFrame(
         data={
             'a': [1, 1, 1, 3, 4, 1, 1],
@@ -183,7 +184,7 @@ def test_drop_duplicates_w_sorting() -> None:
         },
     )
 
-    df = get_from_df('drop_dup_table', pdf)
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     result = df.drop_duplicates(subset=['a', 'b'], sort_by=['c'], ascending=False)
 
     assert_equals_data(
@@ -209,14 +210,15 @@ def test_drop_duplicates_w_sorting() -> None:
         ],
     )
 
-def test_errors_drop_duplicates() -> None:
+
+def test_errors_drop_duplicates(engine) -> None:
     pdf = pd.DataFrame(
         data={
             'a': [1, 1, 1, 3, 4, 1, 1],
             'b': ['a', 'b', 'b', 'c', 'd', 'a', 'a'],
         }
     )
-    df = get_from_df('drop_dup_table', pdf)
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
     with pytest.raises(ValueError, match=r'keep must be either'):
         df.drop_duplicates(keep='random')
 
