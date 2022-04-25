@@ -13,9 +13,11 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
-	rm -rf "$(SOURCEDIR)/DataFrame/"
-	rm -rf "$(SOURCEDIR)/modelhub_api_reference/"
-	rm -rf "$(SOURCEDIR)/Series/"
+	rm -rf $(SOURCEDIR)/modelhub/api-reference/modelhub.*
+	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/bach.DataFrame.*
+	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/**/
+	rm -rf $(SOURCEDIR)/bach/api-reference/Series/bach.Series.*
+	rm -rf $(SOURCEDIR)/bach/api-reference/Series/**/
 
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) 0$(O)
 
