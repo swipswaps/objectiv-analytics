@@ -72,7 +72,7 @@ After exploring the `root_location` and `session_duration` (both per root locati
 
 Based on the objectiv.io website data in the quickstart:
 
-We think that users that spent most time (90th percentile) and specifically in our documentation sections are in the Implement phase of Objectiv. As there is a jump beyond the one minute mark at the 70th percentile, it feels sensible to deem that users beyond the 70th up to 90th perctile in our documentation sections are Exploring. The remaining users are Informing themselves about the product. Those users are spending less than 1:40 minutes in the docs and/or spend any amount of time on our main website.
+We think that users that spent most time (90th percentile) and specifically in our documentation sections are in the Implement phase of Objectiv. As there is a jump beyond the one minute mark at the 70th percentile, it feels sensible to deem that users beyond the 70th up to 90th perctile in our documentation sections are Exploring. The remaining users are Informing themselves about the product. Those users are spending less than 1:40 in the docs and/or spend any amount of time on our main website.
 
 .. list-table::
    :widths: 20 50 30
