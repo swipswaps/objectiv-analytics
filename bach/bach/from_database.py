@@ -1,7 +1,7 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import Dict
+from typing import Dict, Optional
 
 from sqlalchemy.engine import Engine
 
@@ -30,12 +30,21 @@ def get_dtypes_from_model(engine: Engine, node: SqlModel) -> Dict[str, str]:
     return _get_dtypes_from_information_schema_query(engine=engine, query=sql)
 
 
-def get_dtypes_from_table(engine: Engine, table_name: str) -> Dict[str, str]:
+def get_dtypes_from_table(
+    engine: Engine,
+    table_name: str,
+    dataset_path: Optional[str] = None
+) -> Dict[str, str]:
     """ Query database to get dtypes of the given table. """
-    # using `INFORMATION_SCHEMA.COLUMNS` in capitals, as that way it works on both Postgres and BigQuery
+    dataset_path = '' if not dataset_path else dataset_path
+    if not dataset_path:
+        # using `INFORMATION_SCHEMA.COLUMNS` in capitals, as that way it works on both Postgres and BigQuery
+        meta_data_table = 'INFORMATION_SCHEMA.COLUMNS'
+    else:
+        meta_data_table = f'{dataset_path}.INFORMATION_SCHEMA.COLUMNS'
     sql = f"""
         select column_name, data_type
-        from INFORMATION_SCHEMA.COLUMNS
+        from {meta_data_table}
         where table_name = '{table_name}'
         order by ordinal_position;
     """

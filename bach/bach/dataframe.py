@@ -532,7 +532,8 @@ class DataFrame:
             engine: Engine,
             table_name: str,
             index: List[str],
-            all_dtypes: Optional[Dict[str, str]] = None
+            all_dtypes: Optional[Dict[str, str]] = None,
+            dataset_path: Optional[str] = None
     ) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the content of an existing table in the database.
@@ -547,6 +548,7 @@ class DataFrame:
         :param all_dtypes: Optional. Mapping from column name to dtype.
             Must contain all index and data columns.
             Must be in same order as the columns appear in the the sql-model.
+        :param dataset_path: TODO
         :returns: A DataFrame based on a sql table.
 
         .. note::
@@ -555,10 +557,23 @@ class DataFrame:
         if all_dtypes is not None:
             dtypes = all_dtypes
         else:
-            dtypes = get_dtypes_from_table(engine=engine, table_name=table_name)
+            dtypes = get_dtypes_from_table(engine=engine, table_name=table_name, dataset_path=dataset_path)
 
-        model_builder = CustomSqlModelBuilder(sql='SELECT * FROM {table_name}', name='from_table')
-        sql_model = model_builder(table_name=quote_identifier(engine.dialect, table_name))
+        if dataset_path:
+            sql = 'SELECT * FROM {dataset_path}.{table_name}'
+            model_builder = CustomSqlModelBuilder(sql=sql, name='from_table')
+            # TODO: We assume dataset_path is already properly quoted. is there a nicer way to do this, that
+            #  is also sort of generic accross databases?
+            sql_model = model_builder(
+                table_name=quote_identifier(engine.dialect, table_name),
+                dataset_path=dataset_path
+            )
+        else:
+            sql = 'SELECT * FROM {table_name}'
+            model_builder = CustomSqlModelBuilder(sql=sql, name='from_table')
+            sql_model = model_builder(
+                table_name=quote_identifier(engine.dialect, table_name)
+            )
         return cls._from_node(
             engine=engine,
             model=sql_model,
@@ -624,6 +639,11 @@ class DataFrame:
         :returns: A DataFrame based on an SqlModel
 
         """
+        missing_index_keys = {k for k in index if k not in all_dtypes}
+        if missing_index_keys:
+            raise ValueError(f'Specified index keys ({missing_index_keys} not found in'
+                             f' all_dtypes: {all_dtypes.keys()}')
+
         index_dtypes = {k: all_dtypes[k] for k in index}
         series_dtypes = {k: all_dtypes[k] for k in all_dtypes.keys() if k not in index}
 
