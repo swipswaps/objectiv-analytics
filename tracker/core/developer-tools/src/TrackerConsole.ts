@@ -3,7 +3,7 @@
  */
 
 import { TrackerConsoleImplementation, TrackerConsoleInterface } from '@objectiv/tracker-core';
-import { NoopConsoleImplementation } from "./NoopConsoleImplementation";
+import { NoopConsoleImplementation } from './NoopConsoleImplementation';
 
 /**
  * The default implementation of TrackerConsole. A singleton used pretty much by all other interfaces.
