@@ -4,16 +4,18 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import doctest
+import os
+import sys
+import inspect
+
 # -- Path setup --------------------------------------------------------------
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import doctest
-import os
-import sys
-import inspect
+sys.path.append(os.path.abspath("./_ext"))
 
 project = 'Bach'
 copyright = '2021, Objectiv'
@@ -49,6 +51,7 @@ extensions = [
     'sphinx.ext.doctest',  # run examples /tests
     'numpydoc',  # use numpy style docs
     'sphinx_markdown_builder',
+    'sphinx_docusaurus_builder',
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
