@@ -20,7 +20,7 @@ def _create_test_table(engine: Engine, table_name: str):
               f'create table {table_name}(a bigint, b text, c double precision, d date, e timestamp); '
     elif is_bigquery(engine):
         sql = f'drop table if exists {table_name}; ' \
-              f'create table {table_name}(a int64, b string, c float64, d date, e datetime); '
+              f'create table {table_name}(a int64, b string, c float64, d date, e timestamp); '
     else:
         raise Exception('Incomplete tests')
     with engine.connect() as conn:
