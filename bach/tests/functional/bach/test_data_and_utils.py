@@ -6,11 +6,12 @@ Utilities and a very simple dataset for testing Bach DataFrames.
 This file does not contain any test, but having the file's name start with `test_` makes pytest treat it
 as a test file. This makes pytest rewrite the asserts to give clearer errors.
 """
+import datetime
 from decimal import Decimal
 from typing import List, Union, Type, Dict, Any
 
 import sqlalchemy
-from sqlalchemy.engine import ResultProxy, Engine
+from sqlalchemy.engine import ResultProxy, Engine, Dialect
 
 from bach import DataFrame, Series
 from bach.types import get_series_type_from_db_dtype
@@ -344,3 +345,12 @@ def assert_postgres_type(
         assert db_type == expected_db_type
     series_type = get_series_type_from_db_dtype(DBDialect.POSTGRES, db_type)
     assert series_type == expected_series_type
+
+
+def convert_expected_data_timestamps(dialect: Dialect, data: List[List[Any]]) -> List[List[Any]]:
+    """ Set UTC timezone on datetime objects if dialect is BigQuery. """
+    def set_tz(value):
+        if not isinstance(value, (datetime.datetime, datetime.date)) or not is_bigquery(dialect):
+            return value
+        return value.replace(tzinfo=datetime.timezone.utc)
+    return [[set_tz(cell) for cell in row] for row in data]
