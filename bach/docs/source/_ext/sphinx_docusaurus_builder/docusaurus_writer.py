@@ -1,15 +1,12 @@
-from munch import munchify
-# from sphinx_markdown_builder.markdown_writer import MarkdownTranslator, MarkdownWriter
-import pydash as _
-import yaml
-
 from .depth import Depth
 from .doctree2md import Translator, Writer
 from docutils import nodes
 from pydash import _
 import html2text
+from munch import munchify
 import os
 import sys
+import yaml
 
 h = html2text.HTML2Text()
 
@@ -82,6 +79,7 @@ class DocusaurusTranslator(Translator):
         # annotation, e.g 'method', 'class'
         self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
         self.add('_ ')
+        
     def visit_desc_addname(self, node):
         # module preroll for class/method
         pass
