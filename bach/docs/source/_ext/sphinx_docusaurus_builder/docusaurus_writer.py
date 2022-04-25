@@ -25,10 +25,13 @@ class DocusaurusTranslator(Translator):
         Translator.__init__(self, document, builder=None)
         self.builder = builder
 
-    def get_path(self, docname):
-        path = '' if docname == 'index' else docname
-        path = '/' + _.snake_case(path).replace('_', '-')
-        return path
+    # Writes the slug
+    def get_slug(self, docname):
+        print("PARSING DOC: ", docname)
+        slug = '/modeling' if docname == 'index' else '/modeling/' + docname
+        # slug = '/' + _.snake_case(slug).replace('_', '-') + '/'
+        slug = slug.replace('_', '-') + '/'
+        return slug
 
     @property
     def rows(self):
@@ -51,10 +54,10 @@ class DocusaurusTranslator(Translator):
         ctx = self.builder.ctx
         variables = munchify({
             'date': ctx.date,
-            'docname': self.builder.current_docname,
-            'images': self.builder.images,
-            'path': self.get_path(self.builder.current_docname),
-            'title': self.title
+            'id': _.snake_case(self.builder.current_docname).replace('_', '-'),
+            # 'id': self.builder.current_docname,
+            'title': self.title,
+            'slug': self.get_slug(self.builder.current_docname),
         })
         variables_yaml = yaml.safe_dump(variables)
         frontmatter = '---\n' + variables_yaml + '---\n'
@@ -79,7 +82,7 @@ class DocusaurusTranslator(Translator):
         # annotation, e.g 'method', 'class'
         self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
         self.add('_ ')
-        
+
     def visit_desc_addname(self, node):
         # module preroll for class/method
         pass
@@ -271,6 +274,21 @@ class DocusaurusTranslator(Translator):
 
     def depart_raw(self, node):
         self.ascend('raw')
+
+    def visit_reference(self, node):
+        attributes = node.attributes
+        # print("ATTRIBUTES", attributes)
+        # self.add("EN NU DAN?")
+        if('reftitle' in attributes):
+            title = attributes['reftitle']
+            uri = attributes['refuri']
+            self.add("["+title+"]("+uri+")")
+            if title == 'modelhub.Map.is_first_session':
+                print("REFERENCE ATTRIBUTES:", attributes)
+        pass
+
+        #  <reference internal="True" reftitle="modelhub.Map.is_first_session" refuri="#modelhub.Map.is_first_session"><literal classes="xref py py-obj">Map.is_first_session</literal></reference>
+        # THIS IS A REFERENCE {'rawsource': '', 'children': [<literal: <#text: 'Map.is_convers ...'>>], 'attributes': {'ids': [], 'classes': [], 'names': [], 'dupnames': [], 'backrefs': [], 'internal': True, 'refuri': '#modelhub.Map.is_conversion_event', 'reftitle': 'modelhub.Map.is_conversion_event'}, 'tagname': 'reference', 'parent': <paragraph: <reference...><#text: '(data, name)'>>, '_document': <document: <target...><section "mapping; models_mapping"...>>, 'source': None, 'line': None}
 
     def visit_table(self, node):
         self.tables.append(node)

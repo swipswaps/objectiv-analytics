@@ -1,9 +1,10 @@
 """
 Copyright Objectiv B.V. 2022
 
-Used to import Sphinx generated python docs into Docusaurus. This script does the following:
-- TODO
+Copies Sphinx generated python docs into Docusaurus. 
 """
+
+import shutil
 
 # html build dir / output of sphinx
 html_dir = 'build/docusaurus/'
@@ -14,7 +15,10 @@ docs = 'docs'
 # base dir of these docs (relative to docusaurus_dir/docs/
 module = 'modeling'
 
+docs_source = f'{html_dir}'
 docs_target = f'{docusaurus_dir}/{docs}/{module}'
 
-# TODO: copy the right files to the right directories
+# TODO: Clean up the directories on objectiv.io???
 
+# Copy all API reference files to the right directory
+shutil.copytree(docs_source, docs_target, dirs_exist_ok=True)
