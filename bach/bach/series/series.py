@@ -1338,22 +1338,27 @@ class Series(ABC):
 
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
+    # TODO make group_by optional, but for that we need to use current series sorting
     def _check_window(
-        self, agg_function: WindowFunction, window: Optional[Union[WrappedWindow, 'GroupBy']],
+        self, agg_function: WindowFunction, window: Optional[WrappedWindow],
     ) -> 'Window':
         """
         Validate that the given partition or the stored group_by is a true Window or raise an exception
         """
         from bach.partitioning import Window
 
+        if not window:
+            raise ValueError(f'Cannot apply {agg_function.value} function without a window clause')
+
+        window_cp = copy(window) if isinstance(window, Window) else window.group_by
         if (
-            isinstance(window, Window)
+            isinstance(window_cp, Window)
             and not agg_function.supports_window_frame_clause(dialect=self.engine.dialect)
         ):
             # remove boundaries if the functions does not support window frame clause
-            window = window.set_frame_clause(start_boundary=None, end_boundary=None)
+            window_cp = window_cp.set_frame_clause(start_boundary=None, end_boundary=None)
 
-        return cast(Window, self._check_unwrap_groupby(window, isin=Window))
+        return cast(Window, self._check_unwrap_groupby(window_cp, isin=Window))
 
     def window_row_number(self, window: WrappedWindow = None):
         """
