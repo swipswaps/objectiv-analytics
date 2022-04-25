@@ -5,7 +5,9 @@ from tests.unit.bach.util import get_fake_df
 def test_window_row_number(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=True).window_row_number()
+
+    w = left.sort_values(by='b', ascending=True).window()
+    result = series_b.window_row_number(w)
 
     result_sql = result.expression.to_sql(dialect)
     if is_bigquery(dialect):
@@ -20,7 +22,9 @@ def test_window_row_number(dialect):
 def test_window_rank(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=True).window_rank()
+
+    w = left.sort_values(by='b', ascending=True).window()
+    result = series_b.window_rank(w)
 
     result_sql = result.expression.to_sql(dialect)
     if is_bigquery(dialect):
@@ -35,7 +39,9 @@ def test_window_rank(dialect):
 def test_window_dense_rank(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=True).window_dense_rank()
+
+    w = left.sort_values(by='b', ascending=True).window()
+    result = series_b.window_dense_rank(w)
 
     result_sql = result.expression.to_sql(dialect)
     if is_bigquery(dialect):
@@ -50,7 +56,9 @@ def test_window_dense_rank(dialect):
 def test_window_percent_rank(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=True).window_percent_rank()
+
+    w = left.sort_values(by='b', ascending=True).window()
+    result = series_b.window_percent_rank(w)
 
     result_sql = result.expression.to_sql(dialect)
     if is_bigquery(dialect):
@@ -65,7 +73,9 @@ def test_window_percent_rank(dialect):
 def test_window_cume_dist(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=False).window_cume_dist()
+
+    w = left.sort_values(by='b', ascending=False).window()
+    result = series_b.window_cume_dist(window=w)
 
     result_sql = result.expression.to_sql(dialect)
     if is_bigquery(dialect):
@@ -80,7 +90,9 @@ def test_window_cume_dist(dialect):
 def test_window_ntile(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=False).window_ntile()
+
+    w = left.sort_values(by='b', ascending=False).window()
+    result = series_b.window_ntile(window=w)
 
     result_sql = result.expression.to_sql(dialect)
     if is_bigquery(dialect):
@@ -95,7 +107,9 @@ def test_window_ntile(dialect):
 def test_window_lead(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=False).window_lead()
+
+    w = left.sort_values(by='b', ascending=False).window()
+    result = series_b.window_lead(window=w)
 
     result_sql = result.expression.to_sql(dialect)
     column_name = '`b`' if is_bigquery(dialect) else '"b"'
@@ -107,7 +121,9 @@ def test_window_lead(dialect):
 def test_window_first_value(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=False).window_first_value()
+
+    w = left.sort_values(by='b', ascending=False).window()
+    result = series_b.window_first_value(w)
 
     result_sql = result.expression.to_sql(dialect)
     column_name = '`b`' if is_bigquery(dialect) else '"b"'
@@ -120,7 +136,9 @@ def test_window_first_value(dialect):
 def test_window_last_value(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=False).window_last_value()
+
+    w = left.sort_values(by='b', ascending=False).window()
+    result = series_b.window_last_value(w)
 
     result_sql = result.expression.to_sql(dialect)
     column_name = '`b`' if is_bigquery(dialect) else '"b"'
@@ -133,7 +151,9 @@ def test_window_last_value(dialect):
 def test_window_nth_value(dialect):
     left = get_fake_df(dialect, ['a'], ['b', 'c'])
     series_b = left['b']
-    result = series_b.sort_values(ascending=False).window_nth_value(10)
+
+    w = left.sort_values(by='b', ascending=False).window()
+    result = series_b.window_nth_value(10, window=w)
 
     result_sql = result.expression.to_sql(dialect)
     column_name = '`b`' if is_bigquery(dialect) else '"b"'

@@ -1344,30 +1344,16 @@ class Series(ABC):
         """
         Validate that the given partition or the stored group_by is a true Window or raise an exception
         """
-        from bach.partitioning import Window, GroupBy
-        from bach.dataframe import DataFrame
+        from bach.partitioning import Window
 
-        if not window or isinstance(window, (GroupBy, DataFrame)):
-            group_by: Optional[GroupBy]
-            if isinstance(window, GroupBy):
-                group_by = window
-            else:
-                group_by = window.group_by if isinstance(window, DataFrame) else self.group_by
-            window_cp = Window(
-                group_by_columns=list(group_by.index.values()) if group_by else [],
-                order_by=(
-                    window.order_by
-                    if isinstance(window, DataFrame)
-                    else [SortColumn(expression=self.expression, asc=bool(self.sorted_ascending))]
-                ),
-            )
-        else:
-            window_cp = copy(window)
+        if (
+            isinstance(window, Window)
+            and not agg_function.supports_window_frame_clause(dialect=self.engine.dialect)
+        ):
+            # remove boundaries if the functions does not support window frame clause
+            window = window.set_frame_clause(start_boundary=None, end_boundary=None)
 
-        if window_cp and not agg_function.supports_window_frame_clause(dialect=self.engine.dialect):
-            window_cp = window_cp.set_frame_clause(start_boundary=None, end_boundary=None)
-
-        return cast(Window, self._check_unwrap_groupby(window_cp, isin=Window))
+        return cast(Window, self._check_unwrap_groupby(window, isin=Window))
 
     def window_row_number(self, window: WrappedWindow = None):
         """
