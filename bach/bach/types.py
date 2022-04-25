@@ -57,10 +57,14 @@ def get_dtype_from_db_dtype(db_dialect: DBDialect, db_dtype: str) -> str:
 
 
 def value_to_dtype(value: Any) -> str:
-    """
-    Give the dtype, as a string of the given value.
-    """
+    """ Give the dtype, as a string of the given value. """
     return _registry.value_to_dtype(value)
+
+
+def value_to_series(value: Any) -> Type['Series']:
+    # TODO: not needed, remove again?
+    """ Return the Series subclass that can represent value as literal. """
+    return get_series_type_from_dtype(dtype=value_to_dtype(value))
 
 
 T = TypeVar('T', bound='Series')
@@ -122,12 +126,12 @@ class TypeRegistry:
         from bach.series import \
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,\
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,\
-            SeriesUuid, SeriesJsonb, SeriesJson
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray
 
         standard_types: List[Type[Series]] = [
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,
-            SeriesUuid, SeriesJsonb, SeriesJson
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray
         ]
 
         for klass in standard_types:

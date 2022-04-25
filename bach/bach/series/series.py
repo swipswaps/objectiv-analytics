@@ -19,7 +19,7 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes
+from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes, value_to_series
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 
@@ -1628,8 +1628,7 @@ def const_to_series(base: Union[Series, DataFrame],
     if isinstance(value, Series):
         return value
     name = '__const__' if name is None else name
-    dtype = value_to_dtype(value)
-    series_type = get_series_type_from_dtype(dtype)
+    series_type = value_to_series(value)
     return series_type.from_const(base=base, value=value, name=name)
 
 
@@ -1649,9 +1648,8 @@ def variable_series(
     """
     if isinstance(value, Series):
         return value
-    dtype = value_to_dtype(value)
-    series_type = get_series_type_from_dtype(dtype)
-    variable_placeholder = Expression.variable(dtype=dtype, name=name)
+    series_type = value_to_series(value)
+    variable_placeholder = Expression.variable(dtype=series_type.dtype, name=name)
     variable_expression = series_type.supported_literal_to_expression(
         dialect=base.engine.dialect,
         literal=variable_placeholder

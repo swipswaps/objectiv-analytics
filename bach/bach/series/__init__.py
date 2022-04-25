@@ -10,3 +10,4 @@ from bach.series.series_json import SeriesJson, SeriesJsonb
 from bach.series.series_string import SeriesString
 from bach.series.series_datetime import \
     SeriesAbstractDateTime, SeriesDate, SeriesTime, SeriesTimestamp, SeriesTimedelta
+from bach.series.series_array import SeriesArray
