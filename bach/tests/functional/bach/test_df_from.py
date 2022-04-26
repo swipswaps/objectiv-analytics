@@ -6,6 +6,7 @@ tests for:
  * DataFrame.from_model()
 
 """
+import pytest
 from sqlalchemy.engine import Engine
 
 from bach import DataFrame
@@ -19,13 +20,14 @@ def _create_test_table(engine: Engine, table_name: str):
               f'create table {table_name}(a bigint, b text, c double precision, d date, e timestamp); '
     elif is_bigquery(engine):
         sql = f'drop table if exists {table_name}; ' \
-              f'create table {table_name}(a int64, b string, c float64, d date, e datetime); '
+              f'create table {table_name}(a int64, b string, c float64, d date, e timestamp); '
     else:
         raise Exception('Incomplete tests')
     with engine.connect() as conn:
         conn.execute(sql)
 
 
+@pytest.mark.xdist_group(name="test_table_writers")
 def test_from_table_basic(engine):
     table_name = 'test_df_from_table'
     _create_test_table(engine, table_name)
@@ -49,6 +51,7 @@ def test_from_table_basic(engine):
     assert df == df_all_dtypes
 
 
+@pytest.mark.xdist_group(name="test_table_writers")
 def test_from_model_basic(pg_engine):
     # This is essentially the same test as test_from_table_basic(), but tests creating the dataframe with
     # from_model instead of from_table
@@ -76,6 +79,7 @@ def test_from_model_basic(pg_engine):
     assert df == df_all_dtypes
 
 
+@pytest.mark.xdist_group(name="test_table_writers")
 def test_from_table_column_ordering(engine):
     # Create a Dataframe in which the index is not the first column in the table.
     table_name = 'test_df_from_table'
@@ -99,6 +103,7 @@ def test_from_table_column_ordering(engine):
     assert df == df_all_dtypes
 
 
+@pytest.mark.xdist_group(name="test_table_writers")
 def test_from_model_column_ordering(pg_engine):
     # This is essentially the same test as test_from_table_model_ordering(), but tests creating the dataframe with
     # from_model instead of from_table

@@ -5,7 +5,7 @@ from copy import copy
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
-    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload,
+    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload, Mapping,
 )
 
 import numpy
@@ -17,7 +17,7 @@ from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, AllSupportedLiteralTypes
 from bach.utils import escape_parameter_characters
-from sql_models.constants import NotSet, not_set
+from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
@@ -773,13 +773,13 @@ class DataFrame:
         self,
         engine: Optional[Engine] = None,
         base_node: Optional[BachSqlModel] = None,
-        index: Optional[Dict[str, 'Series']] = None,
-        series: Optional[Dict[str, 'Series']] = None,
+        index: Optional[Mapping[str, 'Series']] = None,
+        series: Optional[Mapping[str, 'Series']] = None,
         group_by: Optional[Union['GroupBy', NotSet]] = not_set,
         order_by: Optional[List[SortColumn]] = None,
         variables: Optional[Dict[DtypeNamePair, Hashable]] = None,
-        index_dtypes: Optional[Dict[str, str]] = None,
-        series_dtypes: Optional[Dict[str, str]] = None,
+        index_dtypes: Optional[Mapping[str, str]] = None,
+        series_dtypes: Optional[Mapping[str, str]] = None,
         single_value: bool = False,
         savepoints: Optional['Savepoints'] = None,
         **kwargs
@@ -1845,18 +1845,31 @@ class DataFrame:
         .. note::
             This function queries the database.
         """
-        with self.engine.connect() as conn:
-            sql = self.view_sql(limit=limit)
-            dtype = {name: series.dtype_to_pandas for name, series in self.all_series.items()
-                     if series.dtype_to_pandas is not None}
+        db_dialect = DBDialect.from_engine(self.engine)
 
+        sql = self.view_sql(limit=limit)
+
+        series_name_to_dtype = {}
+        for series in self.all_series.values():
+            pandas_info = series.to_pandas_info.get(db_dialect)
+            if pandas_info is not None:
+                series_name_to_dtype[series.name] = pandas_info.dtype
+
+        with self.engine.connect() as conn:
             # read_sql_query expects a parameterized query, so we need to escape the parameter characters
             sql = escape_parameter_characters(conn, sql)
-            pandas_df = pandas.read_sql_query(sql, conn).astype(dtype)
+            pandas_df = pandas.read_sql_query(sql, conn, dtype=series_name_to_dtype)
 
-            if len(self._index):
-                return pandas_df.set_index(list(self._index.keys()))
-            return pandas_df
+        # Post-process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
+        # the strings that the query gives us into UUID objects
+        for name, series in self.data.items():
+            to_pandas_info = series.to_pandas_info.get(db_dialect)
+            if to_pandas_info is not None and to_pandas_info.function is not None:
+                pandas_df[name] = pandas_df[name].apply(to_pandas_info.function)
+
+        if self.index:
+            pandas_df = pandas_df.set_index(list(self.index.keys()))
+        return pandas_df
 
     def head(self, n: int = 5) -> pandas.DataFrame:
         """

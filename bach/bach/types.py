@@ -26,7 +26,7 @@ AllSupportedLiteralTypes = Union[
     bool,
     None,
     str,
-    datetime.date, datetime.time, datetime.datetime, datetime.timedelta, numpy.timedelta64,
+    datetime.date, datetime.time, datetime.datetime, numpy.datetime64, datetime.timedelta, numpy.timedelta64,
     UUID,
     dict,
     list
@@ -150,6 +150,7 @@ class TypeRegistry:
         self._register_value_klass(datetime.date, SeriesDate)
         self._register_value_klass(datetime.time, SeriesTime)
         self._register_value_klass(datetime.datetime, SeriesTimestamp)
+        self._register_value_klass(numpy.datetime64, SeriesTimestamp)
         self._register_value_klass(datetime.timedelta, SeriesTimedelta)
         self._register_value_klass(numpy.timedelta64, SeriesTimedelta)
         self._register_value_klass(UUID, SeriesUuid)
