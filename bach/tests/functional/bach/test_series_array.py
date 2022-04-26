@@ -8,8 +8,8 @@ from tests.functional.bach.test_data_and_utils import get_df_with_test_data, ass
 def test_basic_value_to_expression(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
-    df['int_array'] = SeriesArray.from_const(base=df, value=[1, 2, 3], name='int_array')
-    df['str_array'] = SeriesArray.from_const(base=df, value=['a', 'b', 'c'], name='str_array')
+    df['int_array'] = SeriesArray.from_const(base=df, value=[1, 2, 3], name='int_array', dtype=['int64'])
+    df['str_array'] = SeriesArray.from_const(base=df, value=['a', 'b', 'c'], name='str_array', dtype=['string'])
     print(df.dtypes)
     assert_equals_data(
         df,
@@ -21,14 +21,13 @@ def test_basic_value_to_expression(engine):
 def test_getitem(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
-    df['int_array'] = SeriesArray.from_const(base=df, value=[1, 2, 3], name='int_array')
-    df['str_array'] = SeriesArray.from_const(base=df, value=['a', 'b', 'c'], name='str_array')
+    df['int_array'] = SeriesArray.from_const(base=df, value=[1, 2, 3], name='int_array', dtype=['int64'])
+    df['str_array'] = SeriesArray.from_const(base=df, value=['a', 'b', 'c'], name='str_array', dtype=['string'])
     df = df.materialize()   # TODO: make tests pass without this materialize() call
     df['a'] = df['int_array'].arr[0]
     df['b'] = df['int_array'].arr[1]
     df['c'] = df['int_array'].arr[2]
     df['d'] = df['str_array'].arr[1]
-    print(df.dtypes)
     assert_equals_data(
         df,
         expected_columns=[
@@ -36,14 +35,18 @@ def test_getitem(engine):
         ],
         expected_data=[[1, 1, [1, 2, 3], ['a', 'b', 'c'], 1, 2, 3, 'b']]
     )
+    assert df.dtypes['a'] == 'int64'
+    assert df.dtypes['b'] == 'int64'
+    assert df.dtypes['c'] == 'int64'
+    assert df.dtypes['d'] == 'string'
 
 
 def test_len(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
-    df['empty_array'] = SeriesArray.from_const(base=df, value=[], name='empty_array')
-    df['int_array'] = SeriesArray.from_const(base=df, value=[1, 2, 3, 4, 5, 6], name='int_array')
-    df['str_array'] = SeriesArray.from_const(base=df, value=['a', 'b', 'c'], name='str_array')
+    df['empty_array'] = SeriesArray.from_const(base=df, value=[], name='empty_array', dtype=['int64'])
+    df['int_array'] = SeriesArray.from_const(base=df, value=[1, 2, 3, 4, 5, 6], name='int_array', dtype=['int64'])
+    df['str_array'] = SeriesArray.from_const(base=df, value=['a', 'b', 'c'], name='str_array', dtype=['string'])
     df = df.materialize()   # TODO: make tests pass without this materialize() call
     df['a'] = df['empty_array'].arr.len()
     df['b'] = df['int_array'].arr.len()

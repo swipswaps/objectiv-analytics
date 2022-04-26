@@ -38,7 +38,12 @@ usage, that is fine.
 """
 
 
-DtypeOrAlias = Union[Type, str]
+Dtype = str
+StructuredDtype = Union[List[Any], Dict[str, Any], Dtype]
+# Real definition of StructuredDtype, but not supported by mypy:
+# StructuredDtype = Union[List[StructuredDtype], Dict[str, StructuredDtype], str]
+# TODO: use DtypeOrAlias in StructuredDtype?
+DtypeOrAlias = Union[Type, Dtype]
 
 
 def get_series_type_from_dtype(dtype: DtypeOrAlias) -> Type['Series']:

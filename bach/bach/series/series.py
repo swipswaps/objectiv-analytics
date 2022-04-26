@@ -19,7 +19,8 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes, value_to_series
+from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes, value_to_series, \
+    StructuredDtype
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 
@@ -129,7 +130,8 @@ class Series(ABC):
                  expression: Expression,
                  group_by: Optional['GroupBy'],
                  sorted_ascending: Optional[bool],
-                 index_sorting: List[bool]):
+                 index_sorting: List[bool],
+                 instance_dtype: Optional[StructuredDtype] = None):
         """
         Initialize a new Series object.
         If a Series is associated with a DataFrame. The engine, base_node and index
@@ -200,6 +202,8 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
+        # TODO: @property and _instance_dtype
+        self.instance_dtype = instance_dtype  # TODO: do some check that this is consistent with cls.dtype
 
     @classmethod
     @abstractmethod
@@ -316,7 +320,8 @@ class Series(ABC):
             expression: Expression,
             group_by: Optional['GroupBy'],
             sorted_ascending: Optional[bool] = None,
-            index_sorting: List[bool] = None
+            index_sorting: List[bool] = None,
+            instance_dtype: Optional[StructuredDtype] = None
     ):
         """ INTERNAL: Create an instance of this class. """
         return cls(
@@ -327,7 +332,8 @@ class Series(ABC):
             expression=expression,
             group_by=group_by,
             sorted_ascending=sorted_ascending,
-            index_sorting=[] if index_sorting is None else index_sorting
+            index_sorting=[] if index_sorting is None else index_sorting,
+            instance_dtype=instance_dtype
         )
 
     @classmethod
@@ -363,7 +369,8 @@ class Series(ABC):
     def from_const(cls,
                    base: DataFrameOrSeries,
                    value: Any,
-                   name: str) -> 'Series':
+                   name: str,
+                   dtype: Optional[StructuredDtype] = None) -> 'Series':
         """
         Create an instance of this class, that represents a column with the given value.
         The returned Series will be similar to the Series given as base. In case a DataFrame is given,
@@ -406,7 +413,8 @@ class Series(ABC):
         expression: Optional['Expression'] = None,
         group_by: Optional[Union['GroupBy', NotSet]] = not_set,
         sorted_ascending: Optional[Union[bool, NotSet]] = not_set,
-        index_sorting: Optional[List[bool]] = None
+        index_sorting: Optional[List[bool]] = None,
+        instance_dtype: Optional[StructuredDtype] = None
     ) -> T:
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
@@ -425,7 +433,8 @@ class Series(ABC):
             expression=self._expression if expression is None else expression,
             group_by=self._group_by if group_by is not_set else group_by,
             sorted_ascending=self._sorted_ascending if sorted_ascending is not_set else sorted_ascending,
-            index_sorting=self._index_sorting if index_sorting is None else index_sorting
+            index_sorting=self._index_sorting if index_sorting is None else index_sorting,
+            instance_dtype=self.instance_dtype if instance_dtype is None else instance_dtype
         )
 
     def copy_override_dtype(self, dtype: Optional[str]) -> 'Series':

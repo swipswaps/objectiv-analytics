@@ -937,8 +937,8 @@ class DataFrame:
             Calling materialize() resets the order of the dataframe. Call :py:meth:`sort_values()` again on
             the result if order is important.
         """
-        index_dtypes = {k: v.dtype for k, v in self._index.items()}
-        series_dtypes = {k: v.dtype for k, v in self._data.items()}
+        index_dtypes = {k: v.dtype for k, v in self.index.items()}
+        series_dtypes = {k: v.dtype for k, v in self.data.items()}
         node = self.get_current_node(name=node_name, limit=limit, distinct=distinct)
 
         df = self.get_instance(
@@ -951,6 +951,15 @@ class DataFrame:
             savepoints=self.savepoints,
             variables=self.variables
         )
+        # hackish, but works for now: copy instance dtypes
+        for k, v in self.index.items():
+            if v.instance_dtype is not None:
+                df[k] = df[k].copy_override(instance_dtype=v.instance_dtype)
+        for k, v in self.data.items():
+            df[k] = df[k].copy_override(index=df.index)
+            if v.instance_dtype is not None:
+                df[k] = df[k].copy_override(instance_dtype=v.instance_dtype)
+        # end of: copy instance dtypes
 
         if not inplace:
             return df

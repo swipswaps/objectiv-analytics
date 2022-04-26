@@ -10,7 +10,7 @@ from bach.series import Series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from bach.sql_model import BachSqlModel
-from bach.types import DtypeOrAlias
+from bach.types import DtypeOrAlias, StructuredDtype
 from sql_models.constants import DBDialect
 from sql_models.util import quote_string, is_postgres, DatabaseNotSupportedException
 
@@ -376,7 +376,8 @@ class SeriesJson(SeriesJsonb):
                  expression: Expression,
                  group_by: 'GroupBy',
                  sorted_ascending: Optional[bool],
-                 index_sorting: List[bool]):
+                 index_sorting: List[bool],
+                 instance_dtype: Optional[StructuredDtype] = None):
 
         super().__init__(engine=engine,
                          base_node=base_node,
@@ -385,4 +386,5 @@ class SeriesJson(SeriesJsonb):
                          expression=Expression.construct(f'cast({{}} as jsonb)', expression),
                          group_by=group_by,
                          sorted_ascending=sorted_ascending,
-                         index_sorting=index_sorting)
+                         index_sorting=index_sorting,
+                         instance_dtype=instance_dtype)
