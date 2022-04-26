@@ -7,8 +7,46 @@ from munch import munchify
 import os
 import sys
 import yaml
+# from docutils.parsers.rst import Directive, directives
+from sphinx.util.docutils import SphinxDirective, directives
 
 h = html2text.HTML2Text()
+
+frontmatter = {}
+
+class FrontMatterPositionDirective(SphinxDirective):
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+    option_spec = {}
+    has_content = False
+
+    def run(self):
+        docname = self.env.docname
+        print("RUNNING FRONTMATTER POSITION DIRECTIVE FOR DOC ", docname)
+        reference = directives.uri(self.arguments[0])
+        frontmatter.setdefault(docname, dict())
+        frontmatter[docname]['position'] = reference
+        print("SELF.FRONTMATTER:", frontmatter)
+        paragraph_node = nodes.raw(text='sidebar_position: ' + reference + '\n')
+        return [paragraph_node]
+
+class FrontMatterSlugDirective(SphinxDirective):
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+    option_spec = {}
+    has_content = False
+
+    def run(self):
+        docname = self.env.docname
+        print("RUNNING FRONTMATTER SLUG DIRECTIVE FOR DOC ", docname)
+        reference = directives.uri(self.arguments[0])
+        frontmatter.setdefault(docname, dict())
+        frontmatter[docname]['slug'] = reference
+        print("SELF.FRONTMATTER:", frontmatter)
+        paragraph_node = nodes.raw(text='slug: ' + reference + '\n')
+        return [paragraph_node]
 
 class DocusaurusTranslator(Translator):
     depth = Depth()
@@ -24,13 +62,18 @@ class DocusaurusTranslator(Translator):
     def __init__(self, document, builder=None):
         Translator.__init__(self, document, builder=None)
         self.builder = builder
+        self.frontmatter = frontmatter
 
     # Writes the slug
-    def get_slug(self, docname):
-        print("PARSING DOC: ", docname)
-        slug = '/modeling' if docname == 'index' else '/modeling/' + docname
+    def get_slug(self, docname, doc_frontmatter):
+        if doc_frontmatter and 'slug' in doc_frontmatter:
+            return doc_frontmatter['slug']
+        
+        slug = docname.replace('_', '-')
+        if docname[-5:] == "index":
+            slug = docname[:-5]
         # slug = '/' + _.snake_case(slug).replace('_', '-') + '/'
-        slug = slug.replace('_', '-') + '/'
+        slug = '/modeling/' + slug + '/'
         return slug
 
     @property
@@ -52,16 +95,20 @@ class DocusaurusTranslator(Translator):
 
     def depart_document(self, node):
         ctx = self.builder.ctx
+        doc_frontmatter = self.frontmatter[self.builder.current_docname] if self.builder.current_docname in self.frontmatter else None
+        # print("FRONTMATTER FOR DOC " + self.builder.current_docname + ":", doc_frontmatter)
         variables = munchify({
             'date': ctx.date,
             'id': _.snake_case(self.builder.current_docname).replace('_', '-'),
             # 'id': self.builder.current_docname,
             'title': self.title,
-            'slug': self.get_slug(self.builder.current_docname),
+            'slug': self.get_slug(self.builder.current_docname, doc_frontmatter),
         })
+        if doc_frontmatter and 'position' in doc_frontmatter:
+            variables['sidebar_position'] = int(doc_frontmatter['position'])
         variables_yaml = yaml.safe_dump(variables)
-        frontmatter = '---\n' + variables_yaml + '---\n'
-        self.add(frontmatter, section='head')
+        frontmatter_content = '---\n' + variables_yaml + '---\n'
+        self.add(frontmatter_content, section='head')
 
     def visit_title(self, node):
         if not self.visited_title:
@@ -283,8 +330,6 @@ class DocusaurusTranslator(Translator):
             title = attributes['reftitle']
             uri = attributes['refuri']
             self.add("["+title+"]("+uri+")")
-            if title == 'modelhub.Map.is_first_session':
-                print("REFERENCE ATTRIBUTES:", attributes)
         pass
 
         #  <reference internal="True" reftitle="modelhub.Map.is_first_session" refuri="#modelhub.Map.is_first_session"><literal classes="xref py py-obj">Map.is_first_session</literal></reference>
@@ -409,4 +454,6 @@ class DocusaurusTranslator(Translator):
         self.depth.ascend(node_name)
 
 class DocusaurusWriter(Writer):
+    directives.register_directive('frontmatterposition', FrontMatterPositionDirective)
+    directives.register_directive('frontmatterslug', FrontMatterSlugDirective)
     translator_class = DocusaurusTranslator

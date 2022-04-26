@@ -3,6 +3,8 @@ from os import path
 from setuptools import setup, find_packages
 from subprocess import check_output
 from .sphinx_docusaurus_builder.docusaurus_builder import DocusaurusBuilder
+from .sphinx_docusaurus_builder.docusaurus_writer import FrontMatterDirective
+from docutils.parsers.rst import directives
 
 here = path.abspath(path.dirname(__file__))
 

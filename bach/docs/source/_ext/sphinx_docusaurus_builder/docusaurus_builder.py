@@ -77,4 +77,3 @@ class DocusaurusBuilder(Builder):
 
     def finish(self):
         pass
-      
