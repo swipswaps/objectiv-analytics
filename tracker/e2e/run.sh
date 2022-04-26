@@ -1,25 +1,24 @@
 #!/bin/bash
 
-declare -a TAGS=(
-  "latest"
-  "next"
-)
-
-
 for PROJECT in */
 do
-  cd $PROJECT
+  echo "---------------------------------------------------------------"
+  echo "Running $PROJECT"
+  echo "---------------------------------------------------------------"
 
-  for TAG in "${TAGS[@]}"
-  do
-    echo "---------------------------------------------------------------"
-    echo "$PROJECT: building with tag: $TAG"
-    echo "---------------------------------------------------------------"
-    cp package.template.json package.json
-    sed -i '' "s/{TAG}/$TAG/g" package.json
-	  npm install
-	  npm run build
-  done
+  (
+    cd $PROJECT
 
-  cd ..
+    # install dependencies
+    npm install
+
+    # run tests
+    npm run test
+
+    # build
+    npm run build
+
+    # cleanup
+    rm -rf build
+  )
 done
