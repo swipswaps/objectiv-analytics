@@ -10,7 +10,7 @@ from bach.utils import escape_parameter_characters
 from sql_models.constants import DBDialect
 from sql_models.model import SqlModel, CustomSqlModelBuilder
 from sql_models.sql_generator import to_sql
-from sql_models.util import is_postgres, DatabaseNotSupportedException
+from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
 
 def get_dtypes_from_model(engine: Engine, node: SqlModel) -> Dict[str, str]:
@@ -33,15 +33,21 @@ def get_dtypes_from_model(engine: Engine, node: SqlModel) -> Dict[str, str]:
 def get_dtypes_from_table(
     engine: Engine,
     table_name: str,
-    dataset_path: Optional[str] = None
+    *,
+    bq_dataset: Optional[str] = None,
+    bq_project_id: Optional[str] = None
 ) -> Dict[str, str]:
     """ Query database to get dtypes of the given table. """
-    dataset_path = '' if not dataset_path else dataset_path
-    if not dataset_path:
-        # using `INFORMATION_SCHEMA.COLUMNS` in capitals, as that way it works on both Postgres and BigQuery
+    if is_postgres(engine):
         meta_data_table = 'INFORMATION_SCHEMA.COLUMNS'
+    elif is_bigquery(engine):
+        meta_data_table = 'INFORMATION_SCHEMA.COLUMNS'
+        if bq_dataset:
+            meta_data_table = f'{bq_dataset}.{meta_data_table}'
+        if bq_project_id:
+            meta_data_table = f'{bq_project_id}.{meta_data_table}'
     else:
-        meta_data_table = f'{dataset_path}.INFORMATION_SCHEMA.COLUMNS'
+        raise DatabaseNotSupportedException(engine)
     sql = f"""
         select column_name, data_type
         from {meta_data_table}
