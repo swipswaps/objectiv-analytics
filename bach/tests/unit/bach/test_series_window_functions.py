@@ -114,7 +114,8 @@ def test_window_lead(dialect):
     result_sql = result.expression.to_sql(dialect)
     column_name = '`b`' if is_bigquery(dialect) else '"b"'
     assert result_sql == (
-        f'lead({column_name}, 1, NULL) over ( order by "b" desc RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)'
+        f'lead({column_name}, 1, NULL) over '
+        f'( order by {column_name} desc RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)'
     )
 
 
