@@ -8,6 +8,7 @@ import pytest
 
 from bach import Series, SeriesAbstractNumeric
 from bach.partitioning import GroupingList, GroupingSet, Rollup, Cube
+from bach.utils import WindowFunction
 from sql_models.util import is_postgres
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
 
