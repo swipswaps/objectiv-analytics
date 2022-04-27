@@ -20,11 +20,11 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 from bach.sql_model import BachSqlModel
 
 from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes
-from bach.utils import is_valid_column_name, WindowFunction
+from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 
 if TYPE_CHECKING:
-    from bach.partitioning import GroupBy, Window
+    from bach.partitioning import GroupBy, Window, WindowFunction
     from bach.series import SeriesBoolean
 
 T = TypeVar('T', bound='Series')
@@ -1354,34 +1354,25 @@ class Series(ABC):
     # TODO more specific docs
     # TODO make group_by optional, but for that we need to use current series sorting
     def _check_window(
-        self, agg_function: WindowFunction, window: Optional[WrappedWindow],
+        self, agg_function: 'WindowFunction', window: Optional[WrappedWindow],
     ) -> 'Window':
         """
         Validate that the given partition or the stored group_by is a true Window or raise an exception
         """
         from bach.partitioning import Window
+        window = cast(Window, self._check_unwrap_groupby(window, isin=Window))
 
-        if not window and not self.group_by:
-            raise ValueError(f'Cannot apply {agg_function.value} function without a window clause')
-
-        if not window:
-            # use series group_by attribute (e.g window.series_a.window_row_number())
-            window_cp = self.group_by
-        else:
-            window_cp = copy(window) if isinstance(window, Window) else window.group_by
-        if (
-            isinstance(window_cp, Window)
-            and not agg_function.supports_window_frame_clause(dialect=self.engine.dialect)
-        ):
+        if not agg_function.supports_window_frame_clause(dialect=self.engine.dialect):
             # remove boundaries if the functions does not support window frame clause
-            window_cp = window_cp.set_frame_clause(start_boundary=None, end_boundary=None)
+            return window.set_frame_clause(start_boundary=None, end_boundary=None)
 
-        return cast(Window, self._check_unwrap_groupby(window_cp, isin=Window))
+        return window
 
     def window_row_number(self, window: WrappedWindow = None):
         """
         Returns the number of the current row within its window, counting from 1.
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.ROW_NUMBER, window)
         return self._derived_agg_func(window, Expression.construct('row_number()'), 'int64')
 
@@ -1390,6 +1381,7 @@ class Series(ABC):
         Returns the rank of the current row, with gaps; that is, the row_number of the first row
         in its peer group.
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.RANK, window)
         return self._derived_agg_func(window, Expression.construct('rank()'), 'int64')
 
@@ -1398,6 +1390,7 @@ class Series(ABC):
         Returns the rank of the current row, without gaps; this function effectively counts peer
         groups.
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.DENSE_RANK, window)
         return self._derived_agg_func(window, Expression.construct('dense_rank()'), 'int64')
 
@@ -1407,6 +1400,7 @@ class Series(ABC):
         (rank - 1) / (total partition rows - 1).
         The value thus ranges from 0 to 1 inclusive.
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.PERCENT_RANK, window)
         return self._derived_agg_func(window, Expression.construct('percent_rank()'), "double precision")
 
@@ -1416,6 +1410,7 @@ class Series(ABC):
         (number of partition rows preceding or peers with current row) / (total partition rows).
         The value thus ranges from 1/N to 1.
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.CUME_DIST, window)
         return self._derived_agg_func(window, Expression.construct('cume_dist()'), "double precision")
 
@@ -1424,6 +1419,7 @@ class Series(ABC):
         Returns an integer ranging from 1 to the argument value,
         dividing the partition as equally as possible.
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.NTILE, window)
         return self._derived_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
 
@@ -1437,6 +1433,7 @@ class Series(ABC):
         :param default: The value to return if no value is available, can be a constant value or Series.
         Defaults to None
         """
+        from bach.partitioning import WindowFunction
         # TODO Lag, lead etc. could check whether the window is setup correctly to include that value
         window = self._check_window(WindowFunction.LAG, window)
         default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default)
@@ -1456,6 +1453,7 @@ class Series(ABC):
         :param default: The value to return if no value is available, can be a constant value or Series.
         Defaults to None
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.LEAD, window)
         default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default)
         return self._derived_agg_func(
@@ -1468,6 +1466,7 @@ class Series(ABC):
         """
         Returns value evaluated at the row that is the first row of the window frame.
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.FIRST_VALUE, window)
         return self._derived_agg_func(
             window,
@@ -1479,6 +1478,7 @@ class Series(ABC):
         """
         Returns value evaluated at the row that is the last row of the window frame.
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.LAST_VALUE, window)
         return self._derived_agg_func(window, Expression.construct('last_value({})', self), self.dtype)
 
@@ -1487,6 +1487,7 @@ class Series(ABC):
         Returns value evaluated at the row that is the n'th row of the window frame.
         (counting from 1); returns NULL if there is no such row.
         """
+        from bach.partitioning import WindowFunction
         window = self._check_window(WindowFunction.NTH_VALUE, window)
         return self._derived_agg_func(
             window,
