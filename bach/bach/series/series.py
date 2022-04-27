@@ -1360,13 +1360,13 @@ class Series(ABC):
         Validate that the given partition or the stored group_by is a true Window or raise an exception
         """
         from bach.partitioning import Window
-        window = cast(Window, self._check_unwrap_groupby(window, isin=Window))
+        checked_window = cast(Window, self._check_unwrap_groupby(window, isin=Window))
 
         if not agg_function.supports_window_frame_clause(dialect=self.engine.dialect):
             # remove boundaries if the functions does not support window frame clause
-            return window.set_frame_clause(start_boundary=None, end_boundary=None)
+            return checked_window.set_frame_clause(start_boundary=None, end_boundary=None)
 
-        return window
+        return checked_window
 
     def window_row_number(self, window: WrappedWindow = None):
         """
