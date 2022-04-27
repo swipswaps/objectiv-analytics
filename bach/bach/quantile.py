@@ -79,7 +79,7 @@ def calculate_quantiles(
         )
 
         # BigQuery returns quantile per row, need to apply distinct
-        df = df.materialize(distinct=True)
+        df = df.materialize(node_name='quantile', distinct=True)
 
     # q values should be numeric
     df['q'] = df['q'].astype(float)

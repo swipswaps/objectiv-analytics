@@ -40,12 +40,17 @@ def test_df_categorical_describe(engine) -> None:
     )
 
 
-def test_df_numerical_describe() -> None:
-    df = get_bt_with_test_data()[['city', 'skating_order', 'inhabitants']]
+def test_df_numerical_describe(engine) -> None:
+    df = get_df_with_test_data(engine)[['city', 'skating_order', 'inhabitants']]
     result = df.describe(percentiles=[0.5])
     assert isinstance(result, DataFrame)
 
     result = result.reset_index(drop=False)
+    mode_result = ['mode', 1., 3055.]
+    if is_bigquery(engine):
+        # cannot change sorting for APPROX_TOP_COUNT
+        mode_result = ['mode', 3., 93485.]
+
     expected_df = pd.DataFrame(
         data=[
             ['count', 3., 3.],
@@ -54,7 +59,7 @@ def test_df_numerical_describe() -> None:
             ['min', 1., 3055.],
             ['max', 3., 93485.],
             ['nunique', 3., 3.],
-            ['mode', 1., 3055.],
+            mode_result,
             ['0.5', 2., 33520.],
         ],
         columns=[
