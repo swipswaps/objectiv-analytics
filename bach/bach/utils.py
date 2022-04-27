@@ -1,5 +1,4 @@
 import re
-from enum import Enum
 from typing import NamedTuple, Dict, List, Set
 from sqlalchemy.engine import Connection, Dialect
 
@@ -81,48 +80,3 @@ def is_valid_column_name(dialect: Dialect, name: str) -> bool:
         prefix_ok = not any(name.startswith(prefix) for prefix in reserved_prefixes)
         return len_ok and pattern_ok and prefix_ok
     raise DatabaseNotSupportedException(dialect)
-
-
-class WindowFunction(Enum):
-    FIRST_VALUE = 'first_value'
-    LAST_VALUE = 'last_value'
-    NTH_VALUE = 'nth_value'
-    LEAD = 'lead'
-    LAG = 'lag'
-
-    RANK = 'rank'
-    DENSE_RANK = 'dense_rank'
-    PERCENT_RANK = 'percent_rank'
-    CUME_DIST = 'cume_dist'
-    NTILE = 'ntile'
-    ROW_NUMBER = 'row_number'
-
-    NAVIGATION_FUNCTIONS = (
-        FIRST_VALUE,
-        LAST_VALUE,
-        NTH_VALUE,
-        LEAD,
-        LAG,
-    )
-
-    NUMBERING_FUNCTIONS = (
-        RANK,
-        DENSE_RANK,
-        PERCENT_RANK,
-        CUME_DIST,
-        NTILE,
-        ROW_NUMBER,
-    )
-
-    ALL_FUNCTIONS = (
-        *NAVIGATION_FUNCTIONS,
-        *NUMBERING_FUNCTIONS,
-    )
-
-    def supports_window_frame_clause(self, dialect: Dialect) -> bool:
-        if is_bigquery(dialect):
-            return self.value not in WindowFunction.NUMBERING_FUNCTIONS.value
-
-        if is_postgres(dialect):
-            return True
-        raise DatabaseNotSupportedException(dialect)

@@ -2,12 +2,60 @@ from copy import copy
 from enum import Enum
 from typing import List, Dict, Optional, cast, TypeVar
 
+from sqlalchemy.engine import Dialect
+
 from bach.series import Series
 from bach.expression import Expression, WindowFunctionExpression
 from bach.dataframe import SortColumn
 from bach.sql_model import BachSqlModel
+from sql_models.util import is_postgres, is_bigquery, DatabaseNotSupportedException
 
 G = TypeVar('G', bound='GroupBy')
+
+
+class WindowFunction(Enum):
+    FIRST_VALUE = 'first_value'
+    LAST_VALUE = 'last_value'
+    NTH_VALUE = 'nth_value'
+    LEAD = 'lead'
+    LAG = 'lag'
+
+    RANK = 'rank'
+    DENSE_RANK = 'dense_rank'
+    PERCENT_RANK = 'percent_rank'
+    CUME_DIST = 'cume_dist'
+    NTILE = 'ntile'
+    ROW_NUMBER = 'row_number'
+
+    _NAVIGATION_FUNCTIONS = (
+        FIRST_VALUE,
+        LAST_VALUE,
+        NTH_VALUE,
+        LEAD,
+        LAG,
+    )
+
+    _NUMBERING_FUNCTIONS = (
+        RANK,
+        DENSE_RANK,
+        PERCENT_RANK,
+        CUME_DIST,
+        NTILE,
+        ROW_NUMBER,
+    )
+
+    _ALL_FUNCTIONS = (
+        *_NAVIGATION_FUNCTIONS,
+        *_NUMBERING_FUNCTIONS,
+    )
+
+    def supports_window_frame_clause(self, dialect: Dialect) -> bool:
+        if is_bigquery(dialect):
+            return self.value not in WindowFunction._NUMBERING_FUNCTIONS.value
+
+        if is_postgres(dialect):
+            return True
+        raise DatabaseNotSupportedException(dialect)
 
 
 class WindowFrameMode(Enum):
