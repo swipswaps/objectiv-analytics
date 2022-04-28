@@ -14,10 +14,10 @@ help:
 
 clean:
 	rm -rf $(SOURCEDIR)/modelhub-api-reference/**/modelhub.* # not the index
-	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/bach.DataFrame.*
 	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/**/
-	rm -rf $(SOURCEDIR)/bach/api-reference/Series/bach.Series.*
+	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/bach.DataFrame.* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/**/
+	rm -rf $(SOURCEDIR)/bach/api-reference/Series/bach.Series* # not the index
 
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) 0$(O)
 
