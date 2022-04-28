@@ -532,7 +532,10 @@ class DataFrame:
             engine: Engine,
             table_name: str,
             index: List[str],
-            all_dtypes: Optional[Dict[str, str]] = None
+            all_dtypes: Optional[Dict[str, str]] = None,
+            *,
+            bq_dataset: Optional[str] = None,
+            bq_project_id: Optional[str] = None
     ) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the content of an existing table in the database.
@@ -547,18 +550,44 @@ class DataFrame:
         :param all_dtypes: Optional. Mapping from column name to dtype.
             Must contain all index and data columns.
             Must be in same order as the columns appear in the the sql-model.
+        :param bq_dataset: BigQuery-only. Dataset in which the table resides, if different from engine.url
+        :param bq_project_id: BigQuery-only. Project of dataset, if different from engine.url
         :returns: A DataFrame based on a sql table.
 
         .. note::
             If all_dtypes is not set, then this will query the database.
         """
+        if bq_project_id and not bq_dataset:
+            raise ValueError('Cannot specify bq_project_id without setting bq_dataset.')
+        if bq_dataset and not is_bigquery(engine):
+            raise ValueError('bq_dataset is a BigQuery-only option.')
+
         if all_dtypes is not None:
             dtypes = all_dtypes
         else:
-            dtypes = get_dtypes_from_table(engine=engine, table_name=table_name)
+            dtypes = get_dtypes_from_table(
+                engine=engine,
+                table_name=table_name,
+                bq_dataset=bq_dataset,
+                bq_project_id=bq_project_id
+            )
 
-        model_builder = CustomSqlModelBuilder(sql='SELECT * FROM {table_name}', name='from_table')
-        sql_model = model_builder(table_name=quote_identifier(engine.dialect, table_name))
+        # For postgres we just generate:    'SELECT * FROM "table_name"'
+        # For BQ we might need to generate: 'SELECT * FROM `project_id`.`data_set`.`table_name`'
+
+        sql_table_name_template = '{table_name}'
+        sql_params = {'table_name': quote_identifier(engine.dialect, table_name)}
+        if bq_dataset:
+            sql_table_name_template = f'{{bq_dataset}}.{sql_table_name_template}'
+            sql_params['bq_dataset'] = quote_identifier(engine.dialect, bq_dataset)
+        if bq_project_id:
+            sql_table_name_template = f'{{bq_project_id}}.{sql_table_name_template}'
+            sql_params['bq_project_id'] = quote_identifier(engine.dialect, bq_project_id)
+
+        sql = f'SELECT * FROM {sql_table_name_template}'
+        model_builder = CustomSqlModelBuilder(sql=sql, name='from_table')
+        sql_model = model_builder(**sql_params)
+
         return cls._from_node(
             engine=engine,
             model=sql_model,
@@ -624,6 +653,11 @@ class DataFrame:
         :returns: A DataFrame based on an SqlModel
 
         """
+        missing_index_keys = {k for k in index if k not in all_dtypes}
+        if missing_index_keys:
+            raise ValueError(f'Specified index keys ({missing_index_keys} not found in'
+                             f' all_dtypes: {all_dtypes.keys()}')
+
         index_dtypes = {k: all_dtypes[k] for k in index}
         series_dtypes = {k: all_dtypes[k] for k in all_dtypes.keys() if k not in index}
 

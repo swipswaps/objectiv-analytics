@@ -23,6 +23,7 @@ from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes, v
     StructuredDtype
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
+from sql_models.util import is_bigquery
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
@@ -1319,10 +1320,25 @@ class Series(ABC):
         :param partition: The partition or window to apply
         :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
         :returns: a new Series with the aggregation applied
+
+        ..note::
+            BigQuery has no support for aggregation function ``MODE``, therefore ``APPROX_TOP_COUNT``
+            approximate aggregate function is used instead. Which means that an approximate result will
+            be produced instead of exact results.
+
+            For more information:
+            https://cloud.google.com/bigquery/docs/reference/standard-sql/approximate_aggregate_functions#approx_top_count
         """
+        agg_expr = f'mode() within group (order by {{}})'
+        if is_bigquery(self.engine):
+            # BigQuery has no aggregate function for mode, therefore we use
+            # APPROX_TOP_COUNT which return an approximation of the exact result
+            # https://cloud.google.com/bigquery/docs/reference/standard-sql/approximate_aggregate_functions
+            agg_expr = f'approx_top_count({{}}, 1)[offset(0)].value'
+
         return self._derived_agg_func(
             partition=partition,
-            expression=AggregateFunctionExpression.construct(f'mode() within group (order by {{}})', self),
+            expression=AggregateFunctionExpression.construct(agg_expr, self),
             skipna=skipna
         )
 
