@@ -174,6 +174,8 @@ class DocusaurusTranslator(Translator):
         pass
 
     def visit_field(self, node):
+        if(self.builder.current_docname == 'models/index'):
+            print("FOUND A FIELD:", node)        
         self.add('\n')
 
     def depart_field(self, node):
@@ -185,6 +187,34 @@ class DocusaurusTranslator(Translator):
 
     def depart_field_name(self, node):
         self.add('**')
+
+    def visit_definition(self, node):
+        if(self.builder.current_docname == 'models/index'):
+            print("FOUND A definition:", node)        
+        self.add('\n')
+
+    def depart_definition(self, node):
+        self.add('\n')
+
+    def visit_label(self, node):
+        if(self.builder.current_docname == 'models/index'):
+            print("FOUND A label:", node)        
+        self.add('\n')
+
+    def depart_label(self, node):
+        self.add('\n')
+
+    def visit_literal(self, node):
+        # if(self.builder.current_docname == 'models/index'):
+        if(node.astext() == 'map'):
+            print("FOUND A LITERAL in "+self.builder.current_docname+":", node)
+
+    def visit_literal_strong(self, node):
+        self.add('**')
+
+    def visit_literal_block(self, node):
+        if(self.builder.current_docname == 'models/index'):
+            print("FOUND A LITERAL BLOCK:", node)
 
     def visit_literal_strong(self, node):
         self.add('**')
@@ -199,7 +229,11 @@ class DocusaurusTranslator(Translator):
         self.add('*')
 
     def visit_title_reference(self, node):
-        pass
+        self.add('`')
+        for child in node.children:
+            child.walkabout(self)
+        self.add('`')
+        raise nodes.SkipNode
 
     def depart_title_reference(self, node):
         pass
@@ -365,6 +399,7 @@ class DocusaurusTranslator(Translator):
         self.add(' |\n')
         if not len(self.theads):
             self.table_entries = []
+
 
     def visit_autosummary_toc(self, node):
         # print("PARSING AUTOSUMMARY WITH TOC IN " + getattr(self.builder, 'current_docname'))
