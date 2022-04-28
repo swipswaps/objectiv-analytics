@@ -8,10 +8,13 @@ on:
       - '.github/**'
 
 jobs:
-  typecheck-and-run-tests:
+  bach-typecheck-and-run-tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # make sure we don't run the various python versions in parallel,
+        # as that may break write tests on the DB
+        max-parallel: 1
         python-version: [3.7, 3.8, 3.9]
     services:
       # based on https://docs.github.com/en/actions/guides/creating-postgresql-service-containers
@@ -34,6 +37,8 @@ jobs:
     env:
       # tell tests to use the above defined postgres service
       OBJ_DB_PG_TEST_URL: 'postgresql://objectiv:no_password_set@localhost:5432/objectiv'
+      GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      OBJ_DB_BQ_CREDENTIALS_PATH: './sa.json'
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -52,7 +57,7 @@ jobs:
         run: |
           cd bach
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt -r requirements.txt
+          pip install -r requirements-dev.txt -r requirements.txt -r requirements-bigquery.txt
       - name: Typecheck with mypy
         run: |
           cd bach
@@ -61,11 +66,15 @@ jobs:
         run: |
           cd bach
           pycodestyle bach sql_models
+      - name: Setup GCP Credentials
+        run: |
+          cd bach
+          echo $GCP_SERVICE_ACCOUNT > $OBJ_DB_BQ_CREDENTIALS_PATH
       - name: Unit tests
         run: |
           cd bach
-          pytest tests/unit/ -W error::DeprecationWarning
+          pytest -n 4 --dist loadgroup --all tests/unit tests/
       - name: Functional tests
         run: |
           cd bach
-          pytest tests/functional/ -W error::DeprecationWarning
+          pytest -n 4 --dist loadgroup --all tests/functional tests/
