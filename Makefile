@@ -25,7 +25,7 @@ build-docker-notebook-image-local:
 
 build-docker-notebook-image:
 	cd notebooks && docker buildx build --pull --rm --no-cache --output type=image,push=true \
-		--platform=linux/arm64,linux/amd64 --tag objectiv/notebook${TAG} -f docker/Dockerfile .
+		--platform=linux/arm64,linux/amd64 --tag objectiv/notebook:${TAG} -f docker/Dockerfile .
 
 
 publish-tracker:
