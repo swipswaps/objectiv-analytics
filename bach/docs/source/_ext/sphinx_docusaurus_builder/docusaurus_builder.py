@@ -8,6 +8,7 @@ from sphinx.locale import __
 from sphinx.util import logging
 from sphinx.util.osutil import ensuredir, os_path
 import datetime
+from urllib.parse import quote
 
 if False:
     from typing import Any, Dict, Iterator, Set, Tuple
@@ -22,6 +23,7 @@ class DocusaurusBuilder(Builder):
     epilog = __('The docusaurus files are in %(outdir)s.')
 
     out_suffix = '.md'
+    link_suffix = '/'
     allow_parallel = True
     default_translator_class = DocusaurusTranslator
 
@@ -49,8 +51,8 @@ class DocusaurusBuilder(Builder):
             except EnvironmentError:
                 pass
 
-    def get_target_uri(self, docname, typ=None):
-        return ''
+    def get_target_uri(self, docname: str, typ: str = None) -> str:
+        return quote(docname) + self.link_suffix
 
     def prepare_writing(self, docnames):
         self.writer = DocusaurusWriter(self)

@@ -9,6 +9,7 @@ import sys
 import yaml
 # from docutils.parsers.rst import Directive, directives
 from sphinx.util.docutils import SphinxDirective, directives
+from docutils.nodes import Element, Node, Text
 
 h = html2text.HTML2Text()
 
@@ -25,23 +26,12 @@ class DocusaurusTranslator(Translator):
     tables = []
     tbodys = []
     theads = []
-    
+
+
     def __init__(self, document, builder=None):
         Translator.__init__(self, document, builder=None)
         self.builder = builder
         self.frontmatter = frontmatter
-
-    # Writes the slug
-    def get_slug(self, docname, doc_frontmatter):
-        if doc_frontmatter and 'slug' in doc_frontmatter:
-            return doc_frontmatter['slug']
-        
-        slug = docname.replace('_', '-')
-        if docname[-5:] == "index":
-            slug = docname[:-5]
-        # slug = '/' + _.snake_case(slug).replace('_', '-') + '/'
-        slug = '/modeling/' + slug + '/'
-        return slug
 
     @property
     def rows(self):
@@ -57,10 +47,25 @@ class DocusaurusTranslator(Translator):
                         rows.append(node)
         return rows
 
+
+    # Writes the slug
+    def get_slug(self, docname, doc_frontmatter):
+        if doc_frontmatter and 'slug' in doc_frontmatter:
+            return doc_frontmatter['slug']
+        
+        slug = docname.replace('_', '-')
+        if docname[-5:] == "index":
+            slug = docname[:-5]
+        # slug = '/' + _.snake_case(slug).replace('_', '-') + '/'
+        slug = '/modeling/' + slug + '/'
+        return slug
+
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
 
+
     def depart_document(self, node):
+        # write the frontmatter after being done with the doc
         ctx = self.builder.ctx
         doc_frontmatter = self.frontmatter[self.builder.current_docname] if self.builder.current_docname in self.frontmatter else None
         variables = munchify({
@@ -74,6 +79,7 @@ class DocusaurusTranslator(Translator):
         variables_yaml = yaml.safe_dump(variables)
         frontmatter_content = '---\n' + variables_yaml + '---\n'
         self.add(frontmatter_content, section='head')
+
 
     def visit_title(self, node):
         if not self.visited_title:
@@ -223,6 +229,12 @@ class DocusaurusTranslator(Translator):
         """Sphinx note directive."""
         pass
 
+    def visit_section(self, node):
+        self.add('## ')
+
+    def depart_section(self, node):
+        self.add('\n\n')
+
     def visit_rubric(self, node):
         """Sphinx Rubric, a heading without relation to the document sectioning
         http://docutils.sourceforge.net/docs/ref/rst/directives.html#rubric."""
@@ -252,8 +264,7 @@ class DocusaurusTranslator(Translator):
         """Sphinx autosummary See http://www.sphinx-
         doc.org/en/master/usage/extensions/autosummary.html."""
         self.table_entries = [] # reset the table_entries, so depart_thead doesn't generate redundant columns
-
-        # TODO: add table headers names as an attribute to the autosummary?
+        # TODO: add table headers names as an optional attribute to the autosummary?
         tgroup = nodes.tgroup(cols=2)
         thead = nodes.thead()
         tgroup += thead
@@ -267,6 +278,7 @@ class DocusaurusTranslator(Translator):
         thead.append(row)
         node.insert(0, thead)
         self.tables.append(node)
+
 
     def depart_autosummary_table(self, node):
         """Sphinx autosummary See http://www.sphinx-
@@ -354,18 +366,24 @@ class DocusaurusTranslator(Translator):
         if not len(self.theads):
             self.table_entries = []
 
-    def visit_reference(self, node):
-        attributes = node.attributes
-        # print("ATTRIBUTES", attributes)
-        # self.add("EN NU DAN?")
-        if('reftitle' in attributes):
-            title = attributes['reftitle']
-            uri = attributes['refuri']
-            self.add("["+title+"]("+uri+")")
-        pass
+    def visit_autosummary_toc(self, node):
+        # print("PARSING AUTOSUMMARY WITH TOC IN " + getattr(self.builder, 'current_docname'))
+        # TODO: support autosummary toc
+        raise nodes.SkipNode
 
-        #  <reference internal="True" reftitle="modelhub.Map.is_first_session" refuri="#modelhub.Map.is_first_session"><literal classes="xref py py-obj">Map.is_first_session</literal></reference>
-        # THIS IS A REFERENCE {'rawsource': '', 'children': [<literal: <#text: 'Map.is_convers ...'>>], 'attributes': {'ids': [], 'classes': [], 'names': [], 'dupnames': [], 'backrefs': [], 'internal': True, 'refuri': '#modelhub.Map.is_conversion_event', 'reftitle': 'modelhub.Map.is_conversion_event'}, 'tagname': 'reference', 'parent': <paragraph: <reference...><#text: '(data, name)'>>, '_document': <document: <target...><section "mapping; models_mapping"...>>, 'source': None, 'line': None}
+    def depart_autosummary_toc(self, node):
+        # TODO: support autosummary toc
+        raise nodes.SkipNode
+
+
+    def visit_seealso(self, node):
+        # print("PARSING SEEALSO " + getattr(self.builder, 'current_docname'))
+        # TODO: support seealso
+        raise nodes.SkipNode
+
+    def depart_seealso(self, node):
+        # TODO: support seealso
+        raise nodes.SkipNode
 
     def visit_math_block(self, node):
         pass

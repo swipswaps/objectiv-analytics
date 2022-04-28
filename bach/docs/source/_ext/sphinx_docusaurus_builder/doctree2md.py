@@ -574,13 +574,16 @@ class Translator(nodes.NodeVisitor):
     def _refuri2http(self, node):
         # Replace 'refuri' in reference with HTTP address, if possible
         # None for no possible address
+        this_doc = self.builder.current_docname
         url = node.get('refuri')
         if not node.get('internal'):
             return url
+        # TO FIX: Stripping the first '..' characters as a workaround
+        url = url[3:].replace('_', '-')
+        node['refuri'] = url
         # If HTTP page build URL known, make link relative to that.
         if not self.markdown_http_base:
             return node.get("refuri")
-        this_doc = self.builder.current_docname
         if url in (None, ''):  # Reference to this doc
             url = self.builder.get_target_uri(this_doc)
         else:  # URL is relative to the current docname.
