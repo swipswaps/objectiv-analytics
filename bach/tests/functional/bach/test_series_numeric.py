@@ -8,6 +8,7 @@ from psycopg2._range import NumericRange
 from sqlalchemy.engine import Engine
 
 from bach import DataFrame
+from sql_models.util import is_postgres, is_bigquery
 from tests.functional.bach.test_data_and_utils import (
     assert_equals_data, get_df_with_test_data, get_bt_with_test_data
 )
@@ -130,16 +131,25 @@ def test_aggregations_quantile(pg_engine):
         pd.testing.assert_series_equal(expected_all_quantiles, result_all_quantiles.to_pandas(), check_names=False)
 
 
-def test_series_cut() -> None:
+def test_series_cut(engine) -> None:
     bins = 4
-    inhabitants = get_bt_with_test_data(full_data_set=True)['inhabitants']
+    inhabitants = get_df_with_test_data(engine, full_data_set=True)['inhabitants']
 
     # right == true
     result_right = inhabitants.cut(bins=bins).sort_index()
     bounds_right = '(]'
-    bin1_right = NumericRange(Decimal('607.215'),  Decimal('23896.25'), bounds=bounds_right)
-    bin2_right = NumericRange(Decimal('23896.25'),  Decimal('47092.5'), bounds=bounds_right)
-    bin4_right = NumericRange(Decimal('70288.75'), Decimal('93485'), bounds=bounds_right)
+
+    if is_postgres(engine):
+        bin1_right = NumericRange(Decimal('607.215'),  Decimal('23896.25'), bounds=bounds_right)
+        bin2_right = NumericRange(Decimal('23896.25'),  Decimal('47092.5'), bounds=bounds_right)
+        bin4_right = NumericRange(Decimal('70288.75'), Decimal('93485'), bounds=bounds_right)
+    elif is_bigquery(engine):
+        bin1_right = {'lower': 607.215,  'upper': 23896.25, 'bounds': bounds_right}
+        bin2_right = {'lower': 23896.25,  'upper': 47092.5, 'bounds': bounds_right}
+        bin4_right = {'lower': 70288.75,  'upper': 93485., 'bounds': bounds_right}
+    else:
+        raise Exception
+
     assert_equals_data(
         result_right,
         expected_columns=['inhabitants', 'range'],
@@ -161,9 +171,18 @@ def test_series_cut() -> None:
     # right == false
     result_not_right = inhabitants.cut(bins=bins, right=False).sort_index()
     bounds_not_right = '[)'
-    bin1_not_right = NumericRange(Decimal('700'),  Decimal('23896.25'), bounds=bounds_not_right)
-    bin2_not_right = NumericRange(Decimal('23896.25'),  Decimal('47092.5'), bounds=bounds_not_right)
-    bin4_not_right = NumericRange(Decimal('70288.75'), Decimal('93577.785'), bounds=bounds_not_right)
+
+    if is_postgres(engine):
+        bin1_not_right = NumericRange(Decimal('700'),  Decimal('23896.25'), bounds=bounds_not_right)
+        bin2_not_right = NumericRange(Decimal('23896.25'),  Decimal('47092.5'), bounds=bounds_not_right)
+        bin4_not_right = NumericRange(Decimal('70288.75'), Decimal('93577.785'), bounds=bounds_not_right)
+    elif is_bigquery(engine):
+        bin1_not_right = {'lower': 700.,  'upper': 23896.25, 'bounds': bounds_not_right}
+        bin2_not_right = {'lower': 23896.25,  'upper': 47092.5, 'bounds': bounds_not_right}
+        bin4_not_right = {'lower': 70288.75,  'upper': 93577.785, 'bounds': bounds_not_right}
+    else:
+        raise Exception
+
     assert_equals_data(
         result_not_right,
         expected_columns=['inhabitants', 'range'],
@@ -190,8 +209,8 @@ def test_series_cut() -> None:
     ]
     for expected_pdf, result in to_assert:
         for exp, res in zip(expected_pdf.to_numpy(), result.to_numpy()):
-            np.testing.assert_almost_equal(exp.left, float(res.lower), decimal=2)
-            np.testing.assert_almost_equal(exp.right, float(res.upper), decimal=2)
+            np.testing.assert_almost_equal(exp.left, float(res.left), decimal=2)
+            np.testing.assert_almost_equal(exp.right, float(res.right), decimal=2)
 
 
 def test_series_qcut() -> None:
@@ -249,10 +268,10 @@ def test_series_qcut() -> None:
     for expected_pdf, result in to_assert:
         for exp, res in zip(expected_pdf.to_numpy(), result.to_numpy()):
             if not isinstance(exp, pd.Interval):
-                assert res is None
+                assert np.isnan(res) or res is None
                 continue
-            np.testing.assert_almost_equal(exp.left, float(res.lower), decimal=2)
-            np.testing.assert_almost_equal(exp.right, float(res.upper), decimal=2)
+            np.testing.assert_almost_equal(exp.left, float(res.left), decimal=2)
+            np.testing.assert_almost_equal(exp.right, float(res.right), decimal=2)
 
 
 def test_series_scale() -> None:

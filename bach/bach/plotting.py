@@ -7,6 +7,7 @@ import numpy
 import pandas
 
 from bach import SeriesAbstractNumeric
+from sql_models.util import is_bigquery
 
 if TYPE_CHECKING:
     from bach.dataframe import DataFrame
@@ -53,18 +54,21 @@ class PlotHandler(object):
         # prepare results for Pandas hist compatibility
         freq_pdf = freq_df.to_pandas()
         freq_pdf = freq_pdf.pivot_table(
-            columns='column_label', values='frequency', index='range', dropna=False, fill_value=0,
+            columns='column_label',
+            values='frequency',
+            index='lower_edge',
+            dropna=False,
+            fill_value=0,
         )
         freq_pdf = freq_pdf.reset_index(level=-1, drop=False)
 
         # get lower bounds per range and add the last upper bound (last_bin + bin_width)
-        freq_pdf['bin_edge'] = freq_pdf['range'].apply(lambda r: r.lower).astype(float)
-        bin_edges = freq_pdf['bin_edge'].to_numpy()
+        bin_edges = freq_pdf['lower_edge'].to_numpy()
         bin_width = numpy.ediff1d(bin_edges)[-1]
         bin_edges = numpy.append(bin_edges, bin_edges[-1] + bin_width)
 
         # use calculated frequencies as weights, since Pandas will try to recalculate frequencies
-        hist_data = pandas.DataFrame(data={col: freq_pdf['bin_edge'] for col in numeric_columns})
+        hist_data = pandas.DataFrame(data={col: freq_pdf['lower_edge'] for col in numeric_columns})
         weights = freq_pdf[numeric_columns].to_numpy()
         return hist_data.plot.hist(bins=bin_edges, weights=weights, **kwargs)
 
@@ -88,11 +92,15 @@ class PlotHandler(object):
             method='bach',
             include_empty_bins=True,
             ignore_index=False,
-        )().to_frame()
+        )().to_frame().reset_index(drop=False)
 
         # create frequency distribution dataframe per label (numeric column)
         # labels are contained in __stacked_index series (result from DataFrame.stack)
-        frequencies = bins_per_col_df.groupby(by=['__stacked_index', 'range']).count()
+        from bach.series import SeriesNumericInterval
+        bins_per_col_df['lower_edge'] = (
+            bins_per_col_df['range'].copy_override_type(SeriesNumericInterval).lower
+        )
+        frequencies = bins_per_col_df.groupby(by=['__stacked_index', 'lower_edge']).count()
         frequencies = frequencies.reset_index(drop=False)
 
         # rename columns to meaningful names
@@ -100,4 +108,4 @@ class PlotHandler(object):
             columns={'__stacked_index': 'column_label', '__stacked_count': 'frequency'},
         )
         frequencies['column_label'] = frequencies['column_label'].fillna('empty_bins')
-        return frequencies
+        return frequencies[['column_label', 'frequency', 'lower_edge']]

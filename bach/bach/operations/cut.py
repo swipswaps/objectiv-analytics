@@ -7,6 +7,8 @@ from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, Series
 from bach.expression import Expression
 import numpy
 
+from bach.series.series_numeric import SeriesNumericInterval
+from sql_models.util import is_bigquery
 
 _RANGE_ADJUSTMENT = 0.001  # Pandas.cut currently uses 1%
 
@@ -70,7 +72,7 @@ class CutOperation:
         (initial series will be contained as index)
         """
         bucket_properties_df = self._calculate_bucket_properties()
-        range_series = self._calculate_bucket_ranges(bucket_properties_df)
+        range_df = self._calculate_bucket_ranges(bucket_properties_df)
 
         final_index_keys = []
         if not self.ignore_index:
@@ -79,21 +81,28 @@ class CutOperation:
 
         df = self.series.to_frame().reset_index(drop=self.ignore_index)
 
-        left_df = df if not self.include_empty_bins else range_series.to_frame()
-        right_df = range_series.to_frame() if not self.include_empty_bins else df
+        left_df = df if not self.include_empty_bins else range_df
+        right_df = range_df if not self.include_empty_bins else df
         how = 'inner' if not self.include_empty_bins else 'left'
 
-        # <@ (contains operator for ranges) is currently not supported
-        # therefore we need to create a raw expression for this
+        #
         fake_merge = left_df.merge(right_df, how='cross')
-        mask = fake_merge[self.series.name].copy_override(
-            expression=Expression.construct(
-                f'cast({{}} as numeric) <@ {{}}',
-                fake_merge[self.series.name],
-                fake_merge[self.RANGE_SERIES_NAME],
-            ),
-        )
-        mask = mask.copy_override_type(SeriesBoolean)
+        if self.right:
+            mask = (
+                (fake_merge[self.series.name] > fake_merge['lower_bound'])
+                & (fake_merge[self.series.name] <= fake_merge['upper_bound'])
+            )
+        else:
+            mask = (
+                 (fake_merge[self.series.name] >= fake_merge['lower_bound'])
+                 & (fake_merge[self.series.name] < fake_merge['upper_bound'])
+            )
+
+        if self.method == CutMethod.BACH:
+            mask |= (
+                (fake_merge[self.series.name] == fake_merge['lower_bound' if self. right else 'upper_bound'])
+                & (fake_merge['bucket'] == (1 if self.right else self.bins))
+            )
 
         df = left_df.merge(right_df, how=how, on=mask)
 
@@ -192,7 +201,7 @@ class CutOperation:
             )
         )
 
-    def _calculate_bucket_ranges(self, bucket_properties_df: 'DataFrame') -> 'Series':
+    def _calculate_bucket_ranges(self, bucket_properties_df: 'DataFrame') -> 'DataFrame':
         """
         Calculates upper and lower bound for each bucket.
          * bucket (integer 1 to N)
@@ -201,21 +210,17 @@ class CutOperation:
          * range (object containing both lower_bound and upper_bound) if method == 'bach', first/last
             range boundaries will contain both lower and upper edges.
 
-         return a series containing each range per bucket (bucket series is found as index)
+         return a DataFrame with the calculated series from above
         """
 
         # self.series might not have data for all buckets, we need to actually generate the series
-        buckets = SeriesInt64(
+        import pandas
+        from bach.dataframe import DataFrame
+        range_df = DataFrame.from_pandas(
             engine=self.series.engine,
-            base_node=self.series.base_node,
-            expression=Expression.construct(f'generate_series(1, {self.bins})'),
-            name='bucket',
-            index={},
-            group_by=None,
-            sorted_ascending=None,
-            index_sorting=[],
-        )
-        range_df = buckets.to_frame().reset_index(drop=True).drop_duplicates(ignore_index=True)
+            df=pandas.DataFrame(data={'bucket': range(1, self.bins + 1)}),
+            convert_objects=True,
+        ).reset_index(drop=True)
 
         range_df = range_df.merge(bucket_properties_df, how='cross')
 
@@ -249,16 +254,21 @@ class CutOperation:
                 ),
             )
 
-        range_df[self.RANGE_SERIES_NAME] = range_df.bucket.copy_override(
-            expression=Expression.construct(
-                # casting is needed since numrange does not support float64
-                f'numrange(cast({{}} as numeric), cast({{}} as numeric), {bounds_stmt})',
-                range_df['lower_bound'],
-                range_df['upper_bound'],
-            ),
-        )
         range_df = range_df.materialize(node_name='bin_ranges')
-        return range_df[self.RANGE_SERIES_NAME]
+        # casting is needed since numrange does not support float64
+        range_stmt = f'numrange(cast({{}} as numeric), cast({{}} as numeric), {bounds_stmt})'
+        if is_bigquery(self.series.engine):
+            range_stmt = f'struct({{}} as lower, {{}} as upper, {bounds_stmt} as bounds)'
+
+        range_df[self.RANGE_SERIES_NAME] = range_df.bucket.copy_override(
+            expression=Expression.construct(range_stmt, range_df['lower_bound'], range_df['upper_bound']),
+        )
+
+        range_df[self.RANGE_SERIES_NAME] = range_df[self.RANGE_SERIES_NAME].copy_override_type(
+            SeriesNumericInterval,
+        )
+
+        return range_df[['bucket', 'lower_bound', 'upper_bound', self.RANGE_SERIES_NAME]]
 
 
 class QCutOperation:
@@ -376,6 +386,9 @@ class QCutOperation:
 
         quantile_ranges_df[self.RANGE_SERIES_NAME] = lower_bound.copy_override(
             expression=Expression.construct(range_stmt, upper_bound, lower_bound, upper_bound),
+        )
+        quantile_ranges_df[self.RANGE_SERIES_NAME] = (
+            quantile_ranges_df[self.RANGE_SERIES_NAME].copy_override_type(SeriesNumericInterval)
         )
         # The expressions of lower_bound and upper_bound are complex and long. Below they are used three
         # times in the expression for the range column. By materializing the dataframe first, we prevent the
