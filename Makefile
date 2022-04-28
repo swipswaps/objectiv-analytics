@@ -1,4 +1,4 @@
-.PHONY: all build-all-images build-ds push-images
+.PHONY: all build-all-images
 
 # default tag, used to tag images
 # default tag is current date
@@ -11,7 +11,7 @@ CONTAINER_REPO=eu.gcr.io/objectiv-production
 all: build-all-images
 
 # what to build
-build-all-images: build-backend build-notebook
+build-all-images: build-docker-backend-image-local build-docker-notebook-image-local
 
 ## build backend images
 build-docker-backend-image-local:
