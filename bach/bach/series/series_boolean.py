@@ -36,7 +36,7 @@ class SeriesBoolean(Series, ABC):
     dtype_aliases = ('boolean', '?', bool)
     supported_db_dtype = {
         DBDialect.POSTGRES: 'boolean',
-        DBDialect.BIGQUERY: 'boolean',
+        DBDialect.BIGQUERY: 'BOOL',
     }
     supported_value_types = (bool, )
 
