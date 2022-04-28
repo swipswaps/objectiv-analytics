@@ -13,7 +13,7 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
-	rm -rf $(SOURCEDIR)/modelhub/api-reference/modelhub.*
+	rm -rf $(SOURCEDIR)/modelhub-api-reference/**/modelhub.* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/bach.DataFrame.*
 	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/**/
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/bach.Series.*

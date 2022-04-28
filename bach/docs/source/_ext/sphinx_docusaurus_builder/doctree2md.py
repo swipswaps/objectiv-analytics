@@ -579,8 +579,9 @@ class Translator(nodes.NodeVisitor):
         if not node.get('internal'):
             return url
         # TO FIX: Stripping the first '..' characters as a workaround
-        url = url[3:].replace('_', '-')
-        node['refuri'] = url
+        if url not in (None, ''):
+            url = url[3:].replace('_', '-')
+            node['refuri'] = url
         # If HTTP page build URL known, make link relative to that.
         if not self.markdown_http_base:
             return node.get("refuri")
