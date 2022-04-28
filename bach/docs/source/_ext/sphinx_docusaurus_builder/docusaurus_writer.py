@@ -63,7 +63,6 @@ class DocusaurusTranslator(Translator):
     def depart_document(self, node):
         ctx = self.builder.ctx
         doc_frontmatter = self.frontmatter[self.builder.current_docname] if self.builder.current_docname in self.frontmatter else None
-        # print("FRONTMATTER FOR DOC " + self.builder.current_docname + ":", doc_frontmatter)
         variables = munchify({
             'date': ctx.date,
             'id': _.snake_case(self.builder.current_docname).replace('_', '-'),
@@ -252,8 +251,22 @@ class DocusaurusTranslator(Translator):
     def visit_autosummary_table(self, node):
         """Sphinx autosummary See http://www.sphinx-
         doc.org/en/master/usage/extensions/autosummary.html."""
+        self.table_entries = [] # reset the table_entries, so depart_thead doesn't generate redundant columns
 
-        pass
+        # TODO: add table headers names as an attribute to the autosummary?
+        tgroup = nodes.tgroup(cols=2)
+        thead = nodes.thead()
+        tgroup += thead
+        row = nodes.row()
+        entry = nodes.entry()
+        entry += nodes.inline(text="&nbsp;")
+        row += entry
+        entry = nodes.entry()
+        entry += nodes.inline(text="&nbsp;")
+        row += entry
+        thead.append(row)
+        node.insert(0, thead)
+        self.tables.append(node)
 
     def depart_autosummary_table(self, node):
         """Sphinx autosummary See http://www.sphinx-
@@ -279,29 +292,12 @@ class DocusaurusTranslator(Translator):
 
     def visit_table(self, node):
         self.currently_processing_table = True
-        self.tables.append(node)
-
-        # TODO: add the right table headers
-        self.add('| Model | Description |\n')
-        self.add('| --- | --- |\n')
-        # tgroup = nodes.tgroup(cols=2)
-        # thead = nodes.thead()
-        # tgroup += thead
-        # row = nodes.row()
-        # entry = nodes.entry()
-        # entry += nodes.paragraph(text="Model")
-        # row += entry
-        # entry = nodes.entry()
-        # entry += nodes.paragraph(text="Description")
-        # row += entry
-        # thead.append(row)
-        # self.theads.append(thead)
-        if self.builder.current_docname == "models/index":
-            print("PARSING TABLE:", self.theads)
 
     def depart_table(self, node):
         self.currently_processing_table = False
         self.tables.pop()
+        self.ensure_eol()
+        self.add('\n')
 
     def visit_tabular_col_spec(self, node):
         pass
@@ -327,6 +323,7 @@ class DocusaurusTranslator(Translator):
         self.theads.append(node)
 
     def depart_thead(self, node):
+        # end table head with as many "| -- |"s as there are table entries
         for i in range(len(self.table_entries)):
             length = 0
             for row in self.table_rows:
