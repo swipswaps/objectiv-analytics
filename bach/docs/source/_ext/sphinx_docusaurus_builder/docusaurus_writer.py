@@ -14,45 +14,12 @@ h = html2text.HTML2Text()
 
 frontmatter = {}
 
-class FrontMatterPositionDirective(SphinxDirective):
-    required_arguments = 1
-    optional_arguments = 0
-    final_argument_whitespace = True
-    option_spec = {}
-    has_content = False
-
-    def run(self):
-        docname = self.env.docname
-        print("RUNNING FRONTMATTER POSITION DIRECTIVE FOR DOC ", docname)
-        reference = directives.uri(self.arguments[0])
-        frontmatter.setdefault(docname, dict())
-        frontmatter[docname]['position'] = reference
-        print("SELF.FRONTMATTER:", frontmatter)
-        paragraph_node = nodes.raw(text='sidebar_position: ' + reference + '\n')
-        return [paragraph_node]
-
-class FrontMatterSlugDirective(SphinxDirective):
-    required_arguments = 1
-    optional_arguments = 0
-    final_argument_whitespace = True
-    option_spec = {}
-    has_content = False
-
-    def run(self):
-        docname = self.env.docname
-        print("RUNNING FRONTMATTER SLUG DIRECTIVE FOR DOC ", docname)
-        reference = directives.uri(self.arguments[0])
-        frontmatter.setdefault(docname, dict())
-        frontmatter[docname]['slug'] = reference
-        print("SELF.FRONTMATTER:", frontmatter)
-        paragraph_node = nodes.raw(text='slug: ' + reference + '\n')
-        return [paragraph_node]
-
 class DocusaurusTranslator(Translator):
     depth = Depth()
     enumerated_count = {}
     title = None
     visited_title = False
+    currently_processing_table = False # whether currently processing a table (e.g. to not insert newlines)
     table_entries = []
     table_rows = []
     tables = []
@@ -100,7 +67,6 @@ class DocusaurusTranslator(Translator):
         variables = munchify({
             'date': ctx.date,
             'id': _.snake_case(self.builder.current_docname).replace('_', '-'),
-            # 'id': self.builder.current_docname,
             'title': self.title,
             'slug': self.get_slug(self.builder.current_docname, doc_frontmatter),
         })
@@ -286,6 +252,7 @@ class DocusaurusTranslator(Translator):
     def visit_autosummary_table(self, node):
         """Sphinx autosummary See http://www.sphinx-
         doc.org/en/master/usage/extensions/autosummary.html."""
+
         pass
 
     def depart_autosummary_table(self, node):
@@ -310,35 +277,30 @@ class DocusaurusTranslator(Translator):
     #         docutils.nodes.row
     #         docutils.nodes.entry
 
-    def visit_math_block(self, node):
-        pass
-
-    def depart_math_block(self, node):
-        pass
-
-    def visit_raw(self, node):
-        self.descend('raw')
-
-    def depart_raw(self, node):
-        self.ascend('raw')
-
-    def visit_reference(self, node):
-        attributes = node.attributes
-        # print("ATTRIBUTES", attributes)
-        # self.add("EN NU DAN?")
-        if('reftitle' in attributes):
-            title = attributes['reftitle']
-            uri = attributes['refuri']
-            self.add("["+title+"]("+uri+")")
-        pass
-
-        #  <reference internal="True" reftitle="modelhub.Map.is_first_session" refuri="#modelhub.Map.is_first_session"><literal classes="xref py py-obj">Map.is_first_session</literal></reference>
-        # THIS IS A REFERENCE {'rawsource': '', 'children': [<literal: <#text: 'Map.is_convers ...'>>], 'attributes': {'ids': [], 'classes': [], 'names': [], 'dupnames': [], 'backrefs': [], 'internal': True, 'refuri': '#modelhub.Map.is_conversion_event', 'reftitle': 'modelhub.Map.is_conversion_event'}, 'tagname': 'reference', 'parent': <paragraph: <reference...><#text: '(data, name)'>>, '_document': <document: <target...><section "mapping; models_mapping"...>>, 'source': None, 'line': None}
-
     def visit_table(self, node):
+        self.currently_processing_table = True
         self.tables.append(node)
 
+        # TODO: add the right table headers
+        self.add('| Model | Description |\n')
+        self.add('| --- | --- |\n')
+        # tgroup = nodes.tgroup(cols=2)
+        # thead = nodes.thead()
+        # tgroup += thead
+        # row = nodes.row()
+        # entry = nodes.entry()
+        # entry += nodes.paragraph(text="Model")
+        # row += entry
+        # entry = nodes.entry()
+        # entry += nodes.paragraph(text="Description")
+        # row += entry
+        # thead.append(row)
+        # self.theads.append(thead)
+        if self.builder.current_docname == "models/index":
+            print("PARSING TABLE:", self.theads)
+
     def depart_table(self, node):
+        self.currently_processing_table = False
         self.tables.pop()
 
     def visit_tabular_col_spec(self, node):
@@ -391,9 +353,34 @@ class DocusaurusTranslator(Translator):
         self.table_rows.append(node)
 
     def depart_row(self, node):
-        self.add('|\n')
+        self.add(' |\n')
         if not len(self.theads):
             self.table_entries = []
+
+    def visit_reference(self, node):
+        attributes = node.attributes
+        # print("ATTRIBUTES", attributes)
+        # self.add("EN NU DAN?")
+        if('reftitle' in attributes):
+            title = attributes['reftitle']
+            uri = attributes['refuri']
+            self.add("["+title+"]("+uri+")")
+        pass
+
+        #  <reference internal="True" reftitle="modelhub.Map.is_first_session" refuri="#modelhub.Map.is_first_session"><literal classes="xref py py-obj">Map.is_first_session</literal></reference>
+        # THIS IS A REFERENCE {'rawsource': '', 'children': [<literal: <#text: 'Map.is_convers ...'>>], 'attributes': {'ids': [], 'classes': [], 'names': [], 'dupnames': [], 'backrefs': [], 'internal': True, 'refuri': '#modelhub.Map.is_conversion_event', 'reftitle': 'modelhub.Map.is_conversion_event'}, 'tagname': 'reference', 'parent': <paragraph: <reference...><#text: '(data, name)'>>, '_document': <document: <target...><section "mapping; models_mapping"...>>, 'source': None, 'line': None}
+
+    def visit_math_block(self, node):
+        pass
+
+    def depart_math_block(self, node):
+        pass
+
+    def visit_raw(self, node):
+        self.descend('raw')
+
+    def depart_raw(self, node):
+        self.ascend('raw')
 
     def visit_enumerated_list(self, node):
         self.depth.descend('list')
@@ -431,8 +418,8 @@ class DocusaurusTranslator(Translator):
     def visit_entry(self, node):
         if not len(self.table_rows):
             raise nodes.SkipNode
+        self.add("| ")
         self.table_entries.append(node)
-        self.add('| ')
 
     def depart_entry(self, node):
         length = 0
@@ -447,11 +434,52 @@ class DocusaurusTranslator(Translator):
         )
         self.add(padding + ' ')
 
+    def visit_paragraph(self, node):
+        pass
+
+    def depart_paragraph(self, node):
+        # Do not add a newline if processing a table, because it will break the markup
+        if not self.currently_processing_table:
+            self.ensure_eol()
+            self.add('\n')
+
     def descend(self, node_name):
         self.depth.descend(node_name)
 
     def ascend(self, node_name):
         self.depth.ascend(node_name)
+
+class FrontMatterPositionDirective(SphinxDirective):
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+    option_spec = {}
+    has_content = False
+
+    def run(self):
+        docname = self.env.docname
+        reference = directives.uri(self.arguments[0])
+        frontmatter.setdefault(docname, dict())
+        frontmatter[docname]['position'] = reference
+        # TODO: do not add a node at all
+        paragraph_node = nodes.raw(text='')
+        return [paragraph_node]
+
+class FrontMatterSlugDirective(SphinxDirective):
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+    option_spec = {}
+    has_content = False
+
+    def run(self):
+        docname = self.env.docname
+        reference = directives.uri(self.arguments[0])
+        frontmatter.setdefault(docname, dict())
+        frontmatter[docname]['slug'] = reference
+        # TODO: do not add a node at all
+        paragraph_node = nodes.raw(text='')
+        return [paragraph_node]
 
 class DocusaurusWriter(Writer):
     directives.register_directive('frontmatterposition', FrontMatterPositionDirective)
