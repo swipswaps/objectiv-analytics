@@ -558,7 +558,7 @@ class DataFrame:
             If all_dtypes is not set, then this will query the database.
         """
         if bq_project_id and not bq_dataset:
-            raise ValueError('Cannot specifiy bq_project_id without setting bq_dataset.')
+            raise ValueError('Cannot specify bq_project_id without setting bq_dataset.')
         if bq_dataset and not is_bigquery(engine):
             raise ValueError('bq_dataset is a BigQuery-only option.')
 

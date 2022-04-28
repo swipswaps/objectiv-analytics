@@ -37,7 +37,19 @@ def get_dtypes_from_table(
     bq_dataset: Optional[str] = None,
     bq_project_id: Optional[str] = None
 ) -> Dict[str, str]:
-    """ Query database to get dtypes of the given table. """
+    """
+    Query database to get dtypes of the given table.
+    :param engine: sqlalchemy engine for the database.
+    :param table_name: the table name for which to get the dtypes
+    :param bq_dataset: BigQuery-only. Dataset in which the table resides, if different from engine.url
+    :param bq_project_id: BigQuery-only. Project of dataset, if different from engine.url
+    :return: Dictionary with as key the column names of the table, and as values the dtype of the column.
+    """
+    if bq_project_id and not bq_dataset:
+        raise ValueError('Cannot specify bq_project_id without setting bq_dataset.')
+    if bq_dataset and not is_bigquery(engine):
+        raise ValueError('bq_dataset is a BigQuery-only option.')
+
     if is_postgres(engine):
         meta_data_table = 'INFORMATION_SCHEMA.COLUMNS'
     elif is_bigquery(engine):
