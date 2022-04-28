@@ -31,7 +31,7 @@ class DocusaurusTranslator(Translator):
 
 
     def __init__(self, document, builder=None):
-        Translator.__init__(self, document, builder=None)
+        Translator.__init__(self, document, builder=builder)
         self.builder = builder
         self.debug = True if builder.current_docname == 'models/index' else False
         self.frontmatter = frontmatter

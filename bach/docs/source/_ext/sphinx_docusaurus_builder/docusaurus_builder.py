@@ -29,7 +29,7 @@ class DocusaurusBuilder(Builder):
 
     current_docname = None
 
-    markdown_http_base = 'https://localhost'
+    markdown_http_base = '/docs/modeling'
 
     def init(self):
         self.secnumbers = {}
