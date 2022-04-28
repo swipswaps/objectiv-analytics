@@ -33,7 +33,7 @@ class DocusaurusTranslator(Translator):
     def __init__(self, document, builder=None):
         Translator.__init__(self, document, builder=builder)
         self.builder = builder
-        self.debug = True if builder.current_docname == 'models/index' else False
+        self.debug = True if 'DataFrame/index' in builder.current_docname else False
         self.frontmatter = frontmatter
 
 
@@ -66,6 +66,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
+        if (self.debug):
+            print(node)
 
 
     def depart_document(self, node):

@@ -1,7 +1,7 @@
 source/models/**/modelhub.*
 source/modelhub-api-reference/**/modelhub.*
-source/bach/api-reference/**/bach.DataFrame.*
-source/bach/api-reference/**/bach.Series.*
+source/bach/api-reference/**/bach.DataFrame*
+source/bach/api-reference/**/bach.Series*
 
 !source/conf.py
 build/
