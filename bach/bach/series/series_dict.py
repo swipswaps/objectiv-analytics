@@ -7,7 +7,7 @@ from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression, join_expressions
-from bach.types import DtypeOrAlias, get_series_type_from_dtype, StructuredDtype
+from bach.types import DtypeOrAlias, get_series_type_from_dtype, StructuredDtype, Dtype
 from sql_models.constants import DBDialect
 from sql_models.util import DatabaseNotSupportedException, is_bigquery
 
@@ -79,10 +79,8 @@ class SeriesDict(Series):
         raise ValueError(f'cannot convert {source_dtype} to dict.')
 
     @property
-    def dict_accessor(self) -> 'DictAccessor':
-        # TODO: what is a good name for this property? We already have Series.array. Although that seems like
-        #  something we should remove. It probably doesn't make sense to name this `array`
-        #  `arr` is perhaps to piratey? Maybe `elements` ?
+    def elements(self) -> 'DictAccessor':
+        # TODO: what is a good name for this property?
         return DictAccessor(self)
 
     @classmethod
@@ -92,6 +90,7 @@ class SeriesDict(Series):
             raise ValueError(f'Type not supported: {type(value)}')
         if not all(isinstance(key, str) for key in value.keys()):
             raise ValueError(f'Non-string keys in dictionary: {value}')
+        # TODO: validate that key is a valid column-name on BigQuery
 
 
 class DictAccessor:
@@ -101,6 +100,19 @@ class DictAccessor:
     def __getitem__(self, key: str):
         # TODO: do we also want to support Series as key?
         engine = self._series.engine
+        if key not in self._series.instance_dtype:
+            raise ValueError(f'Invalid key: {key}. '
+                             f'Available keys: {sorted(self._series.instance_dtype.keys())}')
+        expression = Expression.construct('{}.{}', self._series, Expression.identifier(key))
+        sub_dtype = self._series.instance_dtype[key]
+        if isinstance(sub_dtype, Dtype):
+            new_dtype = sub_dtype
+            return self._series \
+                .copy_override_dtype(dtype=new_dtype) \
+                .copy_override(expression=expression)
+        else:
+            raise Exception('TODO')
+
         # TODO: implementation
         raise ValueError(f'Invalid key type: {type(key)}')
 
