@@ -20,18 +20,22 @@ class DocusaurusTranslator(Translator):
     enumerated_count = {}
     title = None
     visited_title = False
-    currently_processing_table = False # whether currently processing a table (e.g. to not insert newlines)
+    in_table = False # whether currently processing a table (e.g. to not insert newlines)
     table_entries = []
     table_rows = []
     tables = []
     tbodys = []
     theads = []
 
+    debug = False
+
 
     def __init__(self, document, builder=None):
         Translator.__init__(self, document, builder=None)
         self.builder = builder
+        self.debug = True if builder.current_docname == 'models/index' else False
         self.frontmatter = frontmatter
+
 
     @property
     def rows(self):
@@ -84,7 +88,11 @@ class DocusaurusTranslator(Translator):
     def visit_title(self, node):
         if not self.visited_title:
             self.title = node.astext()
-        self.visited_title = True
+            self.visited_title = True
+            self.add('# ')
+        else:
+            self.add('## ')
+
 
     def visit_desc(self, node):
         pass
@@ -174,7 +182,7 @@ class DocusaurusTranslator(Translator):
         pass
 
     def visit_field(self, node):
-        if(self.builder.current_docname == 'models/index'):
+        if(self.debug):
             print("FOUND A FIELD:", node)        
         self.add('\n')
 
@@ -189,7 +197,7 @@ class DocusaurusTranslator(Translator):
         self.add('**')
 
     def visit_definition(self, node):
-        if(self.builder.current_docname == 'models/index'):
+        if(self.debug):
             print("FOUND A definition:", node)        
         self.add('\n')
 
@@ -197,23 +205,31 @@ class DocusaurusTranslator(Translator):
         self.add('\n')
 
     def visit_label(self, node):
-        if(self.builder.current_docname == 'models/index'):
+        if(self.debug):
             print("FOUND A label:", node)        
         self.add('\n')
 
     def depart_label(self, node):
         self.add('\n')
 
+
     def visit_literal(self, node):
-        # if(self.builder.current_docname == 'models/index'):
-        if(node.astext() == 'map'):
-            print("FOUND A LITERAL in "+self.builder.current_docname+":", node)
+        self.add('`')
+        for child in node.children:
+            child.walkabout(self)
+        self.add('`')
+        raise nodes.SkipNode
+
+
+    def depart_literal(self, node):
+        pass
+
 
     def visit_literal_strong(self, node):
         self.add('**')
 
     def visit_literal_block(self, node):
-        if(self.builder.current_docname == 'models/index'):
+        if(self.debug):
             print("FOUND A LITERAL BLOCK:", node)
 
     def visit_literal_strong(self, node):
@@ -228,12 +244,14 @@ class DocusaurusTranslator(Translator):
     def depart_literal_emphasis(self, node):
         self.add('*')
 
+
     def visit_title_reference(self, node):
         self.add('`')
         for child in node.children:
             child.walkabout(self)
         self.add('`')
         raise nodes.SkipNode
+
 
     def depart_title_reference(self, node):
         pass
@@ -263,21 +281,26 @@ class DocusaurusTranslator(Translator):
         """Sphinx note directive."""
         pass
 
+
     def visit_section(self, node):
-        self.add('## ')
+        pass
+
 
     def depart_section(self, node):
         self.add('\n\n')
+
 
     def visit_rubric(self, node):
         """Sphinx Rubric, a heading without relation to the document sectioning
         http://docutils.sourceforge.net/docs/ref/rst/directives.html#rubric."""
         self.add('### ')
 
+
     def depart_rubric(self, node):
         """Sphinx Rubric, a heading without relation to the document sectioning
         http://docutils.sourceforge.net/docs/ref/rst/directives.html#rubric."""
         self.add('\n\n')
+
 
     def visit_image(self, node):
         """Image directive."""
@@ -293,6 +316,7 @@ class DocusaurusTranslator(Translator):
     def depart_image(self, node):
         """Image directive."""
         pass
+
 
     def visit_autosummary_table(self, node):
         """Sphinx autosummary See http://www.sphinx-
@@ -337,10 +361,10 @@ class DocusaurusTranslator(Translator):
     #         docutils.nodes.entry
 
     def visit_table(self, node):
-        self.currently_processing_table = True
+        self.in_table = True
 
     def depart_table(self, node):
-        self.currently_processing_table = False
+        self.in_table = False
         self.tables.pop()
         self.ensure_eol()
         self.add('\n')
@@ -363,10 +387,12 @@ class DocusaurusTranslator(Translator):
     def depart_tgroup(self, node):
         self.ascend('tgroup')
 
+
     def visit_thead(self, node):
         if not len(self.tables):
             raise nodes.SkipNode
         self.theads.append(node)
+
 
     def depart_thead(self, node):
         # end table head with as many "| -- |"s as there are table entries
@@ -381,6 +407,7 @@ class DocusaurusTranslator(Translator):
         self.add('|\n')
         self.table_entries = []
         self.theads.pop()
+
 
     def visit_tbody(self, node):
         if not len(self.tables):
@@ -406,6 +433,7 @@ class DocusaurusTranslator(Translator):
         # TODO: support autosummary toc
         raise nodes.SkipNode
 
+
     def depart_autosummary_toc(self, node):
         # TODO: support autosummary toc
         raise nodes.SkipNode
@@ -416,9 +444,11 @@ class DocusaurusTranslator(Translator):
         # TODO: support seealso
         raise nodes.SkipNode
 
+
     def depart_seealso(self, node):
         # TODO: support seealso
         raise nodes.SkipNode
+
 
     def visit_math_block(self, node):
         pass
@@ -489,7 +519,7 @@ class DocusaurusTranslator(Translator):
 
     def depart_paragraph(self, node):
         # Do not add a newline if processing a table, because it will break the markup
-        if not self.currently_processing_table:
+        if not self.in_table:
             self.ensure_eol()
             self.add('\n')
 
