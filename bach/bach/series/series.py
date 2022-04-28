@@ -20,7 +20,7 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 from bach.sql_model import BachSqlModel
 
 from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes, value_to_series, \
-    StructuredDtype
+    StructuredDtype, Dtype
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.util import is_bigquery
@@ -222,7 +222,12 @@ class Series(ABC):
 
     @classmethod
     @abstractmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: Any) -> Expression:
+    def supported_value_to_literal(
+            cls,
+            dialect: Dialect,
+            value: Any,
+            dtype: StructuredDtype
+    ) -> Expression:
         """
         INTERNAL: Gives an expression for the sql-literal of the given value.
 
@@ -344,27 +349,60 @@ class Series(ABC):
         return cls.supported_db_dtype[db_dialect]
 
     @classmethod
-    def value_to_expression(cls, dialect: Dialect, value: Optional[Any]) -> Expression:
+    def value_to_literal(
+            cls,
+            dialect: Dialect,
+            value: Optional[Any],
+            dtype: StructuredDtype
+    ) -> Expression:
         """
-        INTERNAL: Give the expression for the given value.
+        INTERNAL: Give the literal for the given value.
 
-        Wrapper around :meth:`Series.supported_value_to_literal()` and
-        :meth:`Series.supported_literal_to_expression()` that handles two generic cases:
-            1. If value is None a simple 'NULL' expression is returned.
-            2. If value is not in supported_value_types raises an error.
+        This is similar to :meth:`Series.value_to_expression()`, but does not call
+        :meth:`Series.supported_literal_to_expression()` on the result. In most cases you'd want to use
+        :meth:`Series.value_to_expression()`.
 
-        :param dialect: Database dialect
-        :param value: value to convert to an expression
-        :raises TypeError: if value is not an instance of cls.supported_value_types, and not None
+        This function handles three generic cases:
+        1. If value is None a simple 'NULL' expression is returned.
+        2. If value is not in supported_value_types raises an error.
+        3. if dtype is a simple dtype and does not match cls.dtype, raises an error.
         """
-        # We should wrap this in a ConstValueExpression or something
         if value is None:
             return Expression.raw('NULL')
         if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be one of {cls.supported_value_types}'
                             f', actual type: {type(value)}')
-        literal = cls.supported_value_to_literal(dialect=dialect, value=value)
-        return cls.supported_literal_to_expression(dialect=dialect, literal=literal)
+        # TODO: allow DtypeOrAlias
+        if isinstance(dtype, Dtype) and dtype != cls.dtype:
+            raise ValueError(f'Dtype "{dtype}" does not match class dtype: {cls.dtype}')
+
+        return cls.supported_value_to_literal(dialect=dialect, value=value, dtype=dtype)
+
+    @classmethod
+    def value_to_expression(
+            cls,
+            dialect: Dialect,
+            value: Optional[Any],
+            dtype: StructuredDtype
+    ) -> Expression:
+        """
+        INTERNAL: Give the expression for the given value.
+
+        Wrapper around the methods :meth:`Series.supported_value_to_literal()` and
+        :meth:`Series.supported_literal_to_expression()`, which are implemented in sub-classes.
+        This function handles some generic cases that are not handled in the subclasses. Additionally the
+        result is wrapped in a ConstValueExpression.
+
+        See :meth:`Series.value_to_literal()` on information on what cases are handled in the wrappers.
+
+        :param dialect: Database dialect
+        :param value: value to convert to an expression
+        :param dtype: TODO
+        :raises TypeError: if value is not an instance of cls.supported_value_types, and not None
+        """
+        literal = cls.value_to_literal(dialect=dialect, value=value, dtype=dtype)
+        const_expression = cls.supported_literal_to_expression(dialect=dialect, literal=literal)
+        return ConstValueExpression(const_expression)
 
     @classmethod
     def from_const(cls,
@@ -379,13 +417,17 @@ class Series(ABC):
         :param base:    The DataFrame or Series that the internal parameters are taken from
         :param value:   The value that this constant Series will have
         :param name:    The name that it will be known by (only for representation)
+        :param dtype:   Optional dtype for structural types. Will default to cls.dtype
         """
-        expression = ConstValueExpression(cls.value_to_expression(dialect=base.engine.dialect, value=value))
+        if dtype is None:
+            dtype = cls.dtype
+        expression = cls.value_to_expression(dialect=base.engine.dialect, value=value, dtype=dtype)
         result = cls.get_class_instance(
             base=base,
             name=name,
             expression=expression,
             group_by=None,
+            instance_dtype=dtype
         )
         return result
 
@@ -1446,7 +1488,7 @@ class Series(ABC):
         """
         # TODO Lag, lead etc. could check whether the window is setup correctly to include that value
         window = self._check_window(window)
-        default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default)
+        default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default, dtype=self.dtype)
         return self._derived_agg_func(
             window,
             Expression.construct(f'lag({{}}, {offset}, {{}})', self, default_expr),
@@ -1464,7 +1506,7 @@ class Series(ABC):
         Defaults to None
         """
         window = self._check_window(window)
-        default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default)
+        default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default, dtype=self.dtype)
         return self._derived_agg_func(
             window,
             Expression.construct(f'lead({{}}, {offset}, {{}})', self, default_expr),

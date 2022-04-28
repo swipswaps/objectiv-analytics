@@ -1,15 +1,14 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import Any, Tuple, List, Union, TYPE_CHECKING, cast, Dict, Optional, TypeVar
+from typing import Any, Tuple, List, Union, TYPE_CHECKING, TypeVar
 
-from sqlalchemy.engine import Dialect, Engine
+from sqlalchemy.engine import Dialect
 
 from bach.series import Series
-from bach.expression import Expression, join_expressions, ConstValueExpression
-from bach.sql_model import BachSqlModel
+from bach.expression import Expression, join_expressions
 from bach.types import DtypeOrAlias, value_to_dtype, get_series_type_from_dtype, StructuredDtype, Dtype
-from sql_models.constants import DBDialect, NotSet, not_set
+from sql_models.constants import DBDialect
 from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
 
@@ -32,37 +31,16 @@ class SeriesArray(Series):
     supported_value_types = (list, )
 
     @classmethod
-    def from_const(
-            cls,
-            base: 'DataFrameOrSeries',
-            value: Any,
-            name: str,
-            dtype: Optional[StructuredDtype] = None
-    ) -> 'Series':
-        """
-        TODO: comments
-        """
-        expression = ConstValueExpression(cls.value_to_expression(dialect=base.engine.dialect, value=value))
-        assert dtype is not None and len(dtype) == 1  # todo: error handling here
-        result = cls(
-            engine=base.engine,
-            base_node=base.base_node,
-            index=base.index,
-            name=name,
-            expression=expression,
-            group_by=None,
-            sorted_ascending=None,
-            index_sorting=[],
-            instance_dtype=dtype
-        )
-        return result
-
-    @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         return literal
 
     @classmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: List[Any]) -> Expression:
+    def supported_value_to_literal(
+        cls,
+        dialect: Dialect,
+        value: List[Any],
+        dtype: StructuredDtype
+    ) -> Expression:
         if not isinstance(value, list):
             raise ValueError(f'Type not supported: {type(value)}')
 
@@ -80,7 +58,10 @@ class SeriesArray(Series):
             sub_dtype = list(sub_dtypes)[0]
             sub_db_dtype = get_series_type_from_dtype(sub_dtype).get_db_dtype(dialect)
             series_type = get_series_type_from_dtype(sub_dtype)
-            sub_exprs = [series_type.value_to_expression(dialect, item) for item in value]
+            sub_exprs = [
+                series_type.value_to_expression(dialect=dialect, value=item, dtype=sub_dtype)
+                for item in value
+            ]
 
         if is_postgres(dialect):
             if not sub_exprs:
@@ -96,7 +77,7 @@ class SeriesArray(Series):
     def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'array':
             return expression
-        raise ValueError(f'cannot convert {source_dtype} to uuid.')
+        raise ValueError(f'cannot convert {source_dtype} to array.')
 
     @property
     def arr(self) -> 'ArrayAccessor':

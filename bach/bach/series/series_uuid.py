@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Union, Optional
+from typing import Union
 from uuid import UUID
 
 from sqlalchemy.engine import Dialect
@@ -10,6 +10,7 @@ from bach import DataFrameOrSeries
 from bach.series import Series, const_to_series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition, ToPandasInfo
+from bach.types import StructuredDtype
 from sql_models.constants import DBDialect
 from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
@@ -49,7 +50,12 @@ class SeriesUuid(Series):
         raise DatabaseNotSupportedException(dialect)
 
     @classmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: Union[UUID, str]) -> Expression:
+    def supported_value_to_literal(
+        cls,
+        dialect: Dialect,
+        value: Union[UUID, str],
+        dtype: StructuredDtype
+    ) -> Expression:
         if isinstance(value, str):
             # Check that the string value is a valid UUID by converting it to a UUID
             value = UUID(value)

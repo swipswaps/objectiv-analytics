@@ -318,7 +318,12 @@ class SeriesJsonb(Series):
         return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: Union[dict, list]) -> Expression:
+    def supported_value_to_literal(
+            cls,
+            dialect: Dialect,
+            value: Union[dict, list],
+            dtype: StructuredDtype
+    ) -> Expression:
         json_value = json.dumps(value)
         return Expression.string_value(json_value)
 
