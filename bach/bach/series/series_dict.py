@@ -100,11 +100,13 @@ class DictAccessor:
     def __getitem__(self, key: str):
         # TODO: do we also want to support Series as key?
         engine = self._series.engine
-        if key not in self._series.instance_dtype:
+        instance_dtype = self._series.instance_dtype
+        assert isinstance(instance_dtype, dict)  # todo: improve
+        if key not in instance_dtype:
             raise ValueError(f'Invalid key: {key}. '
-                             f'Available keys: {sorted(self._series.instance_dtype.keys())}')
+                             f'Available keys: {sorted(instance_dtype.keys())}')
         expression = Expression.construct('{}.{}', self._series, Expression.identifier(key))
-        sub_dtype = self._series.instance_dtype[key]
+        sub_dtype = instance_dtype[key]
         if isinstance(sub_dtype, Dtype):
             new_dtype = sub_dtype
             return self._series \
