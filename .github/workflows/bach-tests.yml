@@ -73,8 +73,8 @@ jobs:
       - name: Unit tests
         run: |
           cd bach
-          pytest -n 4 --dist loadgroup --all tests/unit tests/
+          pytest -n 4 --dist loadgroup --all tests/unit tests/ -W error::DeprecationWarning
       - name: Functional tests
         run: |
           cd bach
-          pytest -n 4 --dist loadgroup --all tests/functional tests/
+          pytest -n 4 --dist loadgroup --all tests/functional tests/ -W error::DeprecationWarning
