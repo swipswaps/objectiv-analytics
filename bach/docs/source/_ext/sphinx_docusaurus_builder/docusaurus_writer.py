@@ -108,79 +108,113 @@ class DocusaurusTranslator(Translator):
         self.add(' ')
 
 
+    def visit_comment(self, node):
+        raise nodes.SkipNode
+
+
+    def depart_comment(self, node):
+        raise nodes.SkipNode
+
+
     def visit_desc(self, node):
-        pass
+        if ("desctype" in node.attributes and node.attributes["desctype"] == "class"):
+            self.add('<div class="class">\n')
+        elif ("desctype" in node.attributes and node.attributes["desctype"] == "method"):
+            self.add('<div class="method">\n')
+        else:
+            self.add('<div>\n')
+
 
     def depart_desc(self, node):
-        pass
+        self.add('\n</div>\n')
+
+
+    def visit_desc_signature(self, node):
+        # the main signature (i.e. its name + parameters) of a class/method.
+        # if a signature has a non-null class, thats means it's a class method.
+        if ("class" in node.attributes and node.attributes['class']):
+            self.add('<h2 class="signature-class">')
+        else:
+            self.add('<h2 class="signature-method">')
+
+
+    def depart_desc_signature(self, node):
+        # the main signature of a class/method
+        if ("class" in node.attributes and node.attributes['class']):
+            self.add(')</h2>\n\n')
+        else:
+            self.add(')</h2>\n\n')
+            
 
     def visit_desc_annotation(self, node):
         # annotation, e.g 'method', 'class'
-        self.add('_')
+        self.add('<span class="type-annotation">')
+        self.add('<em>')
+
 
     def depart_desc_annotation(self, node):
         # annotation, e.g 'method', 'class'
         self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
-        self.add('_ ')
+        self.add('</em>')
+        self.add('</span> ')
+
 
     def visit_desc_addname(self, node):
-        # module preroll for class/method
-        pass
+        # module preroll for class/method, e.g. 'classdomain' in 'classdomain.classname'
+        self.add('<span class="additional-name">')
+
 
     def depart_desc_addname(self, node):
-        # module preroll for class/method
-        pass
+        # module preroll for class/method, e.g. 'classdomain' in 'classdomain.classname'
+        self.add('</span>')
+
 
     def visit_desc_name(self, node):
         # name of the class/method
-        # Escape "__" which is a formating string for markdown
+        # Escape "__" which is a formatting string for markdown
+        self.add('<span class="name">')
         if node.rawsource.startswith("__"):
             self.add('\\')
-        pass
+
 
     def depart_desc_name(self, node):
         # name of the class/method
         self.add('(')
+        self.add('</span>')
+
+
+    def visit_desc_parameterlist(self, node):
+        # method/class param list
+        self.add('<small class="parameter-list">')
+
+
+    def depart_desc_parameterlist(self, node):
+        # method/class param list
+        self.add('</small>')
+
+
+    def visit_desc_parameter(self, node):
+        # single method/class param
+        self.add('<span class="parameter" id="'+ node[0].astext() + '">')
+
+
+    def depart_desc_parameter(self, node):
+        # single method/class param
+        # if there are additional params, include a comma
+        self.add('</span>')
+        if node.next_node(descend=False, siblings=True):
+            self.add(', ')
+            
 
     def visit_desc_content(self, node):
         # the description of the class/method
-        pass
+        self.add('\n<div class="content">\n\n')
+
 
     def depart_desc_content(self, node):
         # the description of the class/method
-        pass
+        self.add('\n</div>\n')
 
-    def visit_desc_signature(self, node):
-        # the main signature of class/method
-        # We dont want methods to be at the same level as classes,
-        # If signature has a non null class, thats means it is a signature
-        # of a class method
-        if ("class" in node.attributes and node.attributes["class"]):
-            self.add('\n#### ')
-        else:
-            self.add('\n### ')
-
-    def depart_desc_signature(self, node):
-        # the main signature of class/method
-        self.add(')\n')
-
-    def visit_desc_parameterlist(self, node):
-        # method/class ctor param list
-        pass
-
-    def depart_desc_parameterlist(self, node):
-        # method/class ctor param list
-        pass
-
-    def visit_desc_parameter(self, node):
-        # single method/class ctr param
-        pass
-
-    def depart_desc_parameter(self, node):
-        # single method/class ctr param
-        # if there are additional params, include a comma
-        if node.next_node(descend=False, siblings=True):
-            self.add(', ')
 
     # list of parameters/return values/exceptions
     #
@@ -190,6 +224,8 @@ class DocusaurusTranslator(Translator):
     #
 
     def visit_field_list(self, node):
+        if(self.debug):
+            print("FOUND A FIELD LIST:", node)        
         pass
 
     def depart_field_list(self, node):
@@ -205,6 +241,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_field_name(self, node):
         # field name, e.g 'returns', 'parameters'
+        if(self.debug):
+            print("FOUND A FIELD NAME:", node)        
         self.add('* **')
 
     def depart_field_name(self, node):
@@ -212,7 +250,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_definition(self, node):
         if(self.debug):
-            print("FOUND A definition:", node)        
+            print("FOUND A DEFINITION:", node)        
         self.add('\n')
 
     def depart_definition(self, node):
@@ -220,7 +258,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_label(self, node):
         if(self.debug):
-            print("FOUND A label:", node)        
+            print("FOUND A LABEL:", node)        
         self.add('\n')
 
     def depart_label(self, node):
@@ -240,8 +278,6 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_literal_block(self, node):
-        if(self.debug):
-            print("FOUND A LITERAL BLOCK:", node)
         if (node['language']):
             self.add('```' + node['language'] + '\n')
         else:
@@ -257,12 +293,16 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_literal_strong(self, node):
+        if(self.debug):
+            print("FOUND A LITERAL STRONG:", node)
         self.add('**')
 
     def depart_literal_strong(self, node):
         self.add('**')
 
     def visit_literal_emphasis(self, node):
+        if(self.debug):
+            print("FOUND A LITERAL EMPHASIS:", node)
         self.add('*')
 
     def depart_literal_emphasis(self, node):
@@ -280,9 +320,12 @@ class DocusaurusTranslator(Translator):
     def depart_title_reference(self, node):
         pass
 
+
     def visit_versionmodified(self, node):
         # deprecation and compatibility messages
         # type will hold something like 'deprecated'
+        if(self.debug):
+            print("FOUND A VERSION MODIFIED:", node)
         self.add('**%s:** ' % node.attributes['type'].capitalize())
 
     def depart_versionmodified(self, node):
@@ -291,6 +334,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_warning(self, node):
         """Sphinx warning directive."""
+        if(self.debug):
+            print("FOUND A WARNING:", node)
         self.add('**WARNING**: ')
 
     def depart_warning(self, node):
@@ -299,6 +344,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_note(self, node):
         """Sphinx note directive."""
+        if(self.debug):
+            print("FOUND A NOTE:", node)
         self.add('**NOTE**: ')
 
     def depart_note(self, node):
@@ -319,6 +366,8 @@ class DocusaurusTranslator(Translator):
     def visit_rubric(self, node):
         """Sphinx Rubric, a heading without relation to the document sectioning
         http://docutils.sourceforge.net/docs/ref/rst/directives.html#rubric."""
+        if(self.debug):
+            print("FOUND A RUBRIC:", node)
         self.add('### ')
 
 
@@ -330,6 +379,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_image(self, node):
         """Image directive."""
+        if(self.debug):
+            print("FOUND A IMAGE:", node)
         uri = node.attributes['uri']
         doc_folder = os.path.dirname(self.builder.current_docname)
         if uri.startswith(doc_folder):
@@ -386,8 +437,10 @@ class DocusaurusTranslator(Translator):
     #         docutils.nodes.row
     #         docutils.nodes.entry
 
+    
     def visit_table(self, node):
         self.in_table = True
+
 
     def depart_table(self, node):
         self.in_table = False
@@ -395,20 +448,26 @@ class DocusaurusTranslator(Translator):
         self.ensure_eol()
         self.add('\n')
 
+
     def visit_tabular_col_spec(self, node):
         pass
+
 
     def depart_tabular_col_spec(self, node):
         pass
 
+
     def visit_colspec(self, node):
         pass
+
 
     def depart_colspec(self, node):
         pass
 
+
     def visit_tgroup(self, node):
         self.descend('tgroup')
+
 
     def depart_tgroup(self, node):
         self.ascend('tgroup')
@@ -440,13 +499,16 @@ class DocusaurusTranslator(Translator):
             raise nodes.SkipNode
         self.tbodys.append(node)
 
+
     def depart_tbody(self, node):
         self.tbodys.pop()
+
 
     def visit_row(self, node):
         if not len(self.theads) and not len(self.tbodys):
             raise nodes.SkipNode
         self.table_rows.append(node)
+
 
     def depart_row(self, node):
         self.add(' |\n')
@@ -455,6 +517,8 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_autosummary_toc(self, node):
+        if(self.debug):
+            print("FOUND AN AUTOSUMMARY TOC:", node)
         # print("PARSING AUTOSUMMARY WITH TOC IN " + getattr(self.builder, 'current_docname'))
         # TODO: support autosummary toc
         raise nodes.SkipNode
@@ -466,6 +530,8 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_seealso(self, node):
+        if(self.debug):
+            print("FOUND A SEE ALSO:", node)
         # print("PARSING SEEALSO " + getattr(self.builder, 'current_docname'))
         # TODO: support seealso
         raise nodes.SkipNode
@@ -477,18 +543,24 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_math_block(self, node):
+        if(self.debug):
+            print("FOUND A MATH BLOCK:", node)
         pass
 
     def depart_math_block(self, node):
         pass
 
     def visit_raw(self, node):
+        if(self.debug):
+            print("FOUND A RAW:", node)
         self.descend('raw')
 
     def depart_raw(self, node):
         self.ascend('raw')
 
     def visit_enumerated_list(self, node):
+        if(self.debug):
+            print("FOUND AN ENUMERATED LIST:", node)
         self.depth.descend('list')
         self.depth.descend('enumerated_list')
 
@@ -498,6 +570,8 @@ class DocusaurusTranslator(Translator):
         self.depth.ascend('list')
 
     def visit_bullet_list(self, node):
+        if(self.debug):
+            print("FOUND A BULLET LIST:", node)
         self.depth.descend('list')
         self.depth.descend('bullet_list')
 
@@ -506,6 +580,8 @@ class DocusaurusTranslator(Translator):
         self.depth.ascend('list')
 
     def visit_list_item(self, node):
+        if(self.debug):
+            print("FOUND A LIST ITEM:", node)
         self.depth.descend('list_item')
         depth = self.depth.get('list')
         depth_padding = ''.join(['    ' for i in range(depth - 1)])
@@ -521,11 +597,13 @@ class DocusaurusTranslator(Translator):
     def depart_list_item(self, node):
         self.depth.ascend('list_item')
 
+
     def visit_entry(self, node):
         if not len(self.table_rows):
             raise nodes.SkipNode
         self.add("| ")
         self.table_entries.append(node)
+
 
     def depart_entry(self, node):
         length = 0
@@ -540,8 +618,10 @@ class DocusaurusTranslator(Translator):
         )
         self.add(padding + ' ')
 
+
     def visit_paragraph(self, node):
         pass
+
 
     def depart_paragraph(self, node):
         # Do not add a newline if processing a table, because it will break the markup
@@ -549,11 +629,14 @@ class DocusaurusTranslator(Translator):
             self.ensure_eol()
             self.add('\n')
 
+
     def descend(self, node_name):
         self.depth.descend(node_name)
 
+
     def ascend(self, node_name):
         self.depth.ascend(node_name)
+
 
 class FrontMatterPositionDirective(SphinxDirective):
     required_arguments = 1
@@ -561,6 +644,7 @@ class FrontMatterPositionDirective(SphinxDirective):
     final_argument_whitespace = True
     option_spec = {}
     has_content = False
+
 
     def run(self):
         docname = self.env.docname
@@ -577,6 +661,7 @@ class FrontMatterSlugDirective(SphinxDirective):
     final_argument_whitespace = True
     option_spec = {}
     has_content = False
+
 
     def run(self):
         docname = self.env.docname

@@ -22,7 +22,7 @@ class DocusaurusBuilder(Builder):
     format = 'docusaurus'
     epilog = __('The docusaurus files are in %(outdir)s.')
 
-    out_suffix = '.md'
+    out_suffix = '.mdx'
     link_suffix = '/'
     allow_parallel = True
     default_translator_class = DocusaurusTranslator
