@@ -53,10 +53,6 @@
     "npm-publish": "shx rm -f .npmrc && npm publish --access=public --tag=$TAG",
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish --tag=$TAG && shx rm -f .npmrc"
   },
-  "dependencies": {
-    "@objectiv/tracker-core": "^0.0.19-1",
-    "@objectiv/tracker-react": "^0.0.19-1"
-  },
   "devDependencies": {
     "@objectiv/developer-tools": "^0.0.19-1",
     "@objectiv/testing-tools": "^0.0.19-1",
@@ -72,6 +68,9 @@
     "typescript": "^4.6.2"
   },
   "peerDependencies": {
+    "@objectiv/schema": "^0.0.19-1",
+    "@objectiv/tracker-core": "^0.0.19-1",
+    "@objectiv/tracker-react": "^0.0.19-1",
     "react": ">=16.8",
     "react-dom": ">=16.8",
     "react-router-dom": ">=6.1"

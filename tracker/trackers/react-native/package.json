@@ -66,6 +66,7 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
+    "@objectiv/schema": "^0.0.19-1",
     "@objectiv/tracker-core": "~0.0.19-1",
     "@objectiv/tracker-react-core": "~0.0.19-1",
     "@objectiv/transport-fetch": "^0.0.19-1",
