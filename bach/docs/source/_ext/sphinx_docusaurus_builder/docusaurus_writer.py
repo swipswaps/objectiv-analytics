@@ -476,7 +476,7 @@ class DocusaurusTranslator(Translator):
         self.autosummary_shown.append(self.current_class_or_method) # autosummary shown for this class/method
         # TODO: add table headers names as an optional attribute to the autosummary?
         tgroup = nodes.tgroup(cols=2)
-        thead = nodes.thead()
+        thead = nodes.thead(classes="autosummary")
         tgroup += thead
         row = nodes.row()
         entry = nodes.entry()

@@ -63,7 +63,7 @@ def doctree_read(app: Sphinx, doctree: Node) -> None:
             reference += nodes.inline(text='[source]')
             onlynode = addnodes.only(expr='docusaurus')
             onlynode += reference
-            signature_node.replace_self([onlynode, signature_node]) 
+            signature_node.replace_self([signature_node, onlynode]) 
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:
