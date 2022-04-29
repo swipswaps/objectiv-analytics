@@ -34,14 +34,14 @@ def doctree_read(app: Sphinx, doctree: Node) -> None:
     for objnode in list(doctree.findall(addnodes.desc)):
         domain = objnode.get('domain')
         uris: Set[str] = set()
-        for signode in objnode:
-            if not isinstance(signode, addnodes.desc_signature):
+        for signature_node in objnode:
+            if not isinstance(signature_node, addnodes.desc_signature):
                 continue
 
-            # Convert signode to a specified format
+            # Convert signature_node to a specified format
             info = {}
             for key in domain_keys.get(domain, []):
-                value = signode.get(key)
+                value = signature_node.get(key)
                 if not value:
                     value = ''
                 info[key] = value
@@ -59,13 +59,11 @@ def doctree_read(app: Sphinx, doctree: Node) -> None:
                 continue
             uris.add(uri)
 
-            container = nodes.inline(classes=['viewcode-link'])
-            reference = nodes.reference(internal=False, refuri=uri)
+            reference = nodes.reference(internal=False, refuri=uri, classes=['viewcode-link'])
             reference += nodes.inline(text='[source]')
-            container += reference
             onlynode = addnodes.only(expr='docusaurus')
-            onlynode += container
-            signode += onlynode
+            onlynode += reference
+            signature_node.replace_self([onlynode, signature_node]) 
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:

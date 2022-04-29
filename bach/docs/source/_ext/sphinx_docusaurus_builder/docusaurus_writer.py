@@ -71,8 +71,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
-        # if (self.debug):
-        #     print(node)
+        if (self.debug):
+            print(node)
 
 
     def depart_document(self, node):
@@ -120,14 +120,12 @@ class DocusaurusTranslator(Translator):
         raise nodes.SkipNode
 
 
-    def visit_inline(self, node): 
-        if('viewcode-link' in node.attributes['classes']):
-            self.add('\n<span class="view-code-link">\n\n')
+    def visit_inline(self, node):
+        pass
 
 
     def depart_inline(self, node):
-        if('viewcode-link' in node.attributes['classes']):
-            self.add('\n\n</span>\n')
+        pass
 
 
     def visit_desc(self, node):
@@ -149,9 +147,9 @@ class DocusaurusTranslator(Translator):
         # the main signature (i.e. its name + parameters) of a class/method.
         # if a signature has a non-null class, thats means it's a class method.
         if ("class" in node.attributes and node.attributes['class']):
-            self.add('<h2 class="signature-class">')
+            self.add('\n<h2 class="signature-class">')
         else:
-            self.add('<h2 class="signature-method">')
+            self.add('\n<h2 class="signature-method">')
 
 
     def depart_desc_signature(self, node):
@@ -354,6 +352,9 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_reference(self, node):
+        if('viewcode-link' in node.attributes['classes']):
+            self.add('\n&#8203;<span class="view-source">')
+    
         self.in_reference = True
         url = self._refuri2http(node)
         if url is None:
@@ -362,6 +363,10 @@ class DocusaurusTranslator(Translator):
         for child in node.children:
             child.walkabout(self)
         self.add(']({})'.format(url))
+
+        if('viewcode-link' in node.attributes['classes']):
+            self.add("</span>\n")
+
         raise nodes.SkipNode
 
 
