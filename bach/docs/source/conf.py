@@ -47,7 +47,7 @@ extensions = [
     'sphinx.ext.autodoc',  # generate summaries based on docstrings
     'sphinx.ext.autosummary',  # auto generate autodoc directives
     # 'sphinx.ext.intersphinx',       # generate links to external sphinx projects
-    'sphinx.ext.linkcode',  # generate [source] links to GH
+    'linkcode',  # generate [source] links to GH
     'sphinx.ext.doctest',  # run examples /tests
     'numpydoc',  # use numpy style docs
     'sphinx_markdown_builder',

@@ -68,6 +68,7 @@ class DocusaurusTranslator(Translator):
         slug = '/modeling/' + slug + '/'
         return slug
 
+
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
         # if (self.debug):
@@ -101,7 +102,7 @@ class DocusaurusTranslator(Translator):
         frontmatter_content = '---\n' + variables_yaml + '---\n'
         self.add(frontmatter_content, section='head')
 
-
+    
     def visit_title(self, node):
         if not self.visited_title:
             self.title = node.astext()
@@ -117,6 +118,16 @@ class DocusaurusTranslator(Translator):
 
     def depart_comment(self, node):
         raise nodes.SkipNode
+
+
+    def visit_inline(self, node): 
+        if('viewcode-link' in node.attributes['classes']):
+            self.add('\n<span class="view-code-link">\n\n')
+
+
+    def depart_inline(self, node):
+        if('viewcode-link' in node.attributes['classes']):
+            self.add('\n\n</span>\n')
 
 
     def visit_desc(self, node):
@@ -340,6 +351,7 @@ class DocusaurusTranslator(Translator):
 
     def depart_title_reference(self, node):
         pass
+
 
     def visit_reference(self, node):
         self.in_reference = True
