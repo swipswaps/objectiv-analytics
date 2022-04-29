@@ -74,14 +74,14 @@ class DataFrame:
     do other operations that are not suitable for in memory processing. At any time it is possible to write
     your Bach DataFrame to a pandas DataFrame.
 
-    **Usage**
+    ## Usage
 
     It should generally not be required to construct DataFrame instances manually. A DataFrame can be
     constructed using the any of the bach classmethods like :py:meth:`from_table`, :py:meth:`from_model`, or
     :py:meth:`from_pandas`. The returned DataFrame can be thought of as a dict-like container for Bach
     Series objects.
 
-    **Getting & Setting columns**
+    ## Getting & Setting columns
 
     Getting data works similar to pandas DataFrame. Single columns can be retrieved with ``df['column_name']``
     as well as ``df.column_name``. This will return a single Bach Series. Multiple columns can be retrieved by
@@ -104,7 +104,7 @@ class DataFrame:
     For more information about label-based selection, please take a look to :py:attr:`loc`.
 
 
-    **Moving Series around**
+    ## Moving Series around
 
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
     DataFrame is possible if they share the same base node or index dtype. DataFrames and Series share the
@@ -114,7 +114,7 @@ class DataFrame:
     merge on the index. This works for one level indexes where the dtype of the series is the same as the
     DataFrame's index dtype.
 
-    **Examples**
+    ## Examples
 
     .. code-block:: python
 
@@ -122,7 +122,7 @@ class DataFrame:
         df['b'] = ''
 
 
-    **Database access**
+    ## Database access
 
     The data of this DataFrame is always held in the database and operations on the data are performed
     by the database, not in local memory. Data will only be transferred to local memory when an

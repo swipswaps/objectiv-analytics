@@ -34,7 +34,7 @@ class DocusaurusTranslator(Translator):
     def __init__(self, document, builder=None):
         Translator.__init__(self, document, builder=builder)
         self.builder = builder
-        self.debug = True if 'DataFrame/index' in builder.current_docname else False
+        self.debug = True if builder.current_docname == 'bach/api-reference/DataFrame/bach.DataFrame' else False
         self.frontmatter = frontmatter
 
 
@@ -239,12 +239,22 @@ class DocusaurusTranslator(Translator):
         pass
 
 
-    def visit_literal_strong(self, node):
-        self.add('**')
-
     def visit_literal_block(self, node):
         if(self.debug):
             print("FOUND A LITERAL BLOCK:", node)
+        if (node['language']):
+            self.add('```' + node['language'] + '\n')
+        else:
+            self.add('```\n')
+        for child in node.children:
+            child.walkabout(self)
+        self.add('\n```\n\n')
+        raise nodes.SkipNode
+
+
+    def depart_literal_block(self, node):
+        pass
+
 
     def visit_literal_strong(self, node):
         self.add('**')
@@ -258,7 +268,7 @@ class DocusaurusTranslator(Translator):
     def depart_literal_emphasis(self, node):
         self.add('*')
 
-
+    
     def visit_title_reference(self, node):
         self.add('`')
         for child in node.children:
