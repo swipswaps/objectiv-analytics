@@ -18,6 +18,7 @@ frontmatter = {}
 class DocusaurusTranslator(Translator):
     depth = Depth()
     enumerated_count = {}
+    section_depth = 0
     title = None
     visited_title = False
     in_table = False # whether currently processing a table (e.g. to not insert newlines)
@@ -66,8 +67,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
-        if (self.debug):
-            print(node)
+        # if (self.debug):
+        #     print(node)
 
 
     def depart_document(self, node):
@@ -91,9 +92,9 @@ class DocusaurusTranslator(Translator):
         if not self.visited_title:
             self.title = node.astext()
             self.visited_title = True
-            self.add('# ')
-        else:
-            self.add('## ')
+        for x in range(0, self.section_depth):
+            self.add('#')
+        self.add(' ')
 
 
     def visit_desc(self, node):
@@ -285,10 +286,12 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_section(self, node):
+        self.section_depth += 1
         pass
 
 
     def depart_section(self, node):
+        self.section_depth -= 1
         self.add('\n\n')
 
 
