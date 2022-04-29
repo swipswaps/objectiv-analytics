@@ -21,14 +21,15 @@ class DocusaurusTranslator(Translator):
     section_depth = 0
     title = None
     visited_title = False
+    current_class_or_method = None # the current class or method being parsed (if any)
+    autosummary_shown = [] # holds for which class/method an autosummary has already been shown (if any)
     in_table = False # whether currently processing a table (e.g. to not insert newlines)
     table_entries = []
     table_rows = []
     tables = []
     tbodys = []
     theads = []
-    current_class_or_method = None # the current class or method being parsed (if any)
-    autosummary_shown = [] # holds for which class/method an autosummary has already been shown (if any)
+    in_reference = False # whether currently processing a reference (e.g. to not insert emphasis or bold)
 
     debug = False
 
@@ -36,7 +37,7 @@ class DocusaurusTranslator(Translator):
     def __init__(self, document, builder=None):
         Translator.__init__(self, document, builder=builder)
         self.builder = builder
-        self.debug = True if builder.current_docname == 'bach/api-reference/DataFrame/bach.DataFrame' else False
+        self.debug = True if builder.current_docname == 'models/Aggregation/modelhub.Aggregate.session_duration' else False
         self.frontmatter = frontmatter
 
 
@@ -225,36 +226,45 @@ class DocusaurusTranslator(Translator):
     # field_list
     #   field
     #       field_name (e.g 'returns/parameters/raises')
-    #
-
+    #           field_body (often a bulleted list)    #
     def visit_field_list(self, node):
-        if(self.debug):
-            print("FOUND A FIELD LIST:", node)        
         pass
+
 
     def depart_field_list(self, node):
         pass
 
+
     def visit_field(self, node):
-        if(self.debug):
-            print("FOUND A FIELD:", node)        
         self.add('\n')
+
 
     def depart_field(self, node):
         self.add('\n')
 
+
     def visit_field_name(self, node):
         # field name, e.g 'returns', 'parameters'
-        if(self.debug):
-            print("FOUND A FIELD NAME:", node)        
-        self.add('* **')
+        self.add('### ')
+
 
     def depart_field_name(self, node):
-        self.add('**')
+        self.add('\n\n')
+        pass
+
+
+    def visit_field_body(self, node):
+        # container for the body of the field
+        pass
+
+
+    def depart_field_body(self, node):
+        pass
+
 
     def visit_definition(self, node):
         if(self.debug):
-            print("FOUND A DEFINITION:", node)        
+            print("FOUND A DEFINITION:", node) 
         self.add('\n')
 
     def depart_definition(self, node):
@@ -262,7 +272,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_label(self, node):
         if(self.debug):
-            print("FOUND A LABEL:", node)        
+            print("FOUND A LABEL:", node) 
         self.add('\n')
 
     def depart_label(self, node):
@@ -282,6 +292,7 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_literal_block(self, node):
+        # code block, with optional language parameter
         if (node['language']):
             self.add('```' + node['language'] + '\n')
         else:
@@ -297,20 +308,26 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_literal_strong(self, node):
-        if(self.debug):
-            print("FOUND A LITERAL STRONG:", node)
-        self.add('**')
+        # literal (e.g. `string`) to bolden
+        self.add('**`')
+
 
     def depart_literal_strong(self, node):
-        self.add('**')
+        self.add('`**')
+
 
     def visit_literal_emphasis(self, node):
-        if(self.debug):
-            print("FOUND A LITERAL EMPHASIS:", node)
-        self.add('*')
+        # literal (e.g. `string`) to emphasize
+        # do not add '_' if we're in a reference with a link
+        if not self.in_reference:
+            self.add('_')
+
 
     def depart_literal_emphasis(self, node):
-        self.add('*')
+        # literal (e.g. `string`) to emphasize
+        # if in a reference with a link, remove the '_' at the end
+        if self.in_reference:
+            self.add('')
 
     
     def visit_title_reference(self, node):
@@ -322,6 +339,22 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_title_reference(self, node):
+        pass
+
+    def visit_reference(self, node):
+        self.in_reference = True
+        url = self._refuri2http(node)
+        if url is None:
+            return
+        self.add('[')
+        for child in node.children:
+            child.walkabout(self)
+        self.add(']({})'.format(url))
+        raise nodes.SkipNode
+
+
+    def depart_reference(self, node):
+        self.in_reference = False
         pass
 
 
@@ -358,13 +391,19 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_section(self, node):
+        # container for any section
+
+        # # add container div with an ID if a title has already been shown, otherwise it interferes
+        # if self.visited_title:
+        #     section_ids = node.attributes['ids'][0]
+        #     self.add('\n<div id="' + section_ids + '">\n\n')
         self.section_depth += 1
-        pass
 
 
     def depart_section(self, node):
         self.section_depth -= 1
-        self.add('\n\n')
+        # if self.visited_title:
+        #     self.add('\n</div>\n')
 
 
     def visit_rubric(self, node):
@@ -587,9 +626,10 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_list_item(self, node):
+        # a bulleted or enumerated list item
         self.depth.descend('list_item')
         depth = self.depth.get('list')
-        depth_padding = ''.join(['    ' for i in range(depth - 1)])
+        depth_padding = ''.join(['  ' for i in range(depth - 1)])
         marker = '*'
         if node.parent.tagname == 'enumerated_list':
             if depth not in self.enumerated_count:
@@ -597,10 +637,11 @@ class DocusaurusTranslator(Translator):
             else:
                 self.enumerated_count[depth] = self.enumerated_count[depth] + 1
             marker = str(self.enumerated_count[depth]) + '.'
-        self.add('\n' + depth_padding + marker + ' ')
+        self.add(depth_padding + marker + ' ')
 
 
     def depart_list_item(self, node):
+        # a bulleted or enumerated list item
         self.depth.ascend('list_item')
 
 
