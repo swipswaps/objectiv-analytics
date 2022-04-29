@@ -27,6 +27,8 @@ class DocusaurusTranslator(Translator):
     tables = []
     tbodys = []
     theads = []
+    current_class_or_method = None # the current class or method being parsed (if any)
+    autosummary_shown = [] # holds for which class/method an autosummary has already been shown (if any)
 
     debug = False
 
@@ -117,9 +119,11 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_desc(self, node):
-        if ("desctype" in node.attributes and node.attributes["desctype"] == "class"):
+        desctype = node.attributes["desctype"] if "desctype" in node.attributes else None
+        self.current_class_or_method = desctype
+        if (desctype == "class"):
             self.add('<div class="class">\n')
-        elif ("desctype" in node.attributes and node.attributes["desctype"] == "method"):
+        elif (desctype == "method"):
             self.add('<div class="method">\n')
         else:
             self.add('<div>\n')
@@ -395,10 +399,25 @@ class DocusaurusTranslator(Translator):
         pass
 
 
+    def visit_autosummary_toc(self, node):
+        if(self.debug):
+            print("FOUND AN AUTOSUMMARY TOC FOR CLASS/METHOD", self.current_class_or_method)
+        # if an autosummary type (table or toc) is not yet shown for this class/method, show the TOC list
+        if self.current_class_or_method not in self.autosummary_shown:
+            self.autosummary_shown.append(self.current_class_or_method)
+        else:
+            raise nodes.SkipNode
+
+
+    def depart_autosummary_toc(self, node):
+        self.add("\n\n")
+
+
     def visit_autosummary_table(self, node):
         """Sphinx autosummary See http://www.sphinx-
         doc.org/en/master/usage/extensions/autosummary.html."""
         self.table_entries = [] # reset the table_entries, so depart_thead doesn't generate redundant columns
+        self.autosummary_shown.append(self.current_class_or_method) # autosummary shown for this class/method
         # TODO: add table headers names as an optional attribute to the autosummary?
         tgroup = nodes.tgroup(cols=2)
         thead = nodes.thead()
@@ -516,19 +535,6 @@ class DocusaurusTranslator(Translator):
             self.table_entries = []
 
 
-    def visit_autosummary_toc(self, node):
-        if(self.debug):
-            print("FOUND AN AUTOSUMMARY TOC:", node)
-        # print("PARSING AUTOSUMMARY WITH TOC IN " + getattr(self.builder, 'current_docname'))
-        # TODO: support autosummary toc
-        raise nodes.SkipNode
-
-
-    def depart_autosummary_toc(self, node):
-        # TODO: support autosummary toc
-        raise nodes.SkipNode
-
-
     def visit_seealso(self, node):
         if(self.debug):
             print("FOUND A SEE ALSO:", node)
@@ -569,19 +575,18 @@ class DocusaurusTranslator(Translator):
         self.depth.ascend('enumerated_list')
         self.depth.ascend('list')
 
+    
     def visit_bullet_list(self, node):
-        if(self.debug):
-            print("FOUND A BULLET LIST:", node)
         self.depth.descend('list')
         self.depth.descend('bullet_list')
+
 
     def depart_bullet_list(self, node):
         self.depth.ascend('bullet_list')
         self.depth.ascend('list')
 
+
     def visit_list_item(self, node):
-        if(self.debug):
-            print("FOUND A LIST ITEM:", node)
         self.depth.descend('list_item')
         depth = self.depth.get('list')
         depth_padding = ''.join(['    ' for i in range(depth - 1)])
@@ -593,6 +598,7 @@ class DocusaurusTranslator(Translator):
                 self.enumerated_count[depth] = self.enumerated_count[depth] + 1
             marker = str(self.enumerated_count[depth]) + '.'
         self.add('\n' + depth_padding + marker + ' ')
+
 
     def depart_list_item(self, node):
         self.depth.ascend('list_item')
@@ -628,6 +634,15 @@ class DocusaurusTranslator(Translator):
         if not self.in_table:
             self.ensure_eol()
             self.add('\n')
+
+
+    def visit_compact_paragraph(self, node):
+        if(self.debug):
+            print("FOUND A COMPACT PARAGRAPH:", node)
+        pass
+
+    def depart_compact_paragraph(self, node):
+        pass
 
 
     def descend(self, node_name):
