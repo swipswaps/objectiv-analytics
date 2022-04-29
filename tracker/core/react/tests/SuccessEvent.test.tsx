@@ -5,7 +5,7 @@
 import { LocationContextName, makeContentContext, makeSuccessEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import { trackSuccessEvent, TrackingContextProvider, useSuccessEventTracker } from '../src';
+import { TrackingContextProvider, trackSuccessEvent, useSuccessEventTracker } from '../src';
 
 describe('SuccessEvent', () => {
   beforeEach(() => {

@@ -5,19 +5,17 @@
 import { expectToThrow, matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   GlobalContextName,
-  GlobalContextValidationRule,
   LocationContextName,
-  LocationContextValidationRule,
   makeContentContext,
   Tracker,
-  TrackerConsole,
   TrackerPlatform,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { LocationProvider, TrackingContextProvider, useLocationStack, useTracker, useTrackingContext } from '../src';
 
-TrackerConsole.setImplementation(MockConsoleImplementation);
+require('@objectiv/developer-tools');
+globalThis.objectiv?.TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackingContextProvider', () => {
   beforeEach(() => {
@@ -44,18 +42,25 @@ describe('TrackingContextProvider', () => {
         plugins: [
           {
             pluginName: 'OpenTaxonomyValidationPlugin',
+            initialized: true,
             validationRules: [
-              new GlobalContextValidationRule({
+              {
+                validationRuleName: 'GlobalContextValidationRule',
                 logPrefix: 'OpenTaxonomyValidationPlugin',
                 contextName: GlobalContextName.ApplicationContext,
+                platform: 'CORE',
                 once: true,
-              }),
-              new LocationContextValidationRule({
+                validate: expect.any(Function),
+              },
+              {
+                validationRuleName: 'LocationContextValidationRule',
                 logPrefix: 'OpenTaxonomyValidationPlugin',
                 contextName: LocationContextName.RootLocationContext,
-                once: true,
+                platform: 'CORE',
                 position: 0,
-              }),
+                once: true,
+                validate: expect.any(Function),
+              },
             ],
           },
           {
@@ -74,6 +79,10 @@ describe('TrackingContextProvider', () => {
       transport: undefined,
     },
   };
+
+  it('developers tools should have been imported', async () => {
+    expect(globalThis.objectiv).not.toBeUndefined();
+  });
 
   it('should support children components', () => {
     const Component = () => {
