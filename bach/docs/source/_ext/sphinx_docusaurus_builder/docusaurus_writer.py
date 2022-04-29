@@ -73,13 +73,24 @@ class DocusaurusTranslator(Translator):
 
     def depart_document(self, node):
         # write the frontmatter after being done with the doc
+        current_doc = self.builder.current_docname
+        
+        # Format API reference titles
+        title = self.title
+        for api, config in self.builder.api_frontmatter.items():
+            if current_doc.startswith(api):
+                if 'title_tree_levels' in config:
+                    levels = config['title_tree_levels']
+                    parts = self.title.split('.')
+                    title = '.'.join(parts[-levels:])
+
         ctx = self.builder.ctx
-        doc_frontmatter = self.frontmatter[self.builder.current_docname] if self.builder.current_docname in self.frontmatter else None
+        doc_frontmatter = self.frontmatter[current_doc] if current_doc in self.frontmatter else None
         variables = munchify({
             'date': ctx.date,
-            'id': _.snake_case(self.builder.current_docname).replace('_', '-'),
-            'title': self.title,
-            'slug': self.get_slug(self.builder.current_docname, doc_frontmatter),
+            'id': _.snake_case(current_doc).replace('_', '-'),
+            'title': title,
+            'slug': self.get_slug(current_doc, doc_frontmatter),
         })
         if doc_frontmatter and 'position' in doc_frontmatter:
             variables['sidebar_position'] = int(doc_frontmatter['position'])

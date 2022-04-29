@@ -30,6 +30,17 @@ class DocusaurusBuilder(Builder):
     current_docname = None
 
     markdown_http_base = '/docs/modeling'
+    api_frontmatter = {
+        'bach/api-reference': {
+            'title_tree_levels': 1
+        },
+        'modelhub-api-reference': {
+            'title_tree_levels': 1
+        },
+        'models': {
+            'title_tree_levels': 1
+        }
+    }
 
     def init(self):
         self.secnumbers = {}
