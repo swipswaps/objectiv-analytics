@@ -9,7 +9,10 @@ from sql_models.constants import NotSet, not_set
 from typing import List, Union, TYPE_CHECKING
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-
+from sklearn.linear_model import LogisticRegression as LogisticRegression_sklearn
+from sklearn.model_selection import StratifiedKFold
+import pandas as pd
+from sklearn.metrics import roc_curve, auc
 
 if TYPE_CHECKING:
     from modelhub import ModelHub
@@ -277,3 +280,66 @@ class Aggregate:
         model.underlyingmodel.fit(X, y)
 
         return X, y, model
+
+    def feature_importance_proto(self, X,y, print_report=False):
+        kf = StratifiedKFold(5, shuffle=True, random_state=42)
+
+        # todo now just a method that returns a dict, but could be improved returning a class with the
+        #  models and metrics etc
+
+        result_dict = {}
+
+        coef = pd.DataFrame(columns=X.columns)
+        i = 1
+        # todo split based on bach: maybe save a last test set of complete unseen data in the database (the
+        #  biggest set)
+        for train, test in kf.split(X, y):
+            X_train, X_test, y_train, y_test = X.iloc[train], X.iloc[test], y[train], y[test]
+
+            report = f"fold {i}\n"
+            report += "==============================\n"
+            report += f"{y_test.value_counts()=}\n"
+            report += f"{y_train.value_counts()=}\n"
+
+            lr = LogisticRegression_sklearn()
+            lr.fit(X_train, y_train)
+
+            report += f"score: {lr.score(X_test, y_test)}\n"
+
+            cr = self._mh.metrics.get_classification_report(y_test, lr.predict(X_test), output_dict=True)
+
+            x_results = X_test.copy()
+            x_results['is_converted'] = y_test
+            x_results['yhat'] = lr.predict(X_test)
+
+            proba = lr.predict_proba(X_test)[:, 1]
+            fpr, tpr, thresholds = roc_curve(y_test, proba)
+
+            report += f"\npredicted converted correct: " \
+                f"{len(x_results[(x_results['yhat'] == 1) & (x_results['is_converted'] == 1)])}\n"
+            report += f"recall: {cr[True]['recall']}\n"
+            report += f"precision: {cr[True]['precision']}\n"
+            report += f"roc auc: {auc(fpr, tpr)}\n"
+
+            coef_fold = pd.DataFrame(lr.coef_, columns=X.columns)
+
+            coef = pd.concat([coef, coef_fold])
+
+            result_dict[f'fold {i}'] = {'classification_report': cr,
+                                        'auc': auc(fpr, tpr),
+                                        'coef': coef_fold}
+
+            i += 1
+            report += "==============================\n\n"
+            if print_report:
+                print(report)
+        result_dict['coef'] = coef
+
+        feature = pd.DataFrame([coef.mean(), coef.std()], index=['mean', 'std']).T.sort_values(
+            'mean')
+
+        result_dict['feature'] = feature
+
+        result_dict['auc_mean'] = np.mean([y['auc'] for x, y in result_dict.items() if x[:4] == 'fold'])
+
+        return result_dict
