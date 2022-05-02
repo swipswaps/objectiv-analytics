@@ -19,17 +19,7 @@ if TYPE_CHECKING:
     from bach import DataFrameOrSeries
 
 
-def to_pandas_function_postgres(data):
-    # TODO: extremely hackish. probably best not to support this
-    #  might have to scrap this whole class, if this is not possible nicely, then this doesn't add value.
-
-    # data is a string in format '(field1, field2, field3)'
-    # strip parenthesis and split on comma
-    return tuple(data[1:-1].split(','))
-
-
 def to_pandas_function_bigquery(data):
-    # hackish
     # data is dict of format: `{'_field_1': value, '_field_2': value}`
     return tuple(data[f'_field_{i + 1}'] for i, _key in enumerate(data))
 
@@ -47,6 +37,37 @@ class SeriesTuple(Series):
         DBDialect.POSTGRES: ToPandasInfo(dtype='object', function=to_pandas_function_postgres),
         DBDialect.BIGQUERY: ToPandasInfo(dtype='object', function=to_pandas_function_bigquery)
     }
+
+    @property
+    def to_pandas_info(self) -> Mapping[DBDialect, Optional[ToPandasInfo]]:
+        if is_bigquery(self.engine):
+            return {
+                DBDialect.BIGQUERY: ToPandasInfo(dtype='object', function=to_pandas_function_bigquery)
+            }
+        if is_postgres(self.engine):
+            def split_func(data):
+                # TODO: extremely hackish. probably best not to support this
+                #  might have to scrap this whole class, if this is not possible nicely, then this doesn't
+                #  add value.
+
+                # data is a string in format '(field1, field2, field3)'
+                # strip parenthesis and split on comma. We don't know type information here
+                items = data[1:-1].split(',')
+                result = []
+                for i, item in enumerate(items):
+                    sub_dtype = self.instance_dtype[i]
+                    if sub_dtype == 'string':
+                        result.append(str(item))
+                    elif sub_dtype == 'int64':
+                        result.append(int(item))
+                    elif sub_dtype == 'float64':
+                        result.append(float(item))
+                return tuple(result)
+            return {
+                DBDialect.POSTGRES: ToPandasInfo(dtype='object', function=split_func)
+            }
+
+        return {}
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
