@@ -4,20 +4,18 @@
 
 import { LocationStack } from './Context';
 import { GlobalContextValidationRuleFactory, LocationContextValidationRuleFactory } from './ContextValidationRules';
-import { EventRecorderFactory } from './EventRecorderInterface';
+import { EventRecorderInterface } from './EventRecorderInterface';
 import { LocationTreeInterface } from './LocationTreeInterface';
 import { TrackerConsoleInterface } from './TrackerConsoleInterface';
-import { TrackerEvent } from './TrackerEvent';
 
 /**
  * DeveloperTools interface definition.
  */
 export interface TrackerDeveloperToolsInterface {
+  EventRecorder: EventRecorderInterface;
   getLocationPath: (locationStack: LocationStack) => string;
   LocationTree: LocationTreeInterface;
-  makeEventRecorder: EventRecorderFactory;
   makeGlobalContextValidationRule: GlobalContextValidationRuleFactory;
   makeLocationContextValidationRule: LocationContextValidationRuleFactory;
-  recordedEvents: TrackerEvent[];
   TrackerConsole: TrackerConsoleInterface;
 }
