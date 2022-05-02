@@ -18,7 +18,7 @@ def test_basic_value_to_expression(bq_engine):
         'c': 123.456,
     }
     dtype = {'a': 'int64', 'b': 'string', 'c': 'float64'}
-    df['struct'] = SeriesDict.from_const(base=df, value=struct, name='struct', dtype=dtype)
+    df['struct'] = SeriesDict.from_value(base=df, value=struct, name='struct', dtype=dtype)
     assert_equals_data(
         df,
         expected_columns=['_index_skating_order', 'skating_order', 'struct'],
@@ -39,7 +39,7 @@ def test_series_to_dict(bq_engine):
         'c': df.skating_order * 5
     }
     dtype = {'a': 'int64', 'b': 'string', 'c': 'int64'}
-    df['struct'] = SeriesDict.construct(base=df, value=struct, name='struct', dtype=dtype)
+    df['struct'] = SeriesDict.from_value(base=df, value=struct, name='struct', dtype=dtype)
     assert_equals_data(
         df,
         expected_columns=['_index_skating_order', 'skating_order', 'struct'],
@@ -65,7 +65,7 @@ def test_getitem(bq_engine):
         'c': 123.456
     }
     dtype = {'a': 'int64', 'b': 'string', 'c': 'float64'}
-    df['struct'] = SeriesDict.from_const(base=df, value=struct, name='struct', dtype=dtype)
+    df['struct'] = SeriesDict.from_value(base=df, value=struct, name='struct', dtype=dtype)
     df['field_a'] = df['struct'].elements['a']
     df['field_b'] = df['struct'].elements['b']
     df['field_c'] = df['struct'].elements['c']
@@ -110,7 +110,7 @@ def test_nested(bq_engine):
         'y': simple_dtype,
         'z': [simple_dtype],
     }
-    df['struct'] = SeriesDict.from_const(base=df, value=struct, name='struct', dtype=dtype)
+    df['struct'] = SeriesDict.from_value(base=df, value=struct, name='struct', dtype=dtype)
     df['field_x'] = df['struct'].elements['x']
     df['field_y'] = df['struct'].elements['y']
     df['field_z_0_a'] = df['struct'].elements['z'].elements[0].elements['a']

@@ -1,7 +1,7 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import Any, Tuple, List, Union, TYPE_CHECKING, TypeVar
+from typing import Any, Tuple, List, Union, TYPE_CHECKING, TypeVar, Optional
 
 from sqlalchemy.engine import Dialect
 
@@ -48,23 +48,93 @@ class SeriesArray(Series):
 
         sub_dtype = dtype[0]
         series_type = get_series_type_from_dtype(sub_dtype)
-        sub_db_dtype = series_type.get_db_dtype(dialect)
-        if len(value) == 0:
-            sub_exprs = []
-        else:
-            sub_exprs = [
-                series_type.value_to_expression(dialect=dialect, value=item, dtype=sub_dtype)
-                for item in value
-            ]
+        sub_exprs = [
+            series_type.value_to_expression(dialect=dialect, value=item, dtype=sub_dtype)
+            for item in value
+        ]
 
+        return cls._sub_expressions_to_expression(
+            dialect=dialect,
+            sub_dtype=sub_dtype,
+            sub_expressions=sub_exprs
+        )
+
+    @classmethod
+    def from_value(
+        cls,
+        base: 'DataFrameOrSeries',
+        value: Any,
+        name: str,
+        dtype: Optional[StructuredDtype] = None
+    ) -> 'Series':
+        """
+
+        """
+        # We override the parent class here to allow using Series as sub-values in an array
+        dialect = base.engine.dialect
+
+        if not isinstance(dtype, list):
+            raise ValueError(f'Dtype should be type list. Type(dtype): {type(dtype)}')
+        validate_dtype_value(dtype=dtype, value=value)
+
+        sub_dtype = dtype[0]
+        series_type = get_series_type_from_dtype(sub_dtype)
+
+        sub_exprs = []
+        for i, item in enumerate(value):
+            if isinstance(item, Series):
+                if item.base_node != base.base_node:
+                    raise ValueError(f'When constructing an array from existing Series. '
+                                     f'The Series.base_node must match the base.base_node. '
+                                     f'Index with incorrect base-node: {i}')
+                series = item
+            else:
+                series = series_type.from_value(
+                    base=base,
+                    value=item,
+                    name=f'item_{i}',
+                    dtype=sub_dtype
+                )
+            sub_exprs.append(series.expression)
+
+        expression = cls._sub_expressions_to_expression(
+            dialect=dialect,
+            sub_dtype=sub_dtype,
+            sub_expressions=sub_exprs
+        )
+        result = cls.get_class_instance(
+            base=base,
+            name=name,
+            expression=expression,
+            group_by=None,
+            instance_dtype=dtype
+        )
+        # TODO: check the stuff that Series.from_value() handles like NULL
+        return result
+
+    @staticmethod
+    def _sub_expressions_to_expression(
+        dialect: Dialect,
+        sub_dtype: StructuredDtype,
+        sub_expressions: List[Expression]
+    ) -> Expression:
+        """ Internal function: create an array expression from a list of expressions """
+        series_type = get_series_type_from_dtype(sub_dtype)
+        sub_db_dtype = series_type.get_db_dtype(dialect)
         if is_postgres(dialect):
-            if not sub_exprs:
+            if not sub_expressions:
                 return Expression.construct(f'ARRAY[]::{sub_db_dtype}[]',)
-            return Expression.construct('ARRAY[{}]', join_expressions(expressions=sub_exprs, join_str=', '))
+            return Expression.construct(
+                'ARRAY[{}]',
+                join_expressions(expressions=sub_expressions, join_str=', ')
+            )
         if is_bigquery(dialect):
-            if not sub_exprs:
+            if not sub_expressions:
                 return Expression.construct(f'ARRAY<{sub_db_dtype}>[]', )
-            return Expression.construct('[{}]', join_expressions(expressions=sub_exprs, join_str=', '))
+            return Expression.construct(
+                '[{}]',
+                join_expressions(expressions=sub_expressions, join_str=', ')
+            )
         raise DatabaseNotSupportedException(dialect)
 
     @classmethod
@@ -72,7 +142,6 @@ class SeriesArray(Series):
         # Even when casting from an array to an array, things will be troublesome if instance_dtype doesn't
         # match. So just raise an error.
         raise Exception('Cannot cast a value to an array.')
-
 
     @property
     def arr(self) -> 'ArrayAccessor':

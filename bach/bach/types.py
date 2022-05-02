@@ -42,8 +42,7 @@ Dtype = str
 StructuredDtype = Union[List[Any], Dict[str, Any], Dtype]
 # Real definition of StructuredDtype, but not supported by mypy:
 # StructuredDtype = Union[List[StructuredDtype], Dict[str, StructuredDtype], str]
-# TODO: use DtypeOrAlias in StructuredDtype?
-DtypeOrAlias = Union[Type, Dtype]
+DtypeOrAlias = Union[Type, StructuredDtype]
 
 
 def get_series_type_from_dtype(dtype: DtypeOrAlias) -> Type['Series']:
@@ -66,7 +65,7 @@ def value_to_dtype(value: Any) -> str:
     return _registry.value_to_dtype(value)
 
 
-def value_to_series(value: Any) -> Type['Series']:
+def value_to_series_type(value: Any) -> Type['Series']:
     # TODO: not needed, remove again?
     """ Return the Series subclass that can represent value as literal. """
     return get_series_type_from_dtype(dtype=value_to_dtype(value))
@@ -281,7 +280,7 @@ def validate_dtype_value(dtype: StructuredDtype, value: Any):
     elif isinstance(dtype, Dtype):
         series = get_series_type_from_dtype(dtype)
         if type(value) not in series.supported_value_types:
-            raise ValueError(f'Dtype doees not match value. '
+            raise ValueError(f'Dtype does not match value. '
                              f'Dtype: {dtype}, '
                              f'supported value types: {series.supported_value_types}, '
                              f'value: {value}')
@@ -301,7 +300,7 @@ def validate_dtype_value(dtype: StructuredDtype, value: Any):
         if dtype_keys != value_keys:
             raise ValueError(f'Dtype keys do not match value keys. '
                              f'Dtype keys: {dtype_keys}, value keys: {value_keys}')
-        if any (not isinstance(key, str) for key in dtype_keys):
+        if any(not isinstance(key, str) for key in dtype_keys):
             raise ValueError(f'All dtype keys should be strings. Dtype keys: {dtype_keys}')
         for key, sub_dtype in dtype.items():
             sub_value = value[key]

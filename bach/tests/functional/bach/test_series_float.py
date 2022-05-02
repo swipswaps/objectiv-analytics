@@ -26,7 +26,7 @@ def test_from_const(engine):
     bt['d'] = d
     bt['e'] = e
     bt['f'] = f
-    bt['g'] = SeriesFloat64.from_const(base=bt, value=g, name='tmp')
+    bt['g'] = SeriesFloat64.from_value(base=bt, value=g, name='tmp')
     # check column d separately as `nan == nan` always evaluates to False
     db_values = assert_equals_data(
         bt,

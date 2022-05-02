@@ -65,23 +65,18 @@ class SeriesDict(Series):
         return Expression.construct('STRUCT({})', join_expressions(expressions=sub_exprs, join_str=', '))
 
     @classmethod
-    def _validate_is_bigquery(cls, dialect):
-        if not is_bigquery(dialect):
-            raise DatabaseNotSupportedException(
-                dialect,
-                message_override=f'SeriesDict is not supported for {dialect.name}, try SeriesJson.')
-
-    @classmethod
-    def construct(
+    def from_value(
         cls,
         base: 'DataFrameOrSeries',
         value: Any,
         name: str,
-        dtype: StructuredDtype
+        dtype: Optional[StructuredDtype] = None
     ) -> 'Series':
         """
-        Similar to from_const(), but allows values that are Series instead of constants.
+        TODO: comments
+        Note: dtype is mandatory for this class
         """
+        # We override the parent class here to allow using Series as sub-values in a dict
         dialect = base.engine.dialect
         cls._validate_is_bigquery(dialect)
 
@@ -96,25 +91,17 @@ class SeriesDict(Series):
                     raise ValueError(f'When constructing a struct from existing Series. '
                                      f'The Series.base_node must match the base.base_node. '
                                      f'Key with incorrect base-node: {key}')
-                sub_val = item.expression
+                series = item
             else:
                 sub_dtype = dtype[key]
                 series_type = get_series_type_from_dtype(sub_dtype)
-                if is_structural_dtype(sub_dtype):
-                    series = series_type.construct(
-                        base=base,
-                        value=item,
-                        name=key,
-                        dtype=sub_dtype
-                    )
-                    sub_val = series.expression
-                else:
-                    sub_val = series_type.value_to_expression(
-                        dialect=dialect,
-                        value=item,
-                        dtype=sub_dtype
-                    )
-            sub_expr = Expression.construct('{} as {}', sub_val, Expression.identifier(key))
+                series = series_type.from_value(
+                    base=base,
+                    value=item,
+                    name=key,
+                    dtype=sub_dtype
+                )
+            sub_expr = Expression.construct('{} as {}', series.expression, Expression.identifier(key))
             sub_exprs.append(sub_expr)
         expr = Expression.construct('STRUCT({})', join_expressions(expressions=sub_exprs, join_str=', '))
         result = cls.get_class_instance(
@@ -124,14 +111,21 @@ class SeriesDict(Series):
             group_by=None,
             instance_dtype=dtype
         )
+        # TODO: check the stuff that Series.from_value() handles like NULL
         return result
-
 
     @classmethod
     def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
         # Even when casting from a dict to a dict, things will be troublesome if instance_dtype doesn't
         # match. So just raise an error.
         raise Exception('Cannot cast a value to a dictionary.')
+
+    @classmethod
+    def _validate_is_bigquery(cls, dialect):
+        if not is_bigquery(dialect):
+            raise DatabaseNotSupportedException(
+                dialect,
+                message_override=f'SeriesDict is not supported for {dialect.name}, try SeriesJson.')
 
     @property
     def elements(self) -> 'DictAccessor':
@@ -142,11 +136,15 @@ class SeriesDict(Series):
 class DictAccessor:
     def __init__(self, series: SeriesDict):
         self._series = series
+        # TODO: below checks should not be needed, we should already assure this in Series.__init__()
+        if not isinstance(self._series.instance_dtype, dict):
+            raise Exception('Found type: {self._series.instance_dtype}')
+        self._instance_dtype: Dict[str, Any] = self._series.instance_dtype
 
     def __getitem__(self, key: str):
         # TODO: do we also want to support Series as key?
         engine = self._series.engine
-        instance_dtype = self._series.instance_dtype
+        instance_dtype = self._instance_dtype
         if key not in instance_dtype:
             raise ValueError(f'Invalid key: {key}. '
                              f'Available keys: {sorted(instance_dtype.keys())}')

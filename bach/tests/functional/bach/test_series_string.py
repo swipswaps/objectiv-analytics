@@ -18,8 +18,8 @@ def test_from_const(engine):
     bt = get_df_with_test_data(engine)[['city']]
     bt['a'] = a
     bt['b'] = b
-    bt['c'] = SeriesString.from_const(base=bt, value=c, name='temp')
-    bt['d'] = SeriesString.from_const(base=bt, value=d, name='temp')
+    bt['c'] = SeriesString.from_value(base=bt, value=c, name='temp')
+    bt['d'] = SeriesString.from_value(base=bt, value=d, name='temp')
     bt['e'] = e
     assert_equals_data(
         bt,

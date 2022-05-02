@@ -1178,7 +1178,7 @@ class DataFrame:
         For usage see general introduction DataFrame class.
         """
         # TODO: all types from types.TypeRegistry are supported.
-        from bach.series import Series, const_to_series
+        from bach.series import Series, value_to_series
         if isinstance(key, str):
             if key in self.index:
                 # Cannot set an index column, and cannot have a column name both in self.index and self.data
@@ -1193,7 +1193,7 @@ class DataFrame:
                                            convert_objects=True)
                 value = bt[key]
             if not isinstance(value, Series):
-                series = const_to_series(base=self, value=value, name=key)
+                series = value_to_series(base=self, value=value, name=key)
                 self._data[key] = series
             else:
                 if value.base_node == self.base_node and self._group_by == value.group_by:
@@ -3312,7 +3312,7 @@ class DataFrame:
             }
 
         categorical_series = []
-        from bach.series.series import const_to_series
+        from bach.series.series import value_to_series
         df_cp = self.copy()
 
         # prepare each series, add prefix to each value (variable identifiers)
@@ -3322,7 +3322,7 @@ class DataFrame:
 
             text_series = df_cp[col]
             prefix_val = f'{prefix_per_col.get(col, col)}{prefix_sep}'
-            prefix_series = const_to_series(text_series, value=prefix_val, name=col)
+            prefix_series = value_to_series(text_series, value=prefix_val, name=col)
             text_series = prefix_series + text_series
 
             categorical_series.append(text_series)

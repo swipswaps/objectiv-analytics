@@ -145,7 +145,7 @@ class SeriesAbstractDateTime(Series, ABC):
         # Make sure we cast properly, and round similar to python datetime: add 12 hours and cast to date
         if series.dtype == 'date':
             td_12_hours = datetime.timedelta(seconds=3600 * 12)
-            series_12_hours = SeriesTimedelta.from_const(base=series, value=td_12_hours, name='tmp')
+            series_12_hours = SeriesTimedelta.from_value(base=series, value=td_12_hours, name='tmp')
             expr_12_hours = series_12_hours.expression
 
             return series.copy_override(
