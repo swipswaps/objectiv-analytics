@@ -82,7 +82,7 @@ export const EventRecorder = new (class implements EventRecorderInterface {
       this.eventsCountByType[eventType] = (this.eventsCountByType[eventType] ?? 0) + 1;
 
       // Make event predictable, set the new identifier and remove time information
-      recordedEvent.id = `${eventType}#${this.eventsCountByType[eventType]}`
+      recordedEvent.id = `${eventType}#${this.eventsCountByType[eventType]}`;
       delete recordedEvent.time;
 
       this.events.push(recordedEvent);

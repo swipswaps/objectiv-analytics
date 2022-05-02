@@ -55,7 +55,7 @@ describe('EventRecorder', () => {
     ]);
   });
 
-    it('should remove time information from recorded Events', async () => {
+  it('should remove time information from recorded Events', async () => {
     const testPressEvent1 = new TrackerEvent({ _type: 'PressEvent' });
     const testPressEvent2 = new TrackerEvent({ _type: 'PressEvent' });
     const testPressEvent3 = new TrackerEvent({ _type: 'PressEvent' });
