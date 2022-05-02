@@ -3,6 +3,7 @@
  */
 
 import {
+  cleanObjectFromInternalProperties,
   EventRecorderConfig,
   EventRecorderInterface,
   NonEmptyArray,
@@ -85,7 +86,7 @@ export const EventRecorder = new (class implements EventRecorderInterface {
       recordedEvent.id = `${eventType}#${this.eventsCountByType[eventType]}`;
       delete recordedEvent.time;
 
-      this.events.push(recordedEvent);
+      this.events.push(cleanObjectFromInternalProperties(recordedEvent));
     });
 
     if (this.events.length >= this.maxEvents) {
