@@ -311,6 +311,10 @@ class SeriesJsonb(Series):
         """
         return self.Json(self)
 
+    @property
+    def elements(self):
+        return self.Json(self)
+
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         if not is_postgres(dialect):

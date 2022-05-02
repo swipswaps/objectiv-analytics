@@ -1,24 +1,19 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import Any, Tuple, TYPE_CHECKING, Dict, TypeVar, Optional
+from typing import Any, Tuple, TYPE_CHECKING, Dict, Optional
 
 from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression, join_expressions
-from bach.types import DtypeOrAlias, get_series_type_from_dtype, StructuredDtype, Dtype, \
-    validate_dtype_value, is_structural_dtype
+from bach.types import DtypeOrAlias, get_series_type_from_dtype, StructuredDtype, Dtype, validate_dtype_value
 from sql_models.constants import DBDialect
 from sql_models.util import DatabaseNotSupportedException, is_bigquery
 
 
 if TYPE_CHECKING:
-    from bach import SeriesInt64, DataFrameOrSeries
-    from bach.partitioning import GroupBy
-
-
-T = TypeVar('T', bound='SeriesDict')
+    from bach import DataFrameOrSeries
 
 
 class SeriesDict(Series):
@@ -77,8 +72,7 @@ class SeriesDict(Series):
         Note: dtype is mandatory for this class
         """
         # We override the parent class here to allow using Series as sub-values in a dict
-        dialect = base.engine.dialect
-        cls._validate_is_bigquery(dialect)
+        cls._validate_is_bigquery(base.engine.dialect)
 
         if not isinstance(dtype, dict):
             raise ValueError(f'Dtype should be type dict. Type(dtype): {type(dtype)}')

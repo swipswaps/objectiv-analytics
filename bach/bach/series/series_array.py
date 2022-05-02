@@ -1,24 +1,19 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import Any, Tuple, List, Union, TYPE_CHECKING, TypeVar, Optional
+from typing import Any, Tuple, List, Union, TYPE_CHECKING, Optional
 
 from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression, join_expressions
-from bach.types import DtypeOrAlias, value_to_dtype, get_series_type_from_dtype, StructuredDtype, Dtype, \
-    validate_dtype_value
+from bach.types import DtypeOrAlias, get_series_type_from_dtype, StructuredDtype, Dtype, validate_dtype_value
 from sql_models.constants import DBDialect
 from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
 
 if TYPE_CHECKING:
     from bach import SeriesInt64, DataFrameOrSeries
-    from bach.partitioning import GroupBy
-
-
-T = TypeVar('T', bound='SeriesArray')
 
 
 class SeriesArray(Series):
@@ -71,15 +66,12 @@ class SeriesArray(Series):
 
         """
         # We override the parent class here to allow using Series as sub-values in an array
-        dialect = base.engine.dialect
-
         if not isinstance(dtype, list):
             raise ValueError(f'Dtype should be type list. Type(dtype): {type(dtype)}')
         validate_dtype_value(dtype=dtype, value=value)
 
         sub_dtype = dtype[0]
         series_type = get_series_type_from_dtype(sub_dtype)
-
         sub_exprs = []
         for i, item in enumerate(value):
             if isinstance(item, Series):
@@ -98,7 +90,7 @@ class SeriesArray(Series):
             sub_exprs.append(series.expression)
 
         expression = cls._sub_expressions_to_expression(
-            dialect=dialect,
+            dialect=base.engine.dialect,
             sub_dtype=sub_dtype,
             sub_expressions=sub_exprs
         )

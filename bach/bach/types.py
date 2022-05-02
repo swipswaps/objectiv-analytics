@@ -39,7 +39,7 @@ usage, that is fine.
 
 
 Dtype = str
-StructuredDtype = Union[List[Any], Dict[str, Any], Dtype]
+StructuredDtype = Union[List[Any], Dict[str, Any], tuple, Dtype]
 # Real definition of StructuredDtype, but not supported by mypy:
 # StructuredDtype = Union[List[StructuredDtype], Dict[str, StructuredDtype], str]
 DtypeOrAlias = Union[Type, StructuredDtype]
@@ -130,12 +130,12 @@ class TypeRegistry:
         from bach.series import \
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,\
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,\
-            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray, SeriesDict
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray, SeriesTuple, SeriesDict
 
         standard_types: List[Type[Series]] = [
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,
-            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray, SeriesDict
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray, SeriesTuple, SeriesDict
         ]
 
         for klass in standard_types:
@@ -214,6 +214,8 @@ class TypeRegistry:
         #  maybe switch to all strings, e.g. `'list[int64]'` instead of `list['int64']` ?
         if isinstance(dtype, list):
             dtype = 'array'
+        elif isinstance(dtype, tuple):
+            dtype = 'tuple'
         elif isinstance(dtype, dict):
             dtype = 'dict'
 
@@ -292,6 +294,16 @@ def validate_dtype_value(dtype: StructuredDtype, value: Any):
         sub_dtype = dtype[0]
         for sub_value in value:
             validate_dtype_value(sub_dtype, sub_value)
+    elif isinstance(dtype, tuple):
+        if not isinstance(value, tuple):
+            raise ValueError(f'Dtype is a tuple, value is not a tuple. Value: {value}')
+        if len(value) != len(dtype):
+            raise ValueError(f'Number of items in dtype and value do not match. '
+                             f'dtype: {dtype}, value: {value}')
+        for i, sub_value in enumerate(value):
+            sub_dtype = dtype[i]
+            validate_dtype_value(sub_dtype, sub_value)
+
     elif isinstance(dtype, dict):
         if not isinstance(value, dict):
             raise ValueError(f'Dtype is a dict, value is not a dict. Value: {value}')
