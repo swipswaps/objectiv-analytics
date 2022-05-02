@@ -21,7 +21,8 @@ class DocusaurusTranslator(Translator):
     section_depth = 0
     title = None
     visited_title = False
-    current_class_or_method = None # the current class or method being parsed (if any)
+    current_desc_type = None # the current class or method or property being parsed (if any)
+    in_signature = False # whether currently processing a signature (e.g. to not insert newlines)
     autosummary_shown = [] # holds for which class/method an autosummary has already been shown (if any)
     in_table = False # whether currently processing a table (e.g. to not insert newlines)
     table_entries = []
@@ -37,7 +38,7 @@ class DocusaurusTranslator(Translator):
     def __init__(self, document, builder=None):
         Translator.__init__(self, document, builder=builder)
         self.builder = builder
-        self.debug = True if builder.current_docname == 'models/index' else False
+        self.debug = True if builder.current_docname == 'bach/api-reference/DataFrame/bach.DataFrame.all_series' else False
         self.frontmatter = frontmatter
 
 
@@ -71,8 +72,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
-        if (self.debug):
-            print(node)
+        # if (self.debug):
+        #     print(node)
 
 
     def depart_document(self, node):
@@ -135,11 +136,13 @@ class DocusaurusTranslator(Translator):
     def visit_desc(self, node):
         # container for class and method descriptions
         desctype = node.attributes["desctype"] if "desctype" in node.attributes else None
-        self.current_class_or_method = desctype
+        self.current_desc_type = desctype
         if (desctype == "class"):
             self.add('<div class="class">\n')
         elif (desctype == "method"):
             self.add('<div class="method">\n')
+        elif (desctype == "property"):
+            self.add('<div class="property">\n')
         else:
             self.add('<div>\n')
 
@@ -150,21 +153,23 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_desc_signature(self, node):
-        # the main signature (i.e. its name + parameters) of a class/method.
-        # if a signature has a non-null class, thats means it's a class method.
-        if ("class" in node.attributes and node.attributes['class']):
+        # the main signature (i.e. its name + parameters) of a class/method/property.
+        self.in_signature = True
+        if (self.current_desc_type == 'class'):
             self.add('\n<h2 class="signature-class">')
+        elif (self.current_desc_type == 'property'):
+            self.add('\n<h2 class="signature-property">')
         else:
             self.add('\n<h2 class="signature-method">')
 
 
     def depart_desc_signature(self, node):
-        # the main signature of a class/method
-        if ("class" in node.attributes and node.attributes['class']):
-            self.add(')</h2>\n\n')
-        else:
-            self.add(')</h2>\n\n')
-            
+        # the main signature (i.e. its name + parameters) of a class/method/property.
+        if (self.current_desc_type != 'property'):
+            self.add(')')
+        self.add('</h2>\n\n')
+        self.in_signature = False
+
 
     def visit_desc_annotation(self, node):
         # annotation, e.g 'method', 'class'
@@ -174,7 +179,14 @@ class DocusaurusTranslator(Translator):
 
     def depart_desc_annotation(self, node):
         # annotation, e.g 'method', 'class'
-        self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
+
+        # if this is a property and it has params, properly close it
+        # otherwise, remove the last element (=")" in case of a class/method)
+        if (self.current_desc_type == 'property' and node.children[0].astext() != 'property' and len(node.children) > 0):
+            self.add('\n\n')
+        else:
+            self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
+        
         self.add('</em>')
         self.add('</span> ')
 
@@ -199,7 +211,8 @@ class DocusaurusTranslator(Translator):
 
     def depart_desc_name(self, node):
         # name of the class/method
-        self.add('(')
+        if (self.current_desc_type != 'property'):
+            self.add('(')
         self.add('</span>')
 
 
@@ -229,6 +242,8 @@ class DocusaurusTranslator(Translator):
     def visit_desc_content(self, node):
         # the description of the class/method
         self.add('\n<div class="content">\n\n')
+        # leave current_desc_type, so there's no custom signature parsing (e.g. newlines for references)
+        self.in_signature = False
 
 
     def depart_desc_content(self, node):
@@ -359,10 +374,14 @@ class DocusaurusTranslator(Translator):
     def visit_reference(self, node):
         # Docusaurus doesn't support MDXv2 yet: https://github.com/facebook/docusaurus/issues/4029
         # so we cannot add an MD-formatted link in a <span> element, as it won't get parsed.
-        # therefore, for now, we add this on a newline below the title of a class/method.
+        # therefore, for now, we add these on a newline.
+        if(self.in_signature):
+            self.add('\n\n ')
+
+        # do the same for 'view source' links
         if('viewcode-link' in node.attributes['classes']):
             self.add('\n&#8203;<span class="view-source">')
-    
+
         self.in_reference = True
         url = self._refuri2http(node)
         if url is None:
@@ -371,6 +390,9 @@ class DocusaurusTranslator(Translator):
         for child in node.children:
             child.walkabout(self)
         self.add(']({})'.format(url))
+
+        if(self.in_signature):
+            self.add('\n\n')
 
         if('viewcode-link' in node.attributes['classes']):
             self.add("</span>\n")
@@ -386,8 +408,7 @@ class DocusaurusTranslator(Translator):
     def visit_versionmodified(self, node):
         # deprecation and compatibility messages
         # type will hold something like 'deprecated'
-        if(self.debug):
-            print("FOUND A VERSION MODIFIED:", node)
+        print("FOUND A VERSION MODIFIED in document " + self.builder.current_docname + ":", node) 
         self.add('**%s:** ' % node.attributes['type'].capitalize())
 
     def depart_versionmodified(self, node):
@@ -396,8 +417,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_warning(self, node):
         """Sphinx warning directive."""
-        if(self.debug):
-            print("FOUND A WARNING:", node)
+        print("FOUND A WARNING in document " + self.builder.current_docname + ":", node) 
         self.add('**WARNING**: ')
 
     def depart_warning(self, node):
@@ -406,8 +426,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_note(self, node):
         """Sphinx note directive."""
-        if(self.debug):
-            print("FOUND A NOTE:", node)
+        print("FOUND A NOTE in document " + self.builder.current_docname + ":", node) 
         self.add('**NOTE**: ')
 
     def depart_note(self, node):
@@ -418,6 +437,7 @@ class DocusaurusTranslator(Translator):
     def visit_section(self, node):
         # container for any section
 
+        # TODO
         # # add container div with an ID if a title has already been shown, otherwise it interferes
         # if self.visited_title:
         #     section_ids = node.attributes['ids'][0]
@@ -434,8 +454,6 @@ class DocusaurusTranslator(Translator):
     def visit_rubric(self, node):
         """Sphinx Rubric, a heading without relation to the document sectioning
         http://docutils.sourceforge.net/docs/ref/rst/directives.html#rubric."""
-        if(self.debug):
-            print("FOUND A RUBRIC:", node)
         self.add('### ')
 
 
@@ -447,8 +465,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_image(self, node):
         """Image directive."""
-        if(self.debug):
-            print("FOUND A IMAGE:", node)
+        print("FOUND AN IMAGE in document " + self.builder.current_docname + ":", node) 
         uri = node.attributes['uri']
         doc_folder = os.path.dirname(self.builder.current_docname)
         if uri.startswith(doc_folder):
@@ -464,11 +481,9 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_autosummary_toc(self, node):
-        if(self.debug):
-            print("FOUND AN AUTOSUMMARY TOC FOR CLASS/METHOD", self.current_class_or_method)
-        # if an autosummary type (table or toc) is not yet shown for this class/method, show the TOC list
-        if self.current_class_or_method not in self.autosummary_shown:
-            self.autosummary_shown.append(self.current_class_or_method)
+        # if an autosummary type (table or toc) is not yet shown, show the TOC list
+        if self.current_desc_type not in self.autosummary_shown:
+            self.autosummary_shown.append(self.current_desc_type)
         else:
             raise nodes.SkipNode
 
@@ -481,7 +496,7 @@ class DocusaurusTranslator(Translator):
         """Sphinx autosummary See http://www.sphinx-
         doc.org/en/master/usage/extensions/autosummary.html."""
         self.table_entries = [] # reset the table_entries, so depart_thead doesn't generate redundant columns
-        self.autosummary_shown.append(self.current_class_or_method) # autosummary shown for this class/method
+        self.autosummary_shown.append(self.current_desc_type) # autosummary shown for this class/method
         # TODO: add table headers names as an optional attribute to the autosummary
         self.add('<div class="table-autosummary">\n\n')
         node.classes="autosummary"
@@ -604,37 +619,29 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_seealso(self, node):
-        if(self.debug):
-            print("FOUND A SEE ALSO:", node)
-        # print("PARSING SEEALSO " + getattr(self.builder, 'current_docname'))
-        # TODO: support seealso
+        print("FOUND A SEE ALSO in document " + self.builder.current_docname + ":", node) 
         raise nodes.SkipNode
 
 
     def depart_seealso(self, node):
-        # TODO: support seealso
         raise nodes.SkipNode
 
 
     def visit_math_block(self, node):
-        if(self.debug):
-            print("FOUND A MATH BLOCK:", node)
+        print("FOUND A MATH BLOCK in document " + self.builder.current_docname + ":", node) 
         pass
 
     def depart_math_block(self, node):
         pass
 
     def visit_raw(self, node):
-        if(self.debug):
-            print("FOUND A RAW:", node)
+        print("FOUND A RAW in document " + self.builder.current_docname + ":", node) 
         self.descend('raw')
 
     def depart_raw(self, node):
         self.ascend('raw')
 
     def visit_enumerated_list(self, node):
-        if(self.debug):
-            print("FOUND AN ENUMERATED LIST:", node)
         self.depth.descend('list')
         self.depth.descend('enumerated_list')
 
@@ -707,8 +714,7 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_compact_paragraph(self, node):
-        if(self.debug):
-            print("FOUND A COMPACT PARAGRAPH:", node)
+        print("FOUND AN COMPACT PARAGRAPH in document " + self.builder.current_docname + ":", node) 
         pass
 
     def depart_compact_paragraph(self, node):
