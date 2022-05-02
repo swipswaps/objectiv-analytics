@@ -32,13 +32,10 @@ class DocusaurusTranslator(Translator):
     theads = []
     in_reference = False # whether currently processing a reference (e.g. to not insert emphasis or bold)
 
-    debug = False
-
 
     def __init__(self, document, builder=None):
         Translator.__init__(self, document, builder=builder)
         self.builder = builder
-        self.debug = True if builder.current_docname == 'bach/api-reference/DataFrame/bach.DataFrame.all_series' else False
         self.frontmatter = frontmatter
 
 
@@ -72,8 +69,6 @@ class DocusaurusTranslator(Translator):
 
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
-        # if (self.debug):
-        #     print(node)
 
 
     def depart_document(self, node):
@@ -292,17 +287,35 @@ class DocusaurusTranslator(Translator):
         pass
 
 
+
+    def visit_definition_list(self, node):
+        # a list of terms and their definitions; used for glossaries, classification, or subtopics
+        # generally already correctly parsed as a list or paragraphs, so passing here
+        pass
+
+
+    def depart_definition_list(self, node):
+        # a list of terms and their definitions; used for glossaries, classification, or subtopics
+        # generally already correctly parsed as a list or paragraphs, so passing here
+        pass
+
+
     def visit_definition(self, node):
-        print("FOUND A DEFINITION in document " + self.builder.current_docname + ":", node) 
+        # container for the body elements used to define a term in a definition_list
+        # generally already correctly parsed as a list or paragraphs, so passing here
         self.add('\n')
+
 
     def depart_definition(self, node):
+        # container for the body elements used to define a term in a definition_list
+        # generally already correctly parsed as a list or paragraphs, so passing here
         self.add('\n')
 
+
     def visit_label(self, node):
-        if(self.debug):
-            print("FOUND A LABEL:", node) 
+        print("Unchecked 'label' directive found in document " + self.builder.current_docname + ":", node) 
         self.add('\n')
+
 
     def depart_label(self, node):
         self.add('\n')
@@ -408,30 +421,41 @@ class DocusaurusTranslator(Translator):
     def visit_versionmodified(self, node):
         # deprecation and compatibility messages
         # type will hold something like 'deprecated'
-        print("FOUND A VERSION MODIFIED in document " + self.builder.current_docname + ":", node) 
+        print("Unchecked 'version' directive found in document " + self.builder.current_docname + ":", node) 
         self.add('**%s:** ' % node.attributes['type'].capitalize())
+
 
     def depart_versionmodified(self, node):
         # deprecation and compatibility messages
         pass
 
+
     def visit_warning(self, node):
         """Sphinx warning directive."""
-        print("FOUND A WARNING in document " + self.builder.current_docname + ":", node) 
-        self.add('**WARNING**: ')
+        self.add(':::warning\n\n')
+
 
     def depart_warning(self, node):
         """Sphinx warning directive."""
-        pass
+        self.add('\n:::\n\n')
+
 
     def visit_note(self, node):
         """Sphinx note directive."""
-        print("FOUND A NOTE in document " + self.builder.current_docname + ":", node) 
-        self.add('**NOTE**: ')
+        self.add(':::note\n\n')
+
 
     def depart_note(self, node):
         """Sphinx note directive."""
-        pass
+        self.add('\n:::\n\n')
+
+
+    def visit_seealso(self, node):
+        self.add(':::tip see also\n\n')
+
+
+    def depart_seealso(self, node):
+        self.add('\n:::\n\n')
 
 
     def visit_section(self, node):
@@ -465,7 +489,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_image(self, node):
         """Image directive."""
-        print("FOUND AN IMAGE in document " + self.builder.current_docname + ":", node) 
+        print("Unchecked 'image' directive found in document " + self.builder.current_docname + ":", node) 
         uri = node.attributes['uri']
         doc_folder = os.path.dirname(self.builder.current_docname)
         if uri.startswith(doc_folder):
@@ -474,6 +498,7 @@ class DocusaurusTranslator(Translator):
             if uri.startswith('/'):
                 uri = '.' + uri
         self.add('\n\n![image](%s)\n\n' % uri)
+
 
     def depart_image(self, node):
         """Image directive."""
@@ -618,32 +643,28 @@ class DocusaurusTranslator(Translator):
             self.table_entries = []
 
 
-    def visit_seealso(self, node):
-        print("FOUND A SEE ALSO in document " + self.builder.current_docname + ":", node) 
-        raise nodes.SkipNode
-
-
-    def depart_seealso(self, node):
-        raise nodes.SkipNode
-
-
     def visit_math_block(self, node):
-        print("FOUND A MATH BLOCK in document " + self.builder.current_docname + ":", node) 
+        print("Unchecked 'math_block' directive found in document " + self.builder.current_docname + ":", node) 
         pass
+
 
     def depart_math_block(self, node):
         pass
 
+
     def visit_raw(self, node):
-        print("FOUND A RAW in document " + self.builder.current_docname + ":", node) 
+        # indicates non-reStructuredText data that is to be passed untouched to the Writer, so we won't parse
         self.descend('raw')
+
 
     def depart_raw(self, node):
         self.ascend('raw')
 
+
     def visit_enumerated_list(self, node):
         self.depth.descend('list')
         self.depth.descend('enumerated_list')
+
 
     def depart_enumerated_list(self, node):
         self.enumerated_count[self.depth.get('list')] = 0
@@ -714,8 +735,9 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_compact_paragraph(self, node):
-        print("FOUND AN COMPACT PARAGRAPH in document " + self.builder.current_docname + ":", node) 
+        # a paragraph that could be formatted more compactly; ignored here
         pass
+
 
     def depart_compact_paragraph(self, node):
         pass
