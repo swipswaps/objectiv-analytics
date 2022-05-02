@@ -2,12 +2,12 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { AbstractEvent } from '@objectiv/schema';
 import {
   cleanObjectFromInternalProperties,
   EventRecorderConfig,
   EventRecorderInterface,
   NonEmptyArray,
+  RecordedEvent,
   TrackerEvent,
   TransportableEvent,
 } from '@objectiv/tracker-core';
@@ -28,7 +28,7 @@ export const EventRecorder = new (class implements EventRecorderInterface {
   maxEvents: number = DEFAULT_MAX_EVENTS;
   autoStart: boolean = DEFAULT_AUTO_START;
   recording: boolean = this.autoStart;
-  events: Omit<AbstractEvent, 'time'>[] = [];
+  events: RecordedEvent[] = [];
   eventsCountByType: { [type: string]: number } = {};
 
   /**

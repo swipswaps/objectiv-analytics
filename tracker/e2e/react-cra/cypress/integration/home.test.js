@@ -2,22 +2,13 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-it('should snapshot', () => {
-  cy.log('first snapshot')
-  cy.wrap({ foo: 42 }).snapshot()
-  cy.log('second snapshot')
-  cy.wrap({ bar: 101 }).snapshot()
-})
-
-it("should load the page", () => {
+it("should track the expected events", () => {
+  // Visit home page
   cy.visit("/");
-  cy.findAllByText(/learn react/i).should("have.length", 1);
-});
 
-it("should have triggered 4 events", () => {
-  cy.visit("/");
+  // Find tracked button and click it three times
   cy.findAllByText(/click me/i).click().click().click();
-  cy.window().then((win) => {
-    cy.wrap(win.objectiv.EventRecorder.events).snapshot();
-  })
+
+  // Test against snapshot
+  cy.window().its('objectiv.EventRecorder.events').snapshot();
 });

@@ -1,14 +1,6 @@
 module.exports = {
-  "should snapshot": {
-    "1": {
-      "foo": 42
-    },
-    "2": {
-      "bar": 101
-    }
-  },
   "__version": "9.6.0",
-  "should have triggered 4 events": {
+  "should track the expected events": {
     "1": [
       {
         "_type": "ApplicationLoadedEvent",

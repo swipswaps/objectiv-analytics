@@ -2,7 +2,13 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import { AbstractEvent } from '@objectiv/schema';
 import { TrackerTransportInterface } from './TrackerTransportInterface';
+
+/**
+ * A predictable AbstractEvent. It has no `time` and a predictable identifier.
+ */
+export type RecordedEvent = Omit<AbstractEvent, 'time'>;
 
 /**
  * EventRecording instances can store lists of TrackerEvents for snapshot-testing or other debugging purposes.
@@ -28,6 +34,11 @@ export type EventRecorderInterface = TrackerTransportInterface &
      * Whether EventRecorder si recording or not.
      */
     recording: boolean;
+
+    /**
+     * Whether EventRecorder si recording or not.
+     */
+    events: RecordedEvent[];
 
     /**
      * Allows reconfiguring EventRecorder
