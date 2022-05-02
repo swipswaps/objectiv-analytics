@@ -19,7 +19,7 @@ const DEFAULT_AUTO_START = true;
 /**
  * EventRecorder factory. A TrackerTransport to store TrackerEvents in the `recordedEvents` state for later analysis.
  * Recorded TrackerEvents are automatically assigned predictable identifiers: `event.type` + `#` + number of times
- * Event Type occurred, starting at 1.
+ * Event Type occurred, starting at 1. Also, their `time` is removed. This ensures comparability.
  */
 export const EventRecorder = new (class implements EventRecorderInterface {
   readonly transportName = 'EventRecorder';
@@ -75,14 +75,17 @@ export const EventRecorder = new (class implements EventRecorderInterface {
     (await Promise.all(args)).forEach((trackerEvent) => {
       const eventType = trackerEvent._type;
 
+      // Clone the event
+      const recordedEvent = new TrackerEvent(trackerEvent);
+
       // Increment how many times have we seen this event type so far
       this.eventsCountByType[eventType] = (this.eventsCountByType[eventType] ?? 0) + 1;
 
-      // Generate a predictable event identifier based on event type and how many times have we seen this event type
-      const predictableTrackerEventIdentifier = `${eventType}#${this.eventsCountByType[eventType]}`;
+      // Make event predictable, set the new identifier and remove time information
+      recordedEvent.id = `${eventType}#${this.eventsCountByType[eventType]}`
+      delete recordedEvent.time;
 
-      // Clone the event and assign the new predictable identifier to it
-      this.events.push(new TrackerEvent({ ...trackerEvent, id: predictableTrackerEventIdentifier }));
+      this.events.push(recordedEvent);
     });
 
     if (this.events.length >= this.maxEvents) {

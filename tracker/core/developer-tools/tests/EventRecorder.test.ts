@@ -55,6 +55,28 @@ describe('EventRecorder', () => {
     ]);
   });
 
+    it('should remove time information from recorded Events', async () => {
+    const testPressEvent1 = new TrackerEvent({ _type: 'PressEvent' });
+    const testPressEvent2 = new TrackerEvent({ _type: 'PressEvent' });
+    const testPressEvent3 = new TrackerEvent({ _type: 'PressEvent' });
+
+    testPressEvent1.setTime();
+    testPressEvent2.setTime();
+    testPressEvent3.setTime();
+
+    expect(testPressEvent1.time).not.toBeUndefined();
+    expect(testPressEvent2.time).not.toBeUndefined();
+    expect(testPressEvent3.time).not.toBeUndefined();
+
+    expect(EventRecorder.events).toStrictEqual([]);
+
+    await EventRecorder.handle(testPressEvent1, testPressEvent2, testPressEvent3);
+
+    expect(EventRecorder.events[0].time).toBeUndefined();
+    expect(EventRecorder.events[1].time).toBeUndefined();
+    expect(EventRecorder.events[2].time).toBeUndefined();
+  });
+
   it('should clear the recorded events', async () => {
     const testPressEvent = new TrackerEvent({ _type: 'PressEvent', id: 'test-press-event' });
     const testVisibleEvent = new TrackerEvent({ _type: 'VisibleEvent', id: 'test-visible-event' });
