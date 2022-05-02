@@ -29,7 +29,14 @@ DB_BQ_CREDENTIALS_PATH = os.environ.get(
 
 @pytest.fixture()
 def pg_engine() -> Engine:
-    return sqlalchemy.create_engine(DB_PG_TEST_URL)
+    # TODO: port all tests that use this to be multi-database>
+    return get_postgres_engine_dialect().engine
+
+
+@pytest.fixture()
+def bq_engine() -> Engine:
+    # TODO: port all tests that use this to be multi-database>
+    return get_bigquery_engine_dialect().engine
 
 
 def pytest_addoption(parser: Parser):

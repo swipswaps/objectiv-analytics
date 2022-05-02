@@ -131,12 +131,12 @@ class TypeRegistry:
         from bach.series import \
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,\
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,\
-            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray, SeriesDict
 
         standard_types: List[Type[Series]] = [
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,
-            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesArray, SeriesDict
         ]
 
         for klass in standard_types:
@@ -210,6 +210,14 @@ class TypeRegistry:
         Given a dtype string or a dtype alias, will return the correct Series object to represent such data.
         """
         self._real_init()
+        # list and dict are hardcoded exceptions for now.
+        # TODO: make this nicer, e.g. make sure that no class can register this as an alias
+        #  maybe switch to all strings, e.g. `'list[int64]'` instead of `list['int64']` ?
+        if isinstance(dtype, list):
+            dtype = 'array'
+        elif isinstance(dtype, dict):
+            dtype = 'dict'
+
         if dtype not in self.dtype_to_series:
             raise ValueError(f'Unknown dtype: {dtype}')
         return self.dtype_to_series[dtype]
@@ -243,3 +251,60 @@ class TypeRegistry:
 
 
 _registry = TypeRegistry()
+
+
+def is_structural_dtype(dtype: StructuredDtype) -> bool:
+    return isinstance(dtype, (list, dict))
+
+
+def validate_dtype_value(dtype: StructuredDtype, value: Any):
+    """
+    Check that value is of the given dtype.
+
+    Additionally, checks that if dtype is a structured dtype, that it is structured well.
+
+    If any check fails a ValueError is raised.
+
+    :param dtype: dtype against which to validate value.
+    :param value: Value to validate. Can either be a constant or a Series.
+    """
+    # TODO: add information on where in the dtype/value the error occurred
+    # TODO: support dtype-aliasses?
+    from bach.series import Series
+
+    if isinstance(value, Series):
+        # If value is already a series with a dtype, it should match dtype exactly.
+        if dtype != value.dtype:
+            raise ValueError(f'Dtype does not match dtype of series. '
+                             f'Dtype: {dtype}, series.dtype: {value.dtype}')
+
+    elif isinstance(dtype, Dtype):
+        series = get_series_type_from_dtype(dtype)
+        if type(value) not in series.supported_value_types:
+            raise ValueError(f'Dtype doees not match value. '
+                             f'Dtype: {dtype}, '
+                             f'supported value types: {series.supported_value_types}, '
+                             f'value: {value}')
+    elif isinstance(dtype, list):
+        if not isinstance(value, list):
+            raise ValueError(f'Dtype is a list, value is not a list. Value: {value}')
+        if not len(dtype) == 1:
+            raise ValueError(f'Expected dtype list to have length 1. Dtype: {dtype}')
+        sub_dtype = dtype[0]
+        for sub_value in value:
+            validate_dtype_value(sub_dtype, sub_value)
+    elif isinstance(dtype, dict):
+        if not isinstance(value, dict):
+            raise ValueError(f'Dtype is a dict, value is not a dict. Value: {value}')
+        dtype_keys = set(dtype.keys())
+        value_keys = set(value.keys())
+        if dtype_keys != value_keys:
+            raise ValueError(f'Dtype keys do not match value keys. '
+                             f'Dtype keys: {dtype_keys}, value keys: {value_keys}')
+        if any (not isinstance(key, str) for key in dtype_keys):
+            raise ValueError(f'All dtype keys should be strings. Dtype keys: {dtype_keys}')
+        for key, sub_dtype in dtype.items():
+            sub_value = value[key]
+            validate_dtype_value(sub_dtype, sub_value)
+    else:
+        raise ValueError(f'Dtype not supported. Dtype: {dtype}')

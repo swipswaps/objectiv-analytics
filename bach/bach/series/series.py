@@ -431,6 +431,21 @@ class Series(ABC):
         )
         return result
 
+    @classmethod
+    def construct(
+            cls,
+            base: DataFrameOrSeries,
+            value: Any,
+            name: str,
+            dtype: Optional[StructuredDtype] = None) -> 'Series':
+        """ TODO """
+        return cls.from_const(
+            base=base,
+            value=value,
+            name=name,
+            dtype=dtype
+        )
+
     def copy(self):
         """
         Return a copy of this Series.

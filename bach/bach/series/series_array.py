@@ -7,7 +7,8 @@ from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression, join_expressions
-from bach.types import DtypeOrAlias, value_to_dtype, get_series_type_from_dtype, StructuredDtype, Dtype
+from bach.types import DtypeOrAlias, value_to_dtype, get_series_type_from_dtype, StructuredDtype, Dtype, \
+    validate_dtype_value
 from sql_models.constants import DBDialect
 from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
@@ -41,24 +42,16 @@ class SeriesArray(Series):
         value: List[Any],
         dtype: StructuredDtype
     ) -> Expression:
-        if not isinstance(value, list):
-            raise ValueError(f'Type not supported: {type(value)}')
+        if not isinstance(dtype, list):
+            raise ValueError(f'Dtype should be type list. Type(dtype): {type(dtype)}')
+        validate_dtype_value(dtype=dtype, value=value)
 
         sub_dtype = dtype[0]
+        series_type = get_series_type_from_dtype(sub_dtype)
+        sub_db_dtype = series_type.get_db_dtype(dialect)
         if len(value) == 0:
             sub_exprs = []
         else:
-            # TODO: validates sub-dtypes in value
-            # Support nested structural types.
-            # TODO: maybe we should somehow support this in types.py ?
-            if isinstance(sub_dtype, dict):
-                from bach import SeriesDict
-                series_type = SeriesDict
-            elif isinstance(sub_dtype, list):
-                series_type = SeriesArray
-            else:
-                series_type = get_series_type_from_dtype(sub_dtype)
-            sub_db_dtype = series_type.get_db_dtype(dialect)
             sub_exprs = [
                 series_type.value_to_expression(dialect=dialect, value=item, dtype=sub_dtype)
                 for item in value
@@ -76,9 +69,10 @@ class SeriesArray(Series):
 
     @classmethod
     def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
-        if source_dtype == 'array':
-            return expression
-        raise ValueError(f'cannot convert {source_dtype} to array.')
+        # Even when casting from an array to an array, things will be troublesome if instance_dtype doesn't
+        # match. So just raise an error.
+        raise Exception('Cannot cast a value to an array.')
+
 
     @property
     def arr(self) -> 'ArrayAccessor':
