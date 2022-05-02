@@ -83,6 +83,5 @@
     "@react-navigation/native": ">=6",
     "react": ">=16.8",
     "react-native": ">=0.6"
-  },
-  "stableVersion": "0.0.18"
+  }
 }

@@ -74,6 +74,5 @@
     "react": ">=16.8",
     "react-dom": ">=16.8",
     "react-router-dom": ">=6.1"
-  },
-  "stableVersion": "0.0.18"
+  }
 }

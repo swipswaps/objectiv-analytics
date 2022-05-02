@@ -73,6 +73,5 @@
     "@objectiv/transport-debug": "^0.0.19-1",
     "@objectiv/transport-fetch": "^0.0.19-1",
     "@objectiv/transport-xhr": "^0.0.19-1"
-  },
-  "stableVersion": "0.0.18"
+  }
 }

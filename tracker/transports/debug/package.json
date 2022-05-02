@@ -64,6 +64,5 @@
   "dependencies": {
     "@objectiv/schema": "^0.0.19-1",
     "@objectiv/tracker-core": "~0.0.19-1"
-  },
-  "stableVersion": "0.0.18"
+  }
 }
