@@ -37,7 +37,7 @@ class DocusaurusTranslator(Translator):
     def __init__(self, document, builder=None):
         Translator.__init__(self, document, builder=builder)
         self.builder = builder
-        self.debug = True if builder.current_docname == 'models/Aggregation/modelhub.Aggregate.session_duration' else False
+        self.debug = True if builder.current_docname == 'models/index' else False
         self.frontmatter = frontmatter
 
 
@@ -113,22 +113,27 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_comment(self, node):
+        # comment blocks generally break the Markdown, so skip it
         raise nodes.SkipNode
 
 
     def depart_comment(self, node):
+        # comment blocks generally break the Markdown, so skip it
         raise nodes.SkipNode
 
 
     def visit_inline(self, node):
+        # general inline nodes, no need for parsing
         pass
 
 
     def depart_inline(self, node):
+        # general inline nodes, no need for parsing
         pass
 
 
     def visit_desc(self, node):
+        # container for class and method descriptions
         desctype = node.attributes["desctype"] if "desctype" in node.attributes else None
         self.current_class_or_method = desctype
         if (desctype == "class"):
@@ -140,6 +145,7 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_desc(self, node):
+        # container for class and method descriptions
         self.add('\n</div>\n')
 
 
@@ -272,8 +278,7 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_definition(self, node):
-        if(self.debug):
-            print("FOUND A DEFINITION:", node) 
+        print("FOUND A DEFINITION in document " + self.builder.current_docname + ":", node) 
         self.add('\n')
 
     def depart_definition(self, node):
@@ -352,6 +357,9 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_reference(self, node):
+        # Docusaurus doesn't support MDXv2 yet: https://github.com/facebook/docusaurus/issues/4029
+        # so we cannot add an MD-formatted link in a <span> element, as it won't get parsed.
+        # therefore, for now, we add this on a newline below the title of a class/method.
         if('viewcode-link' in node.attributes['classes']):
             self.add('\n&#8203;<span class="view-source">')
     
@@ -474,16 +482,18 @@ class DocusaurusTranslator(Translator):
         doc.org/en/master/usage/extensions/autosummary.html."""
         self.table_entries = [] # reset the table_entries, so depart_thead doesn't generate redundant columns
         self.autosummary_shown.append(self.current_class_or_method) # autosummary shown for this class/method
-        # TODO: add table headers names as an optional attribute to the autosummary?
+        # TODO: add table headers names as an optional attribute to the autosummary
+        self.add('<div class="table-autosummary">\n\n')
+        node.classes="autosummary"
         tgroup = nodes.tgroup(cols=2)
         thead = nodes.thead(classes="autosummary")
         tgroup += thead
         row = nodes.row()
         entry = nodes.entry()
-        entry += nodes.inline(text="&nbsp;")
+        entry += nodes.inline(text=" ")
         row += entry
         entry = nodes.entry()
-        entry += nodes.inline(text="&nbsp;")
+        entry += nodes.inline(text=" ")
         row += entry
         thead.append(row)
         node.insert(0, thead)
@@ -493,7 +503,8 @@ class DocusaurusTranslator(Translator):
     def depart_autosummary_table(self, node):
         """Sphinx autosummary See http://www.sphinx-
         doc.org/en/master/usage/extensions/autosummary.html."""
-        pass
+        self.add('\n</div>\n\n')
+
 
     ################################################################################
     # tables
@@ -551,6 +562,7 @@ class DocusaurusTranslator(Translator):
     def visit_thead(self, node):
         if not len(self.tables):
             raise nodes.SkipNode
+        
         self.theads.append(node)
 
 
