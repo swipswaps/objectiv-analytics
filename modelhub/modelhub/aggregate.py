@@ -281,6 +281,19 @@ class Aggregate:
 
         return X, y, model
 
+    def feature_importance_new(self, data, name, feature_column, **kwargs):
+        X, y = self._mh.agg.create_feature_usage_data_set(
+            data=data,
+            name=name,
+            feature_column=feature_column)
+
+        X = X.to_pandas()
+        y = y.to_pandas().astype(int)
+
+        model = self.feature_importance_proto(X, y)
+
+        return X, y, model
+
     def feature_importance_proto(self, X,y, print_report=False):
         kf = StratifiedKFold(5, shuffle=True, random_state=42)
 
