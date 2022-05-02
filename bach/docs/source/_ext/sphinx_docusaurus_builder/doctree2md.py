@@ -571,6 +571,7 @@ class Translator(nodes.NodeVisitor):
         self.add('\n---\n\n')
         raise nodes.SkipNode
 
+
     def _refuri2http(self, node):
         # Replace 'refuri' in reference with HTTP address, if possible
         # None for no possible address
@@ -578,10 +579,15 @@ class Translator(nodes.NodeVisitor):
         url = node.get('refuri')
         if not node.get('internal'):
             return url
-        # TO FIX: Stripping the first '..' characters as a workaround
+        # strip off the end starting with '/#', e.g. 'ModelHub/modelhub.ModelHub/#modelhub.ModelHub'
+        # TODO: turn each link into a relative file link to the .mdx file
+        hash_index = url.rfind('/#')
+        url = url[0:hash_index]
+
         if url not in (None, ''):
             url = url[3:].replace('_', '-')
             node['refuri'] = url
+
         # If HTTP page build URL known, make link relative to that.
         if not self.markdown_http_base:
             return node.get("refuri")
@@ -592,23 +598,11 @@ class Translator(nodes.NodeVisitor):
             if this_dir:
                 url = posixpath.normpath('{}/{}'.format(this_dir, url))
         url = '{}/{}'.format(self.markdown_http_base, url)
-        if 'refid' in node:
-            url += '#' + node['refid']
+        print("URL5:",url)
+        # if 'refid' in node:
+        #     url += '#' + node['refid']
         return url
 
-    def visit_reference(self, node):
-        # If no target possible, pass through.
-        url = self._refuri2http(node)
-        if url is None:
-            return
-        self.add('[')
-        for child in node.children:
-            child.walkabout(self)
-        self.add(']({})'.format(url))
-        raise nodes.SkipNode
-
-    def depart_reference(self, node):
-        pass
 
     def visit_nbplot_epilogue(self, node):
         raise nodes.SkipNode

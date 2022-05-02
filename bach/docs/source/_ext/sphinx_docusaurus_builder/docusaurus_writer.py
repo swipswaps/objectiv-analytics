@@ -60,9 +60,8 @@ class DocusaurusTranslator(Translator):
             return doc_frontmatter['slug']
         
         slug = docname.replace('_', '-')
-        if docname[-5:] == "index":
+        if docname == 'index' or docname[-6:] == "/index":
             slug = docname[:-5]
-        # slug = '/' + _.snake_case(slug).replace('_', '-') + '/'
         slug = '/modeling/' + slug + '/'
         return slug
 
@@ -460,19 +459,11 @@ class DocusaurusTranslator(Translator):
 
     def visit_section(self, node):
         # container for any section
-
-        # TODO
-        # # add container div with an ID if a title has already been shown, otherwise it interferes
-        # if self.visited_title:
-        #     section_ids = node.attributes['ids'][0]
-        #     self.add('\n<div id="' + section_ids + '">\n\n')
         self.section_depth += 1
 
 
     def depart_section(self, node):
         self.section_depth -= 1
-        # if self.visited_title:
-        #     self.add('\n</div>\n')
 
 
     def visit_rubric(self, node):
@@ -764,9 +755,8 @@ class FrontMatterPositionDirective(SphinxDirective):
         reference = directives.uri(self.arguments[0])
         frontmatter.setdefault(docname, dict())
         frontmatter[docname]['position'] = reference
-        # TODO: do not add a node at all
-        paragraph_node = nodes.raw(text='')
-        return [paragraph_node]
+        empty_node = nodes.raw()
+        return [empty_node]
 
 class FrontMatterSlugDirective(SphinxDirective):
     required_arguments = 1
@@ -781,9 +771,8 @@ class FrontMatterSlugDirective(SphinxDirective):
         reference = directives.uri(self.arguments[0])
         frontmatter.setdefault(docname, dict())
         frontmatter[docname]['slug'] = reference
-        # TODO: do not add a node at all
-        paragraph_node = nodes.raw(text='')
-        return [paragraph_node]
+        empty_node = nodes.raw()
+        return [empty_node]
 
 class DocusaurusWriter(Writer):
     directives.register_directive('frontmatterposition', FrontMatterPositionDirective)
