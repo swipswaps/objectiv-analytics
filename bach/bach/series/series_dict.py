@@ -61,8 +61,16 @@ class SeriesDict(Series):
                 raise ValueError(f'Key {key} found in value but not in dtype. '
                                  f'value: {value}, dtype: {dtype}')
             sub_dtype = dtype[key]
-            # todo: support dict and array subtypes here
-            series_type = get_series_type_from_dtype(sub_dtype)
+            # Support nested structural types.
+            # TODO: maybe we should somehow support this in types.py ?
+
+            if isinstance(sub_dtype, dict):
+                series_type = SeriesDict
+            elif isinstance(sub_dtype, list):
+                from bach import SeriesArray
+                series_type = SeriesArray
+            else:
+                series_type = get_series_type_from_dtype(sub_dtype)
             sub_val = series_type.value_to_expression(
                 dialect=dialect,
                 value=item,
@@ -111,6 +119,18 @@ class DictAccessor:
             new_dtype = sub_dtype
             return self._series \
                 .copy_override_dtype(dtype=new_dtype) \
+                .copy_override(expression=expression)
+        # TODO: a bit hacky that we have an if-else here for structural sub-dtypes
+        elif isinstance(sub_dtype, dict):
+            return self._series \
+                .copy_override_type(SeriesDict) \
+                .copy_override(instance_dtype=sub_dtype) \
+                .copy_override(expression=expression)
+        elif isinstance(sub_dtype, list):
+            from bach import SeriesArray
+            return self._series \
+                .copy_override_type(SeriesArray) \
+                .copy_override(instance_dtype=sub_dtype) \
                 .copy_override(expression=expression)
         else:
             raise Exception('TODO')

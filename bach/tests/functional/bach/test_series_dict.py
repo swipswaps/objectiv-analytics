@@ -15,14 +15,15 @@ def test_basic_value_to_expression(engine):
     struct = {
         'a': 123,
         'b': 'test',
-        'c': 123.456
+        'c': 123.456,
+        'd': df.skating_order + 5
     }
-    dtype={'a': 'int64', 'b': 'string', 'c': 'float64'}
+    dtype = {'a': 'int64', 'b': 'string', 'c': 'float64', 'd': 'int64'}
     df['struct'] = SeriesDict.from_const(base=df, value=struct, name='struct', dtype=dtype)
     assert_equals_data(
         df,
         expected_columns=['_index_skating_order', 'skating_order', 'struct'],
-        expected_data=[[1, 1, {'a': 123, 'b': 'test', 'c': 123.456}]]
+        expected_data=[[1, 1, {'a': 123, 'b': 'test', 'c': 123.456, 'd': 6}]]
     )
 
 
@@ -38,7 +39,7 @@ def test_getitem(engine):
         'b': 'test',
         'c': 123.456
     }
-    dtype={'a': 'int64', 'b': 'string', 'c': 'float64'}
+    dtype = {'a': 'int64', 'b': 'string', 'c': 'float64'}
     df['struct'] = SeriesDict.from_const(base=df, value=struct, name='struct', dtype=dtype)
     df['field_a'] = df['struct'].elements['a']
     df['field_b'] = df['struct'].elements['b']
@@ -49,4 +50,55 @@ def test_getitem(engine):
             '_index_skating_order', 'skating_order', 'struct', 'field_a', 'field_b', 'field_c'
         ],
         expected_data=[[1, 1, {'a': 123, 'b': 'test', 'c': 123.456}, 123, 'test', 123.456]]
+    )
+
+
+def test_nested(engine):
+    # TODO: works on bigquery only. Do we want to make this BigQuery only, or fallback to json for pg?
+    # Or do more magic in PG to support this partially?
+
+    df = get_df_with_test_data(engine)[['skating_order']]
+    df = df.sort_index()[:1].materialize()
+    struct = {
+        'x': 123,
+        'y': {
+            'a': 123,
+            'b': 'test',
+            'c': 123.456
+        },
+        'z': [
+            {
+                'a': 100,
+                'b': 'z.b1',
+                'c': 0.1
+            }, {
+                'a': 200,
+                'b': 'z.b2',
+                'c': 0.2
+            },
+        ]
+    }
+    simple_dtype={'a': 'int64', 'b': 'string', 'c': 'float64'}
+    dtype = {
+        'x': 'int64',
+        'y': simple_dtype,
+        'z': [simple_dtype],
+    }
+    df['struct'] = SeriesDict.from_const(base=df, value=struct, name='struct', dtype=dtype)
+    df['field_x'] = df['struct'].elements['x']
+    df['field_y'] = df['struct'].elements['y']
+    df['field_z_0_a'] = df['struct'].elements['z'].elements[0].elements['a']
+    df['field_z_1_b'] = df['struct'].elements['z'].elements[1].elements['b']
+    assert_equals_data(
+        df,
+        expected_columns=[
+            '_index_skating_order', 'skating_order',
+            'struct',
+            'field_x', 'field_y', 'field_z_0_a', 'field_z_1_b'
+        ],
+        expected_data=[
+            [1, 1,
+             struct,
+             123,
+             {'a': 123, 'b': 'test', 'c': 123.456}, 100, 'z.b2']]
     )

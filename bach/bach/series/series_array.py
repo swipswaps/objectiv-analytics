@@ -44,20 +44,21 @@ class SeriesArray(Series):
         if not isinstance(value, list):
             raise ValueError(f'Type not supported: {type(value)}')
 
+        sub_dtype = dtype[0]
         if len(value) == 0:
             sub_exprs = []
-            # default. TODO: alternative function that allows to set this
-            sub_dtype = 'string'
-            sub_db_dtype = get_series_type_from_dtype(sub_dtype).get_db_dtype(dialect)
         else:
-            # TODO: track additional typing, about sub-types. Figure out how to do this as this function
-            # is a classmethod
-            sub_dtypes = set(value_to_dtype(item) for item in value)
-            if len(sub_dtypes) != 1:
-                raise ValueError(f'List has inconsistent sub-types, found: {sub_dtypes}')
-            sub_dtype = list(sub_dtypes)[0]
-            sub_db_dtype = get_series_type_from_dtype(sub_dtype).get_db_dtype(dialect)
-            series_type = get_series_type_from_dtype(sub_dtype)
+            # TODO: validates sub-dtypes in value
+            # Support nested structural types.
+            # TODO: maybe we should somehow support this in types.py ?
+            if isinstance(sub_dtype, dict):
+                from bach import SeriesDict
+                series_type = SeriesDict
+            elif isinstance(sub_dtype, list):
+                series_type = SeriesArray
+            else:
+                series_type = get_series_type_from_dtype(sub_dtype)
+            sub_db_dtype = series_type.get_db_dtype(dialect)
             sub_exprs = [
                 series_type.value_to_expression(dialect=dialect, value=item, dtype=sub_dtype)
                 for item in value
@@ -86,6 +87,10 @@ class SeriesArray(Series):
         #  `arr` is perhaps to piratey? Maybe `elements` ?
         return ArrayAccessor(self)
 
+    @property
+    def elements(self) -> 'ArrayAccessor':
+        return ArrayAccessor(self)
+
 
 class ArrayAccessor:
     def __init__(self, series: SeriesArray):
@@ -107,7 +112,8 @@ class ArrayAccessor:
 
             expression = Expression.construct(expr_str, self._series)
             # TODO: extract this logic
-            assert isinstance(self._series.instance_dtype, list) and len(self._series.instance_dtype) == 1
+            if not isinstance(self._series.instance_dtype, list) or len(self._series.instance_dtype) != 1:
+                raise Exception(f'Unexpected instance_dtype: {self._series.instance_dtype}')
             sub_dtype = self._series.instance_dtype[0]
             if isinstance(sub_dtype, Dtype):
                 new_dtype = sub_dtype
@@ -120,8 +126,9 @@ class ArrayAccessor:
                     .copy_override(expression=expression)
             elif isinstance(sub_dtype, dict):
                 # TODO: this type doesn't exist yet!
+                from bach import SeriesDict
                 return self._series \
-                    .copy_override_dtype('todo') \
+                    .copy_override_type(SeriesDict) \
                     .copy_override(instance_dtype=sub_dtype) \
                     .copy_override(expression=expression)
             else:
