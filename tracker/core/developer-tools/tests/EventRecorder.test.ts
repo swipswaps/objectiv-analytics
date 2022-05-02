@@ -72,8 +72,11 @@ describe('EventRecorder', () => {
 
     await EventRecorder.handle(testPressEvent1, testPressEvent2, testPressEvent3);
 
+    // @ts-ignore
     expect(EventRecorder.events[0].time).toBeUndefined();
+    // @ts-ignore
     expect(EventRecorder.events[1].time).toBeUndefined();
+    // @ts-ignore
     expect(EventRecorder.events[2].time).toBeUndefined();
   });
 

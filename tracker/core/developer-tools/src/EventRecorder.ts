@@ -2,6 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { AbstractEvent } from '@objectiv/schema';
 import {
   cleanObjectFromInternalProperties,
   EventRecorderConfig,
@@ -27,7 +28,7 @@ export const EventRecorder = new (class implements EventRecorderInterface {
   maxEvents: number = DEFAULT_MAX_EVENTS;
   autoStart: boolean = DEFAULT_AUTO_START;
   recording: boolean = this.autoStart;
-  events: TrackerEvent[] = [];
+  events: Omit<AbstractEvent, 'time'>[] = [];
   eventsCountByType: { [type: string]: number } = {};
 
   /**
@@ -86,7 +87,11 @@ export const EventRecorder = new (class implements EventRecorderInterface {
       recordedEvent.id = `${eventType}#${this.eventsCountByType[eventType]}`;
       delete recordedEvent.time;
 
-      this.events.push(cleanObjectFromInternalProperties(recordedEvent));
+      this.events.push({
+        ...cleanObjectFromInternalProperties(recordedEvent),
+        location_stack: recordedEvent.location_stack.map(cleanObjectFromInternalProperties),
+        global_contexts: recordedEvent.global_contexts.map(cleanObjectFromInternalProperties),
+      });
     });
 
     if (this.events.length >= this.maxEvents) {
