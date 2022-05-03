@@ -47,9 +47,6 @@ def test_series_to_array(engine):
     )
 
 
-
-
-
 def test_getitem(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()

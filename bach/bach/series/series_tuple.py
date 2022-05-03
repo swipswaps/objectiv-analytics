@@ -34,12 +34,13 @@ class SeriesTuple(Series):
     supported_value_types = (list, )
 
     to_pandas_info = {
-        DBDialect.POSTGRES: ToPandasInfo(dtype='object', function=to_pandas_function_postgres),
+        DBDialect.POSTGRES: ToPandasInfo(dtype='object', function=None),
         DBDialect.BIGQUERY: ToPandasInfo(dtype='object', function=to_pandas_function_bigquery)
     }
 
     @property
     def to_pandas_info(self) -> Mapping[DBDialect, Optional[ToPandasInfo]]:
+        # TODO: this is a hack, probably should make to_pandas_info a function in the super-class
         if is_bigquery(self.engine):
             return {
                 DBDialect.BIGQUERY: ToPandasInfo(dtype='object', function=to_pandas_function_bigquery)
