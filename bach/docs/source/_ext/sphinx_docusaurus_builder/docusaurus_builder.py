@@ -22,13 +22,12 @@ class DocusaurusBuilder(Builder):
     format = 'docusaurus'
     epilog = __('The docusaurus files are in %(outdir)s.')
 
-    out_suffix = '.mdx'
-    link_suffix = '/'
     allow_parallel = True
     default_translator_class = DocusaurusTranslator
-
     current_docname = None
 
+    out_suffix = '.mdx'
+    link_suffix = '/'
     markdown_http_base = '/docs/modeling'
     api_frontmatter = {
         'bach/api-reference': {

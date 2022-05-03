@@ -6,11 +6,7 @@
 Series
 ======
 
-.. autosummary::
-    :template: autosummary/class_short.rst
-    :toctree: 
-
-    Series
+.. autoclass:: Series
 
 
 Reference by function

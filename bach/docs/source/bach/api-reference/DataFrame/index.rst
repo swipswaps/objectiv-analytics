@@ -6,11 +6,7 @@
 DataFrame
 =========
 
-.. autosummary::
-    :template: autosummary/class_short.rst
-    :toctree: 
-
-    DataFrame
+.. autoclass:: DataFrame
 
 
 Reference by function

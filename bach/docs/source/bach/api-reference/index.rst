@@ -12,6 +12,7 @@ API reference
 This is the complete API reference of Bach.
 
 .. autosummary::
+    :template: autosummary/class_short.rst
 
     DataFrame
     Series

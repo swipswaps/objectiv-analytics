@@ -18,6 +18,7 @@ clean:
 	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/bach.DataFrame.* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/**/
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/bach.Series* # not the index
+	rm -rf $(SOURCEDIR)/models/**/
 
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) 0$(O)
 

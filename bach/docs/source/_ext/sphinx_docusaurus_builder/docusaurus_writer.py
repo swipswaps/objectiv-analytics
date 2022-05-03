@@ -59,6 +59,7 @@ class DocusaurusTranslator(Translator):
         if doc_frontmatter and 'slug' in doc_frontmatter:
             return doc_frontmatter['slug']
         
+        # TODO: do not replace underscores in function names
         slug = docname.replace('_', '-')
         if docname == 'index' or docname[-6:] == "/index":
             slug = docname[:-5]
@@ -68,6 +69,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
+        # if 'bach/api-reference/index' in self.title: 
+        #     print("NOW IN bach/api-reference/:", node)
 
 
     def depart_document(self, node):
@@ -132,29 +135,29 @@ class DocusaurusTranslator(Translator):
         desctype = node.attributes["desctype"] if "desctype" in node.attributes else None
         self.current_desc_type = desctype
         if (desctype == "class"):
-            self.add('<div class="class">\n')
+            self.add('<div className="class">\n')
         elif (desctype == "method"):
-            self.add('<div class="method">\n')
+            self.add('<div className="method">\n')
         elif (desctype == "property"):
-            self.add('<div class="property">\n')
+            self.add('<div className="property">\n')
         else:
             self.add('<div>\n')
 
 
     def depart_desc(self, node):
         # container for class and method descriptions
-        self.add('\n</div>\n')
+        self.add('\n</div>\n\n')
 
 
     def visit_desc_signature(self, node):
         # the main signature (i.e. its name + parameters) of a class/method/property.
         self.in_signature = True
         if (self.current_desc_type == 'class'):
-            self.add('\n<h2 class="signature-class">')
+            self.add('\n<h2 className="signature-class">')
         elif (self.current_desc_type == 'property'):
-            self.add('\n<h2 class="signature-property">')
+            self.add('\n<h2 className="signature-property">')
         else:
-            self.add('\n<h2 class="signature-method">')
+            self.add('\n<h2 className="signature-method">')
 
 
     def depart_desc_signature(self, node):
@@ -167,7 +170,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_desc_annotation(self, node):
         # annotation, e.g 'method', 'class'
-        self.add('<span class="type-annotation">')
+        self.add('<span className="type-annotation">')
         self.add('<em>')
 
 
@@ -187,7 +190,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_desc_addname(self, node):
         # module preroll for class/method, e.g. 'classdomain' in 'classdomain.classname'
-        self.add('<span class="additional-name">')
+        self.add('<span className="additional-name">')
 
 
     def depart_desc_addname(self, node):
@@ -198,7 +201,7 @@ class DocusaurusTranslator(Translator):
     def visit_desc_name(self, node):
         # name of the class/method
         # Escape "__" which is a formatting string for markdown
-        self.add('<span class="name">')
+        self.add('<span className="name">')
         if node.rawsource.startswith("__"):
             self.add('\\')
 
@@ -212,7 +215,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_desc_parameterlist(self, node):
         # method/class param list
-        self.add('<small class="parameter-list">')
+        self.add('<small className="parameter-list">')
 
 
     def depart_desc_parameterlist(self, node):
@@ -222,7 +225,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_desc_parameter(self, node):
         # single method/class param
-        self.add('<span class="parameter" id="'+ node[0].astext() + '">')
+        self.add('<span className="parameter" id="'+ node[0].astext() + '">')
 
 
     def depart_desc_parameter(self, node):
@@ -235,14 +238,14 @@ class DocusaurusTranslator(Translator):
 
     def visit_desc_content(self, node):
         # the description of the class/method
-        self.add('\n<div class="content">\n\n')
+        self.add('\n<div className="content">\n\n')
         # leave current_desc_type, so there's no custom signature parsing (e.g. newlines for references)
         self.in_signature = False
 
 
     def depart_desc_content(self, node):
         # the description of the class/method
-        self.add('\n</div>\n')
+        self.add('\n</div>\n\n')
 
 
     # list of parameters/return values/exceptions
@@ -392,7 +395,7 @@ class DocusaurusTranslator(Translator):
 
         # do the same for 'view source' links
         if('viewcode-link' in node.attributes['classes']):
-            self.add('\n&#8203;<span class="view-source">')
+            self.add('\n&#8203;<span className="view-source">')
 
         self.in_reference = True
         url = self._refuri2http(node)
@@ -514,7 +517,7 @@ class DocusaurusTranslator(Translator):
         self.table_entries = [] # reset the table_entries, so depart_thead doesn't generate redundant columns
         self.autosummary_shown.append(self.current_desc_type) # autosummary shown for this class/method
         # TODO: add table headers names as an optional attribute to the autosummary
-        self.add('<div class="table-autosummary">\n\n')
+        self.add('<div className="table-autosummary">\n\n')
         node.classes="autosummary"
         tgroup = nodes.tgroup(cols=2)
         thead = nodes.thead(classes="autosummary")

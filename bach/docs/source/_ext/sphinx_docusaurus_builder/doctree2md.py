@@ -580,9 +580,11 @@ class Translator(nodes.NodeVisitor):
         if not node.get('internal'):
             return url
         # strip off the end starting with '/#', e.g. 'ModelHub/modelhub.ModelHub/#modelhub.ModelHub'
-        # TODO: turn each link into a relative file link to the .mdx file
         hash_index = url.rfind('/#')
         url = url[0:hash_index]
+        # strip off the end starting with '/index', e.g. 'ModelHub/modelhub.ModelHub/index'
+        if url[-6:] == "/index": url = url[:-5]
+        # TODO: turn each link into a relative file link to the .mdx file
 
         if url not in (None, ''):
             url = url[3:].replace('_', '-')
@@ -598,7 +600,6 @@ class Translator(nodes.NodeVisitor):
             if this_dir:
                 url = posixpath.normpath('{}/{}'.format(this_dir, url))
         url = '{}/{}'.format(self.markdown_http_base, url)
-        print("URL5:",url)
         # if 'refid' in node:
         #     url += '#' + node['refid']
         return url
