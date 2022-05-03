@@ -17,7 +17,7 @@ jobs:
         with:
           path-to-signatures: '.github/cla/cla_signatures.json'
           path-to-document: 'https://objectiv.io/cla/'
-          branch: 'main'
+          branch: 'cla-signatures'
           allowlist: dependabot,jansenbob,hendrik-obj,ivarpruijn,KathiaBarahona,borft,afroald,sdirosa,thijs-obj,jansentom,vpapikya,vincenthoogsteder
           lock-pullrequest-aftermerge: true
           signed-commit-message: '$contributorName has signed the CLA in #$pullRequestNo'
