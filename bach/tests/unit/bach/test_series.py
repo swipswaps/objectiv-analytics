@@ -41,6 +41,7 @@ def test_equals(dialect):
 
     int_type = get_series_type_from_dtype('int64')
     float_type = get_series_type_from_dtype('float64')
+    dict_type = get_series_type_from_dtype('dict')
 
     expr_test = Expression.construct('test')
     expr_other = Expression.construct('test::text')
@@ -95,4 +96,13 @@ def test_equals(dialect):
                       expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[])
     assert sleft.equals(sright)
     sright = sright.copy_override(index_sorting=[True])
+    assert not sleft.equals(sright)
+
+    # different instance_dtype
+    sleft = dict_type(engine=engine, base_node=None, index={'a': index_series}, name='test',
+                      expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[],
+                      instance_dtype={'a': 'int64', 'b': ['bool']})
+    sright = sleft.copy_override()
+    assert sleft.equals(sright)
+    sright = sleft.copy_override(instance_dtype={'a': 'float64', 'b': ['bool']})
     assert not sleft.equals(sright)

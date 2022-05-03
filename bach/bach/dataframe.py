@@ -15,7 +15,7 @@ from sqlalchemy.engine import Engine
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
-from bach.types import get_series_type_from_dtype, AllSupportedLiteralTypes
+from bach.types import get_series_type_from_dtype, AllSupportedLiteralTypes, StructuredDtype
 from bach.utils import escape_parameter_characters
 from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
@@ -532,7 +532,7 @@ class DataFrame:
             engine: Engine,
             table_name: str,
             index: List[str],
-            all_dtypes: Optional[Dict[str, str]] = None,
+            all_dtypes: Optional[Mapping[str, StructuredDtype]] = None,
             *,
             bq_dataset: Optional[str] = None,
             bq_project_id: Optional[str] = None
@@ -601,7 +601,7 @@ class DataFrame:
             engine: Engine,
             model: SqlModel,
             index: List[str],
-            all_dtypes: Optional[Dict[str, str]] = None
+            all_dtypes: Optional[Mapping[str, StructuredDtype]] = None
     ) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the result of the query defined in `model`.
@@ -639,7 +639,7 @@ class DataFrame:
             engine,
             model: SqlModel,
             index: List[str],
-            all_dtypes: Dict[str, str]
+            all_dtypes: Mapping[str, StructuredDtype]
     ) -> 'DataFrame':
         """
         INTERNAL: Instantiate a new DataFrame based on the result of the query defined in `model`.
@@ -753,8 +753,8 @@ class DataFrame:
             cls,
             engine,
             base_node: BachSqlModel,
-            index_dtypes: Dict[str, str],
-            dtypes: Dict[str, str],
+            index_dtypes: Mapping[str, StructuredDtype],
+            dtypes: Mapping[str, StructuredDtype],
             group_by: Optional['GroupBy'],
             order_by: List[SortColumn],
             savepoints: 'Savepoints',
@@ -767,30 +767,32 @@ class DataFrame:
         If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
         index: Dict[str, Series] = {}
-        for key, value in index_dtypes.items():
-            index_type = get_series_type_from_dtype(value)
-            index[key] = index_type(
+        for name, dtype in index_dtypes.items():
+            index_type = get_series_type_from_dtype(dtype)
+            index[name] = index_type(
                 engine=engine,
                 base_node=base_node,
                 index={},  # Empty index for index series
-                name=key,
-                expression=Expression.column_reference(key),
+                name=name,
+                expression=Expression.column_reference(name),
                 group_by=group_by,
                 sorted_ascending=None,
-                index_sorting=[]
+                index_sorting=[],
+                instance_dtype=dtype
             )
         series: Dict[str, Series] = {}
-        for key, value in dtypes.items():
-            series_type = get_series_type_from_dtype(value)
-            series[key] = series_type(
+        for name, dtype in dtypes.items():
+            series_type = get_series_type_from_dtype(dtype)
+            series[name] = series_type(
                 engine=engine,
                 base_node=base_node,
                 index=index,
-                name=key,
-                expression=Expression.column_reference(key),
+                name=name,
+                expression=Expression.column_reference(name),
                 group_by=group_by,
                 sorted_ascending=None,
-                index_sorting=[]
+                index_sorting=[],
+                instance_dtype=dtype
             )
         return cls(
             engine=engine,
@@ -812,8 +814,8 @@ class DataFrame:
         group_by: Optional[Union['GroupBy', NotSet]] = not_set,
         order_by: Optional[List[SortColumn]] = None,
         variables: Optional[Dict[DtypeNamePair, Hashable]] = None,
-        index_dtypes: Optional[Mapping[str, str]] = None,
-        series_dtypes: Optional[Mapping[str, str]] = None,
+        index_dtypes: Optional[Mapping[str, StructuredDtype]] = None,
+        series_dtypes: Optional[Mapping[str, StructuredDtype]] = None,
         single_value: bool = False,
         savepoints: Optional['Savepoints'] = None,
         **kwargs

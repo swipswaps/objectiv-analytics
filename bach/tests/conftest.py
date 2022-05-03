@@ -36,6 +36,7 @@ def pg_engine() -> Engine:
 @pytest.fixture()
 def bq_engine() -> Engine:
     # TODO: port all tests that use this to be multi-database>
+    # TODO: get rid of this completely, allow tests to be marked as BigQuery-only or something like that
     return get_bigquery_engine_dialect().engine
 
 

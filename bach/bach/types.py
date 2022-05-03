@@ -8,7 +8,7 @@ To prevent cyclic imports, the functions in this file should not be used by data
 is fully initialized (that is, only use within functions).
 """
 from collections import defaultdict
-from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Union, Sequence
+from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Union, Sequence, Mapping
 import datetime
 from uuid import UUID
 
@@ -39,7 +39,7 @@ usage, that is fine.
 
 
 Dtype = str
-StructuredDtype = Union[List[Any], Dict[str, Any], tuple, Dtype]
+StructuredDtype = Union[List[Any], Mapping[str, Any], tuple, Dtype]
 # Real definition of StructuredDtype, but not supported by mypy:
 # StructuredDtype = Union[List[StructuredDtype], Dict[str, StructuredDtype], str]
 DtypeOrAlias = Union[Type, StructuredDtype]
@@ -55,9 +55,9 @@ def get_series_type_from_db_dtype(db_dialect: DBDialect, db_dtype: str) -> Type[
     return _registry.get_series_type_from_db_dtype(db_dialect, db_dtype)
 
 
-def get_dtype_from_db_dtype(db_dialect: DBDialect, db_dtype: str) -> str:
+def get_dtype_from_db_dtype(db_dialect: DBDialect, db_dtype: str) -> StructuredDtype:
     """ Given a database datatype, return the dtype of the Series subclass for that datatype. """
-    return get_series_type_from_db_dtype(db_dialect, db_dtype).dtype
+    return _registry.get_dtype_from_db_dtype(db_dialect=db_dialect, db_dtype=db_dtype)
 
 
 def value_to_dtype(value: Any) -> str:
@@ -101,7 +101,7 @@ class TypeRegistry:
         # dtype_series: Mapping of dtype to a subclass of Series
         self.dtype_to_series: Dict[DtypeOrAlias, Type['Series']] = {}
 
-        # db_type_to_dtype: Mapping per database dialect, of database types to a subclass of Series
+        # db_dtype_to_series: Mapping per database dialect, of database types to a subclass of Series
         self.db_dtype_to_series: Dict[DBDialect, Dict[str, Type['Series']]] = defaultdict(dict)
 
         # value_type_to_series: Mapping of python types to matching Series types
@@ -223,12 +223,32 @@ class TypeRegistry:
             raise ValueError(f'Unknown dtype: {dtype}')
         return self.dtype_to_series[dtype]
 
+    def get_dtype_from_db_dtype(self, db_dialect: DBDialect, db_dtype: str) -> StructuredDtype:
+        """
+        Given a db_dtype string, will return the full StructuredDtype.
+
+        :return: dtype can be a simple dtype such as 'int64', or a structured dtype, such
+                as {'a': 'int64', 'b': 'float64'}
+        """
+        self._real_init()
+        if db_dtype in self.db_dtype_to_series[db_dialect]:
+            return self.db_dtype_to_series[db_dialect][db_dtype].dtype
+        if db_dialect == DBDialect.BIGQUERY:
+            # TODO: clean this up when we support more than two databases
+            from bach.types_bq import bq_db_dtype_to_dtype
+            scalars = {key: value.dtype for key, value in self.db_dtype_to_series[db_dialect].items()}
+            return bq_db_dtype_to_dtype(db_dtype=db_dtype, scalar_mapping=scalars)
+        raise ValueError(f'Unknown db_dtype: {db_dtype}')
+
     def get_series_type_from_db_dtype(self, db_dialect: DBDialect, db_dtype: str) -> Type['Series']:
         """
         Given a db_dtype string, will return the correct Series object to represent such data from the
         database.
         """
+        # TODO: use above get_dtype_from_db_dtype
         self._real_init()
+        if db_dtype in self.db_dtype_to_series[db_dialect]:
+            return self.db_dtype_to_series[db_dialect][db_dtype]
         if db_dtype not in self.db_dtype_to_series[db_dialect]:
             raise ValueError(f'Unknown db_dtype: {db_dtype}')
         return self.db_dtype_to_series[db_dialect][db_dtype]
@@ -255,7 +275,7 @@ _registry = TypeRegistry()
 
 
 def is_structural_dtype(dtype: StructuredDtype) -> bool:
-    return isinstance(dtype, (list, dict))
+    return isinstance(dtype, (list, dict, tuple))
 
 
 def validate_dtype_value(dtype: StructuredDtype, value: Any):
