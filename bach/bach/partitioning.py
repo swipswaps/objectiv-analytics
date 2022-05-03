@@ -91,8 +91,20 @@ class GroupBy:
                 for n in self._index.keys())
         )
 
-    def get_index_column_expressions(self) -> List[Expression]:
-        return [g.get_column_expression() for g in self._index.values()]
+    def get_index_column_expressions(self, construct_multi_levels: bool = False) -> List[Expression]:
+        if construct_multi_levels:
+            return [g.get_column_expression() for g in self._index.values()]
+
+        from bach.series import SeriesAbstractMultiLevel
+        exprs = []
+        for g in self._index.values():
+            if not isinstance(g, SeriesAbstractMultiLevel):
+                exprs.append(g.get_column_expression())
+                continue
+
+            exprs += [l.get_column_expression() for l in g.levels.values()]
+
+        return exprs
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
         """
@@ -104,8 +116,20 @@ class GroupBy:
         """
         if not self.index:
             return None
-        fmtstr = ', '.join(['{}'] * len(self.index))
-        return Expression.construct(f'{fmtstr}', *[g.expression for g in self.index.values()])
+
+        exprs = []
+        fmt_strs = []
+        for g in self.index.values():
+            if not g.expression.has_multi_level_expressions:
+                exprs.append(g.expression)
+                fmt_strs.append('{}')
+                continue
+
+            multi_lvl_exprs = [expr for expr in g.expression.data if isinstance(expr, Expression)]
+            exprs.extend(multi_lvl_exprs)
+            fmt_strs.extend(['{}'] * len(multi_lvl_exprs))
+        fmtstr = ', '.join(fmt_strs)
+        return Expression.construct(f'{fmtstr}', *exprs)
 
     def copy_override_base_node(self: G, base_node: BachSqlModel) -> G:
         new_cols = [col.copy_override(base_node=base_node) for col in self.index.values()]
@@ -374,21 +398,29 @@ class Window(GroupBy):
         """
         # TODO implement NULLS FIRST / NULLS LAST, probably not here but in the sorting logic.
         order_by = self._get_order_by_expression()
+        from bach.series.series_multi_level import SeriesAbstractMultiLevel
 
         if self.frame_clause is None:
             frame_clause = ''
         else:
             frame_clause = self.frame_clause
 
+        index_exprs = []
         if len(self._index) == 0:
             partition_fmt = ''
         else:
-            partition_fmt = 'partition by ' + ', '.join(['{}'] * len(self.index))
+            fmt_stmts = []
+            for series in self.index.values():
+                if not isinstance(series, SeriesAbstractMultiLevel):
+                    index_exprs.append(series.expression)
+                    fmt_stmts.append('{}')
+                else:
+                    index_exprs.extend([level.expression for level in series.levels.values()])
+                    fmt_stmts.extend(['{}'] * len(series.levels))
+            partition_fmt = 'partition by ' + ', '.join(fmt_stmts)
 
         over_fmt = f'over ({partition_fmt} {{}} {frame_clause})'
-        over_expr = Expression.construct(over_fmt,
-                                         *[i.expression for i in self.index.values()],
-                                         order_by)
+        over_expr = Expression.construct(over_fmt, *index_exprs, order_by)
 
         if self._min_values is None or self._min_values == 0:
             return WindowFunctionExpression.construct(f'{{}} {{}}', window_func, over_expr)

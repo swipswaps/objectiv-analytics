@@ -307,6 +307,12 @@ class Expression:
             isinstance(token, TableColumnReferenceToken) for token in self.get_all_tokens()
         )
 
+    @property
+    def has_multi_level_expressions(self) -> bool:
+        return isinstance(self, MultiLevelExpression) or any(
+            d.has_multi_level_expressions for d in self.data if isinstance(d, Expression)
+        )
+
     def resolve_column_references(self, dialect: Dialect, table_name: Optional[str]) -> 'Expression':
         """ resolve the table name aliases for all columns in this expression """
         result: List[Union[ExpressionToken, Expression]] = []
@@ -446,6 +452,20 @@ class WindowFunctionExpression(Expression):
     def has_aggregate_function(self) -> bool:
         # If a window expression contains an aggregate function, it's not an aggregate expression
         return False
+
+
+class MultiLevelExpression(Expression):
+    def to_sql(self, dialect: Dialect, table_name: Optional[str] = None) -> str:
+        """
+        Compile the expression to a SQL fragment by calling to_sql() on every token or expression in data
+        :param table_name: Optional table name, if set all column-references will be compiled as
+            '"{table_name}"."{column_name}"' instead of just '"{column_name}"'.
+        :return SQL representation of the expression.
+        """
+        resolved_tables_expression = self.resolve_column_references(dialect, table_name)
+        return ','.join(
+            d.to_sql(dialect=dialect) for d in resolved_tables_expression.data
+        )
 
 
 def join_expressions(expressions: List[Expression], join_str: str = ', ') -> Expression:

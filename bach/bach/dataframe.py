@@ -716,15 +716,15 @@ class DataFrame:
 
     @classmethod
     def get_instance(
-            cls,
-            engine,
-            base_node: BachSqlModel,
-            index_dtypes: Dict[str, str],
-            dtypes: Dict[str, str],
-            group_by: Optional['GroupBy'],
-            order_by: List[SortColumn],
-            savepoints: 'Savepoints',
-            variables: Dict['DtypeNamePair', Hashable]
+        cls,
+        engine,
+        base_node: BachSqlModel,
+        index_dtypes: Dict[str, str],
+        dtypes: Dict[str, str],
+        group_by: Optional['GroupBy'],
+        order_by: List[SortColumn],
+        savepoints: 'Savepoints',
+        variables: Dict['DtypeNamePair', Hashable]
     ) -> 'DataFrame':
         """
         INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
@@ -732,32 +732,35 @@ class DataFrame:
         This assumes that base_node has a column for all names in index_dtypes and dtypes.
         If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
-        index: Dict[str, Series] = {}
-        for key, value in index_dtypes.items():
-            index_type = get_series_type_from_dtype(value)
-            index[key] = index_type(
-                engine=engine,
-                base_node=base_node,
+        from bach.series import SeriesAbstractMultiLevel
+
+        base_params = {
+            'engine': engine,
+            'base_node': base_node,
+            'group_by': group_by,
+            'sorted_ascending': None,
+            'index_sorting': [],
+        }
+        index: Dict[str, Series] = {
+            key: get_series_type_from_dtype(value).get_instance(
                 index={},  # Empty index for index series
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by,
-                sorted_ascending=None,
-                index_sorting=[]
+                **base_params
             )
+            for key, value in index_dtypes.items()
+        }
+
         series: Dict[str, Series] = {}
         for key, value in dtypes.items():
             series_type = get_series_type_from_dtype(value)
-            series[key] = series_type(
-                engine=engine,
-                base_node=base_node,
+            series[key] = series_type.get_instance(
                 index=index,
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by,
-                sorted_ascending=None,
-                index_sorting=[]
+                **base_params,
             )
+
         return cls(
             engine=engine,
             base_node=base_node,
@@ -1135,11 +1138,18 @@ class DataFrame:
         For usage see general introduction DataFrame class.
         """
         # TODO: all types from types.TypeRegistry are supported.
-        from bach.series import Series, const_to_series
+        from bach.series import Series, const_to_series, SeriesAbstractMultiLevel
         if isinstance(key, str):
             if key in self.index:
                 # Cannot set an index column, and cannot have a column name both in self.index and self.data
                 raise ValueError(f'Column name "{key}" already exists as index.')
+
+            if any(
+                key in [level.name for level in series.levels.values()]
+                for series in self.all_series.values() if isinstance(series, SeriesAbstractMultiLevel)
+            ):
+                raise ValueError(f'Column name "{key}" already exists as a level in a series multilevel')
+
             if isinstance(value, DataFrame):
                 raise ValueError("Can't set a DataFrame as a single column")
             if isinstance(value, pandas.Series):
@@ -1862,7 +1872,7 @@ class DataFrame:
 
         # Post-process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
         # the strings that the query gives us into UUID objects
-        for name, series in self.data.items():
+        for name, series in self.all_series.items():
             to_pandas_info = series.to_pandas_info.get(db_dialect)
             if to_pandas_info is not None and to_pandas_info.function is not None:
                 pandas_df[name] = pandas_df[name].apply(to_pandas_info.function)
@@ -1900,8 +1910,22 @@ class DataFrame:
         Will return an empty Expression in case ordering is not requested.
         """
         if self._order_by:
-            exprs = [sc.expression for sc in self._order_by]
-            fmtstr = [f"{{}} {'asc' if sc.asc else 'desc'}" for sc in self._order_by]
+            exprs = []
+            fmtstr = []
+
+            for sc in self._order_by:
+                fmt = f"{{}} {'asc' if sc.asc else 'desc'}"
+                if not sc.expression.has_multi_level_expressions:
+                    exprs.append(sc.expression)
+                    fmtstr.append(fmt)
+                    continue
+
+                multi_lvl_exprs = [
+                    level_expr for level_expr in sc.expression.data if isinstance(level_expr, Expression)
+                ]
+                exprs.extend(multi_lvl_exprs)
+                fmtstr.extend([fmt] * len(multi_lvl_exprs))
+
             return Expression.construct(f'order by {", ".join(fmtstr)}', *exprs)
         else:
             return Expression.construct('')
@@ -1913,6 +1937,7 @@ class DataFrame:
         distinct: bool = False,
         where_clause: Expression = None,
         having_clause: Expression = None,
+        construct_multi_levels: bool = False,
     ) -> BachSqlModel:
         """
         INTERNAL: Translate the current state of this DataFrame into a SqlModel.
@@ -1924,6 +1949,7 @@ class DataFrame:
         :param having_clause: The having-clause to apply in case group_by is set, if any
         :returns: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
+        from bach.series import SeriesAbstractMultiLevel
         self._assert_all_variables_set()
 
         if isinstance(limit, int):
@@ -1963,7 +1989,7 @@ class DataFrame:
 
             group_by_column_expr = self.group_by.get_group_by_column_expression()
             if group_by_column_expr:
-                column_exprs = self.group_by.get_index_column_expressions()
+                column_exprs = self.group_by.get_index_column_expressions(construct_multi_levels)
                 column_names = tuple(self.group_by.index.keys())
                 group_by_clause = Expression.construct('group by {}', group_by_column_expr)
             else:
@@ -1975,13 +2001,20 @@ class DataFrame:
             column_exprs += [s.get_column_expression() for s in self._data.values()]
             column_names += tuple(self._data.keys())
         else:
-            column_exprs = [s.get_column_expression() for s in self.all_series.values()]
-            column_names = tuple(self.all_series.keys())
+            column_exprs = []
+            column_names = []
+            for s in self.all_series.values():
+                if not construct_multi_levels and isinstance(s, SeriesAbstractMultiLevel):
+                    column_names += [s.name for s in s.levels.values()]
+                    column_exprs += [s.get_column_expression() for s in s.levels.values()]
+                else:
+                    column_names.append(s.name)
+                    column_exprs.append(s.get_column_expression())
 
         return CurrentNodeSqlModel.get_instance(
             dialect=self.engine.dialect,
             name=name,
-            column_names=column_names,
+            column_names=column_names if isinstance(column_names, tuple) else tuple(column_names),
             column_exprs=column_exprs,
             distinct=distinct,
             where_clause=where_clause,
@@ -2002,7 +2035,7 @@ class DataFrame:
         :param limit: the limit to apply, either as a max amount of rows or a slice of the data.
         :returns: SQL query
         """
-        model = self.get_current_node('view_sql', limit=limit)
+        model = self.get_current_node('view_sql', limit=limit, construct_multi_levels=True)
         placeholder_values = get_variable_values_sql(
             dialect=self.engine.dialect,
             variable_values=self.variables
@@ -2744,7 +2777,7 @@ class DataFrame:
 
         # we need to just apply distinct for 'first' and 'last'.
         if keep:
-            df = df.materialize(distinct=True,)
+            df = df.materialize(distinct=True)
 
         df = df if ignore_index else df.set_index(keys=self.index_columns)
         return df
@@ -3191,6 +3224,11 @@ class DataFrame:
 
         level_index = level if isinstance(level, int) else self.index_columns.index(level)
         index_to_unstack = self.index_columns[level_index]
+
+        from bach.series import SeriesAbstractMultiLevel
+        if isinstance(self.index[index_to_unstack], SeriesAbstractMultiLevel):
+            raise IndexError(f'"{level}" cannot be unstacked, since it is a MultiLevel series.')
+
         values = self.index[index_to_unstack].unique().to_numpy()
 
         if None in values or numpy.nan in values:
