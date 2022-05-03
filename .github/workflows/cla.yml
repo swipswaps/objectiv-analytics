@@ -15,9 +15,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PERSONAL_ACCESS_TOKEN : ${{ secrets.CLA_ACCESS_TOKEN }}
         with:
-          path-to-signatures: '.github/cla/cla_signatures.json'
+          remote-organization-name: 'objectiv'
+          remote-repository-name: 'cla'
+          path-to-signatures: 'signatures/cla_signatures.json'
           path-to-document: 'https://objectiv.io/cla/'
-          branch: 'cla-signatures'
+          branch: 'main'
           allowlist: dependabot,jansenbob,hendrik-obj,ivarpruijn,KathiaBarahona,borft,afroald,sdirosa,thijs-obj,jansentom,vpapikya,vincenthoogsteder
           lock-pullrequest-aftermerge: true
           signed-commit-message: '$contributorName has signed the CLA in #$pullRequestNo'
