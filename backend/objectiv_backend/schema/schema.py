@@ -191,12 +191,6 @@ class MarketingContext(AbstractGlobalContext):
                 [Optional] Search keywords
         content (str):
                 [Optional] Used to differentiate similar content, or links within the same ad
-        source_platform (str):
-                [Optional] Identifies the platform where the marketing activity was undertaken
-        creative_format (str):
-                [Optional] Identifies the creative used (e.g., skyscraper, banner, etc)
-        marketing_tactic (str):
-                [Optional] Identifies the marketing tactic used (e.g., onboarding, retention, acquisition etc)
         id (str):
                 A unique string identifier to be combined with the Context Type (`_type`)
                 for Context instance uniqueness.
@@ -210,9 +204,6 @@ class MarketingContext(AbstractGlobalContext):
                  id: str,
                  term: str = None,
                  content: str = None,
-                 source_platform: str = None,
-                 creative_format: str = None,
-                 marketing_tactic: str = None,
                  **kwargs: Optional[Any]):
         """
         :param source: 
@@ -225,13 +216,7 @@ class MarketingContext(AbstractGlobalContext):
             [Optional] Search keywords
         :param content: 
             [Optional] Used to differentiate similar content, or links within the same ad
-        :param source_platform:
-            [Optional] Identifies the platform where the marketing activity was undertaken
-        :param creative_format:
-            [Optional] Identifies the creative used (e.g., skyscraper, banner, etc)
-        :param marketing_tactic:
-            [Optional] Identifies the marketing tactic used (e.g., onboarding, retention, acquisition etc)
-        :param id:
+        :param id: 
             A unique string identifier to be combined with the Context Type (`_type`)
             for Context instance uniqueness.
         """
@@ -241,9 +226,6 @@ class MarketingContext(AbstractGlobalContext):
                                        campaign=campaign,
                                        term=term,
                                        content=content,
-                                       source_platform=source_platform,
-                                       creative_format=creative_format,
-                                       marketing_tactic=marketing_tactic,
                                        id=id,
                                        **kwargs)
 
