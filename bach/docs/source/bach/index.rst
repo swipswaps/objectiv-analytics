@@ -2,6 +2,7 @@
 
 .. currentmodule:: bach
 
+
 ====
 Bach
 ====
@@ -19,10 +20,11 @@ environment with working models and a Metabase environment to output data to.
 .. toctree::
     :hidden:
 
-    bach_whatisbach
-    bach_core_concepts
-    bach_examples
-    bach_reference
+    what-is-bach
+    core-concepts
+    examples
+    api-reference/index
+
 
 
 

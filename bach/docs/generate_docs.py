@@ -4,8 +4,7 @@ Copyright Objectiv B.V. 2022
 Copies Sphinx generated python docs into Docusaurus. 
 """
 
-from shutil import copytree, ignore_patterns
-from os import remove
+from shutil import copytree, rmtree
 
 # html build dir / output of sphinx
 html_dir = 'build/docusaurus/'
@@ -19,8 +18,5 @@ module = 'modeling'
 docs_source = f'{html_dir}'
 docs_target = f'{docusaurus_dir}/{docs}/{module}'
 
-# TODO: Clean up the directories on objectiv.io???
-
 # Copy all API reference files to the right directory
-remove(docs_source+'/index.mdx')
 copytree(docs_source, docs_target, dirs_exist_ok=True)

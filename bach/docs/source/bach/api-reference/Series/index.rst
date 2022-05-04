@@ -112,21 +112,6 @@ All types
     Series.nunique
     Series.value_counts
 
-Numeric
-+++++++
-.. autosummary::
-    :toctree:
-
-    SeriesAbstractNumeric.cut
-    SeriesAbstractNumeric.qcut
-    SeriesAbstractNumeric.mean
-    SeriesAbstractNumeric.quantile
-    SeriesAbstractNumeric.sem
-    SeriesAbstractNumeric.sum
-    SeriesAbstractNumeric.std
-    SeriesAbstractNumeric.var
-    SeriesAbstractNumeric.scale
-    SeriesAbstractNumeric.minmax_scale
 
 Window
 ++++++

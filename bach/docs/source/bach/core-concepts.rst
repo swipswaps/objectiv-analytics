@@ -1,5 +1,7 @@
 .. currentmodule:: bach
 
+.. frontmatterposition:: 3
+
 =============
 Core Concepts
 =============

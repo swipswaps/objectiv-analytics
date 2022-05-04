@@ -432,16 +432,6 @@ class DocusaurusTranslator(Translator):
         pass
 
 
-    def visit_warning(self, node):
-        """Sphinx warning directive."""
-        self.add(':::warning\n\n')
-
-
-    def depart_warning(self, node):
-        """Sphinx warning directive."""
-        self.add('\n:::\n\n')
-
-
     def visit_note(self, node):
         """Sphinx note directive."""
         self.add(':::note\n\n')
@@ -449,6 +439,36 @@ class DocusaurusTranslator(Translator):
 
     def depart_note(self, node):
         """Sphinx note directive."""
+        self.add('\n:::\n\n')
+
+
+    def visit_caution(self, node):
+        """Sphinx caution directive."""
+        self.add(':::caution\n\n')
+
+
+    def depart_caution(self, node):
+        """Sphinx caution directive."""
+        self.add('\n:::\n\n')
+
+
+    def visit_important(self, node):
+        """Sphinx important directive."""
+        self.add(':::caution important\n\n')
+
+
+    def depart_important(self, node):
+        """Sphinx important directive."""
+        self.add('\n:::\n\n')
+
+
+    def visit_warning(self, node):
+        """Sphinx warning directive."""
+        self.add(':::warning\n\n')
+
+
+    def depart_warning(self, node):
+        """Sphinx warning directive."""
         self.add('\n:::\n\n')
 
 
@@ -560,11 +580,13 @@ class DocusaurusTranslator(Translator):
     
     def visit_table(self, node):
         self.in_table = True
+        self.tables += node
 
 
     def depart_table(self, node):
         self.in_table = False
-        self.tables.pop()
+        if(len(self.tables) > 0):
+            self.tables.pop()
         self.ensure_eol()
         self.add('\n')
 

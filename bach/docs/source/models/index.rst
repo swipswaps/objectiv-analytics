@@ -17,27 +17,43 @@ The model hub has two main types of functions: `map` and `aggregate`.
   `agg`.
 
 
-Mapping
--------
+Map
+---
+
+.. currentmodule:: modelhub.Map
 
 .. autosummary::
     :toctree: Mapping
 
-    Map.is_first_session
-    Map.is_new_user
-    Map.is_conversion_event
-    Map.conversions_counter
-    Map.conversions_in_time
-    Map.pre_conversion_hit_number
+    is_first_session
+    is_new_user
+    is_conversion_event
+    conversions_counter
+    conversions_in_time
+    pre_conversion_hit_number
 
 
-Aggregation
------------
+.. toctree::
+    :hidden:
+
+    Mapping/index
+
+
+.. currentmodule:: modelhub.Aggregate
+
+Aggregate
+---------
 
 .. autosummary::
     :toctree: Aggregation
 
-    Aggregate.unique_users
-    Aggregate.unique_sessions
-    Aggregate.session_duration
-    Aggregate.frequency
+    unique_users
+    unique_sessions
+    session_duration
+    frequency
+
+
+.. toctree::
+    :hidden:
+
+    Aggregation/index

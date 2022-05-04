@@ -2,6 +2,8 @@
 
 .. currentmodule:: bach
 
+.. frontmatterposition:: 4
+
 ===========
 Bach basics
 ===========

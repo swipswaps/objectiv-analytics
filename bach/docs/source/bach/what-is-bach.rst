@@ -1,5 +1,7 @@
 .. _bach_whatisbach:
 
+.. frontmatterposition:: 2
+
 =============
 What is Bach?
 =============

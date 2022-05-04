@@ -16,6 +16,12 @@ This is the complete API reference of Bach.
 
     DataFrame
     Series
+    SeriesAbstractNumeric
+    SeriesAbstractDateTime
+    SeriesBoolean
+    SeriesJsonb
+    SeriesString
+
 
 .. toctree::
     :hidden:
@@ -23,3 +29,8 @@ This is the complete API reference of Bach.
 
     DataFrame/index
     Series/index
+    Series/AbstractNumeric/index
+    Series/AbstractDateTime/index
+    Series/Boolean/index
+    Series/Jsonb/index
+    Series/String/index

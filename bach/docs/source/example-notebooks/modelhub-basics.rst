@@ -29,7 +29,8 @@ The open model hub is a growing collection of open-source, free to use data mode
 combine and run for product analysis and exploration. It includes models for a wide range of typical product
 analytics use cases. The source is available for all models and you're free to make any changes to them.
 
-The model hub has two main type of functions: :ref:`models_mapping` and :ref:`models_aggregation`.
+The model hub has two main type of functions: :ref:`models_reference_mapping` and 
+:ref:`models_reference_aggregation`.
 
 - `map` functions always return a series with the same shape and index as the DataFrame they are applied to.
   This ensures they can be added as a column to that DataFrame. `map` functions that return SeriesBoolean can
@@ -148,7 +149,7 @@ Show the results, now the underlying query is executed.
     presses_per_session.head()
 
 There is another :ref:`example <bach_examples>` that demonstrates what you can do with the Bach modeling
-library, or head over to the :ref:`bach_api_reference` for a complete overview of the possibilities.
+library, or head over to the :ref:`Bach API reference <bach_api_reference>` for a complete overview of the possibilities.
 
 4. Export DataFrame and model hub results to pandas DataFrame
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -167,4 +168,4 @@ This concludes the open model hub demo.
 
 We hope you’ve gotten a taste of the power and flexibility of the open model hub to quickly answer common product analytics questions. You can take it a lot further and build highly specific model stacks for in-depth analysis and exploration.
 
-For a complete overview of all available and upcoming models, check out the :ref:`models`.
+For a complete overview of all available and upcoming models, check out the :ref:`models <models>`.

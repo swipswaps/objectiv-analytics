@@ -1,5 +1,7 @@
 .. _example_notebooks:
 
+.. frontmatterposition:: 2
+
 =================
 Example notebooks
 =================
@@ -22,12 +24,12 @@ model hub uses this DataFrame for its models. For a general introduction to Bach
 .. toctree::
     :maxdepth: 1
 
-    modelhub_basics
-    product_analytics
-    user_intent
-    open_taxonomy
-    feature_engineering
-    machine_learning
+    modelhub-basics
+    product-analytics
+    user-intent
+    open-taxonomy
+    feature-engineering
+    machine-learning
 
 
 .. _get_started_with_objectiv:

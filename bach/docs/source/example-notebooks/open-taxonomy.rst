@@ -73,13 +73,13 @@ The location stack and global contexts are stored as json type data. Within the 
 **Slicing the json data**
 With the `.json[]` syntax you can slice the array using integers. Instead of integers, dictionaries can also be passed to 'query' the json array. If the passed dictionary matches a context object in the stack, all objects of the stack starting (or ending, depending on the slice) at that object will be returned.
 
-In case a json array does not contain the object, `None` is returned. More info at the :ref:`api reference <json_accessor>`.
+In case a json array does not contain the object, `None` is returned. More info at the :ref:`API reference <json_accessor>`.
 
 .. _location_stack:
 
 location_stack
 ~~~~~~~~~~~~~~
-The `location_stack` column in the DataFrame stores the information on the exact location where the event is triggered in the product. The example used above is the location stack of the link to the DataFrame api reference in the menu on our docs page.
+The `location_stack` column in the DataFrame stores the information on the exact location where the event is triggered in the product. The example used above is the location stack of the link to the DataFrame API reference in the menu on our docs page.
 
 Because of the specific way the location information is labeled, validated, and stored using the Open
 Taxonomy, it can be used to slice and group your products' features in an efficient and easy way. The

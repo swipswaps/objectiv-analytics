@@ -525,7 +525,7 @@ class Translator(nodes.NodeVisitor):
         self.list_prefixes.pop()
 
     def visit_bullet_list(self, node):
-        self.list_prefixes.append('* ')
+        self.list_prefixes.append('\n* ')
 
     depart_bullet_list = depart_enumerated_list
 
@@ -579,14 +579,14 @@ class Translator(nodes.NodeVisitor):
         url = node.get('refuri')
         if not node.get('internal'):
             return url
-        # strip off the end starting with '/#', e.g. 'ModelHub/modelhub.ModelHub/#modelhub.ModelHub'
-        hash_index = url.rfind('/#')
-        url = url[0:hash_index]
-        # strip off the end starting with '/index', e.g. 'ModelHub/modelhub.ModelHub/index'
-        if url[-6:] == "/index": url = url[:-5]
-        # TODO: turn each link into a relative file link to the .mdx file
 
         if url not in (None, ''):
+            # strip off the end starting with '/#', e.g. 'ModelHub/modelhub.ModelHub/#modelhub.ModelHub'
+            hash_index = url.rfind('/#')
+            url = url[0:hash_index]
+            # strip off the end starting with '/index', e.g. 'ModelHub/modelhub.ModelHub/index'
+            if url[-6:] == "/index": url = url[:-5]
+            # TODO: turn each link into a relative file link to the .mdx file
             url = url[3:].replace('_', '-')
             node['refuri'] = url
 
