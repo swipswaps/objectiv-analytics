@@ -15,10 +15,11 @@ help:
 
 clean:
 	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/bach.DataFrame.* # not the index
-	rm -rf $(SOURCEDIR)/bach/api-reference/Series/bach.Series* # not the index
+	rm -rf $(SOURCEDIR)/bach/api-reference/Series/bach.Series.* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/AbstractDateTime/bach.SeriesAbstractDateTime* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/AbstractNumeric/bach.SeriesAbstractNumeric* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/Boolean/bach.SeriesBoolean* # not the index
+	rm -rf $(SOURCEDIR)/bach/api-reference/Series/Json/bach.SeriesJson* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/Jsonb/bach.SeriesJsonb* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/String/bach.SeriesString* # not the index
 	rm -rf $(SOURCEDIR)/open-model-hub/models/**/modelhub.* # not the index

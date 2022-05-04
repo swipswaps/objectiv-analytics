@@ -19,6 +19,7 @@ This is the complete API reference of Bach.
     SeriesAbstractNumeric
     SeriesAbstractDateTime
     SeriesBoolean
+    SeriesJson
     SeriesJsonb
     SeriesString
 
@@ -32,5 +33,6 @@ This is the complete API reference of Bach.
     Series/AbstractNumeric/index
     Series/AbstractDateTime/index
     Series/Boolean/index
+    Series/Json/index
     Series/Jsonb/index
     Series/String/index
