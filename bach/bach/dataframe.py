@@ -732,8 +732,6 @@ class DataFrame:
         This assumes that base_node has a column for all names in index_dtypes and dtypes.
         If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
-        from bach.series import SeriesAbstractMultiLevel
-
         base_params = {
             'engine': engine,
             'base_node': base_node,

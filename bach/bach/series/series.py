@@ -1072,6 +1072,9 @@ class Series(ABC):
         .. warning::
             You should probably not use this method directly.
         """
+        if self.expression.has_multi_level_expressions:
+            raise TypeError('cannot apply functions to a series with multiple levels.')
+
         if isinstance(func, str) or callable(func):
             func = [func]
         if not isinstance(func, list):
@@ -1222,6 +1225,9 @@ class Series(ABC):
             raise ValueError(f'Cannot call an aggregation function on already aggregated column '
                              f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
+
+        if self.expression.has_multi_level_expressions:
+            raise ValueError('Cannot call an aggregation function on a series containing multiple levels.')
 
         if isinstance(expression, str):
             expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)

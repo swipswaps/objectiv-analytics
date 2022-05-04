@@ -1,3 +1,4 @@
+import operator
 from abc import ABC, abstractmethod
 from functools import reduce
 from typing import Union, List, Optional, Dict, Any, cast, TypeVar, Tuple, Type, TYPE_CHECKING
@@ -22,6 +23,7 @@ T = TypeVar('T', bound='SeriesAbstractMultiLevel')
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy
     from bach.series import Series, SeriesBoolean
+    from bach.dataframe import DataFrame
 
 
 def _parse_numeric_interval_value(dialect: DBDialect, value):
@@ -218,15 +220,62 @@ class SeriesAbstractMultiLevel(Series, ABC):
         return same_levels and super().equals(other, recursion)
 
     def isnull(self) -> 'SeriesBoolean':
-        from bach.series import SeriesBoolean
-        if len(self.levels) == 1:
-            return list(self.levels.values())[0].isnull()
+        all_series = [lvl.isnull() for lvl in self.levels.values()]
+        return reduce(operator.and_, all_series)
 
-        series = reduce(
-            lambda lvl1, lvl2: lvl1.isnull() & lvl2.isnull(), self.levels.values()
-        ).copy_override_type(SeriesBoolean)
+    def notnull(self) -> 'SeriesBoolean':
+        all_series = [lvl.notnull() for lvl in self.levels.values()]
+        return reduce(operator.and_, all_series)
 
-        return series.copy_override(name=self.name)
+    def fillna(self, other: AllSupportedLiteralTypes):
+        if (
+            not isinstance(other, dict)
+            or not all(level in self.levels for level in other.keys())
+        ):
+            raise ValueError(f'"other" should contain mapping for at least one of {self.__name__} levels')
+
+        self_cp = self.copy()
+        for level_name, value in other.items():
+            setattr(self_cp, f'_{level_name}', self.levels[level_name].fillna(value))
+
+        return self_cp
+
+    def append(
+        self,
+        other: Union['Series', List['Series']],
+        ignore_index: bool = False,
+    ) -> 'Series':
+        if not other:
+            return self
+
+        levels_df_to_append = []
+        for series in other if isinstance(other, list) else [other]:
+            if not isinstance(series, self.__class__):
+                raise ValueError(f'can only append "{self.dtype}" series to {self.name}')
+
+            level_df = series.copy_override(name=self.name).flatten()
+            levels_df_to_append.append(level_df)
+
+        appended_df = self.flatten().append(levels_df_to_append)
+        return self.from_const(
+            base=appended_df,
+            value={level_name: appended_df[f'_{self.name}_{level_name}'] for level_name in self.levels.keys()},
+            name=self.name,
+        )
+
+    def flatten(self) -> 'DataFrame':
+        from bach.dataframe import DataFrame
+        from bach.savepoints import Savepoints
+        return DataFrame(
+            engine=self.engine,
+            base_node=self.base_node,
+            index=self.index,
+            series={level.name: level for level in self.levels.values()},
+            group_by=self.group_by,
+            order_by=[],
+            savepoints=Savepoints(),
+            variables={},
+        )
 
     def _parse_level_value(self, level_name: str, value: Union[AllSupportedLiteralTypes, Series]) -> 'Series':
         supported_dtypes = self.get_supported_level_dtypes()

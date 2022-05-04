@@ -289,4 +289,39 @@ def test_series_numeric_interval_isnull(dialect) -> None:
         bt['num_interval'].lower.isnull() & bt['num_interval'].upper.isnull() & bt['num_interval'].bounds.isnull()
     )
     result = bt['num_interval'].isnull()
-    assert result == expected
+    assert result.equals(expected)
+
+
+def test_series_numeric_interval_notnull(dialect) -> None:
+    bt = get_fake_df_test_data(dialect)
+    bt['num_interval'] = SeriesNumericInterval.from_const(
+        base=bt,
+        value={
+            'lower': 0,
+            'upper': 1,
+            'bounds': '(]'
+        },
+        name='num_interval',
+    )
+    expected = (
+        bt['num_interval'].lower.notnull() & bt['num_interval'].upper.notnull() & bt['num_interval'].bounds.notnull()
+    )
+    result = bt['num_interval'].notnull()
+    assert result.equals(expected)
+
+
+def test_series_numeric_interval_fillna(dialect) -> None:
+    bt = get_fake_df_test_data(dialect)[['inhabitants']]
+    bt['num_interval'] = SeriesNumericInterval.from_const(
+        base=bt,
+        value={
+            'lower': bt['inhabitants'],
+            'upper': bt['inhabitants'],
+            'bounds': '(]'
+        },
+        name='num_interval',
+    )
+
+    expected = bt['num_interval'].lower.fillna(0)
+    result = bt['num_interval'].fillna({'lower': 0})
+    assert result.lower.equals(expected)
