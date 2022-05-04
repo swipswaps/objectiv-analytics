@@ -30,14 +30,17 @@ class DocusaurusBuilder(Builder):
     link_suffix = '/'
     markdown_http_base = '/docs/modeling'
     api_frontmatter = {
+        'open-model-hub/models': {
+            'title_tree_levels': 1,
+            'slug_tree_levels': 1
+        },
+        'open-model-hub/api-reference': {
+            'title_tree_levels': 1,
+            'slug_tree_levels': 1
+        },
         'bach/api-reference': {
-            'title_tree_levels': 1
-        },
-        'modelhub-api-reference': {
-            'title_tree_levels': 1
-        },
-        'models': {
-            'title_tree_levels': 1
+            'title_tree_levels': 1,
+            'slug_tree_levels': 1
         }
     }
 

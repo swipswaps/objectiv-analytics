@@ -1,13 +1,12 @@
-.. _modelhub_api_reference:
+.. _open_model_hub_api_reference:
 
 .. currentmodule:: modelhub
 
-.. frontmatterposition:: 4
-.. frontmatterslug:: /modeling/open-model-hub-api-reference/
+.. frontmatterposition:: 3
 
-============================
-Open model hub API reference
-============================
+=============
+API reference
+=============
 
 This is the complete API reference of the open model hub.
 

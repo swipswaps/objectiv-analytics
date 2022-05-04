@@ -58,19 +58,29 @@ class DocusaurusTranslator(Translator):
     def get_slug(self, docname, doc_frontmatter):
         if doc_frontmatter and 'slug' in doc_frontmatter:
             return doc_frontmatter['slug']
-        
-        # TODO: do not replace underscores in function names
-        slug = docname.replace('_', '-')
-        if docname == 'index' or docname[-6:] == "/index":
-            slug = docname[:-5]
-        slug = '/modeling/' + slug + '/'
+
+        # Format API reference slugs
+        for api_pattern, config in self.builder.api_frontmatter.items():
+            if docname.startswith(api_pattern):
+                if 'slug_tree_levels' in config:
+                    levels = config['slug_tree_levels']
+                    # format the part after the last slash
+                    index_last_part = docname.rfind('/') + 1
+                    last_part = docname[index_last_part:]
+                    parts = last_part.split('.')
+                    last_part_formatted = '.'.join(parts[-levels:])
+                    docname = docname[0:index_last_part] + last_part_formatted
+
+        slug = '/modeling/' + docname + '/'
+        if docname == 'index' or slug[-6:] == "index/":
+            slug = slug[:-6]
         return slug
 
 
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
-        # if 'bach/api-reference/index' in self.title: 
-        #     print("NOW IN bach/api-reference/:", node)
+        # if 'example-notebooks/index' in self.title: 
+        #     print("DOCUMENT:", node)
 
 
     def depart_document(self, node):
@@ -79,8 +89,8 @@ class DocusaurusTranslator(Translator):
         
         # Format API reference titles
         title = self.title
-        for api, config in self.builder.api_frontmatter.items():
-            if current_doc.startswith(api):
+        for api_pattern, config in self.builder.api_frontmatter.items():
+            if current_doc.startswith(api_pattern):
                 if 'title_tree_levels' in config:
                     levels = config['title_tree_levels']
                     parts = self.title.split('.')
@@ -694,6 +704,7 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_bullet_list(self, node):
+        self.add('\n')
         self.depth.ascend('bullet_list')
         self.depth.ascend('list')
 
@@ -715,6 +726,7 @@ class DocusaurusTranslator(Translator):
 
     def depart_list_item(self, node):
         # a bulleted or enumerated list item
+        self.add("\n")
         self.depth.ascend('list_item')
 
 

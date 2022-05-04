@@ -14,8 +14,6 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
-	rm -rf $(SOURCEDIR)/models/**/modelhub.* # not the index
-	rm -rf $(SOURCEDIR)/modelhub-api-reference/**/modelhub.* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/DataFrame/bach.DataFrame.* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/bach.Series* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/AbstractDateTime/bach.SeriesAbstractDateTime* # not the index
@@ -23,6 +21,8 @@ clean:
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/Boolean/bach.SeriesBoolean* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/Jsonb/bach.SeriesJsonb* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/String/bach.SeriesString* # not the index
+	rm -rf $(SOURCEDIR)/open-model-hub/models/**/modelhub.* # not the index
+	rm -rf $(SOURCEDIR)/open-model-hub/api-reference/**/modelhub.* # not the index
 
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) 0$(O)
 

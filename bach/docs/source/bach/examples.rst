@@ -4,9 +4,9 @@
 
 .. frontmatterposition:: 4
 
-===========
-Bach basics
-===========
+========
+Examples
+========
 Here we'll give some very basic examples of the usage of Bach: creating a DataFrame, basic operations,
 aggregate operations, and getting the resulting data filtered and sorted. For this example there is no
 separate notebook available, but the operations demonstrated here are used in the other example notebooks.

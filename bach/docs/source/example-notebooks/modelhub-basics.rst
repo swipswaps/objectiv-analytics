@@ -7,7 +7,7 @@ Open model hub basics
 =====================
 
 In this example, we briefly demonstrate how you can use pre-built models from the open model hub in
-conjunction with, :ref:`bach`, our modeling library.
+conjunction with, :ref:`Bach <bach>`, our modeling library.
 
 This example uses real, unaltered data that was collected from https://objectiv.io with Objectiv’s Tracker. All models
 in the open model hub are compatible with datasets that have been validated against the
