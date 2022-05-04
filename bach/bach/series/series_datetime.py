@@ -182,11 +182,6 @@ class SeriesTimestamp(SeriesAbstractDateTime):
     }
     supported_value_types = (datetime.datetime, numpy.datetime64, datetime.date, str)
 
-    to_pandas_info = {
-        DBDialect.POSTGRES: ToPandasInfo('datetime64[ns]', None),
-        DBDialect.BIGQUERY: ToPandasInfo('datetime64[ns, UTC]', dt_strip_timezone)
-    }
-
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
@@ -238,6 +233,14 @@ class SeriesTimestamp(SeriesAbstractDateTime):
             if source_dtype not in ['string', 'date']:
                 raise ValueError(f'cannot convert {source_dtype} to timestamp')
             return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
+
+    def to_pandas_info(self) -> Optional['ToPandasInfo']:
+        info = {
+            DBDialect.POSTGRES: ToPandasInfo('datetime64[ns]', None),
+            DBDialect.BIGQUERY: ToPandasInfo('datetime64[ns, UTC]', dt_strip_timezone)
+        }
+        db_dialect = DBDialect.from_engine(self.engine)
+        return info.get(db_dialect)
 
     def __add__(self, other) -> 'Series':
         return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))

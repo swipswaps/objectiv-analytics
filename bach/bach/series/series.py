@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from abc import ABC, abstractmethod
-from copy import copy
+from copy import copy, deepcopy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
     TypeVar, Sequence, NamedTuple
 from uuid import UUID
@@ -19,8 +19,8 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes, value_to_series_type, \
-    StructuredDtype, Dtype
+from bach.types import DtypeOrAlias, AllSupportedLiteralTypes, value_to_series_type, StructuredDtype, \
+    Dtype, validate_instance_dtype
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.util import is_bigquery
@@ -109,20 +109,6 @@ class Series(ABC):
     by :meth:`supported_value_to_literal()`.
     """
 
-    to_pandas_info: Mapping[DBDialect, Optional[ToPandasInfo]] = {}
-    """
-    INTERNAL: Optional information on how to map query-results to pandas types.
-
-    ToPandasInfo defines both the pandas-dtype of the data, and an optional function to apply to query
-    results.
-
-    If defined for a given DBDialect, we use this information in :meth:`DataFrame.to_pandas()`, be setting
-    the dtype and applying the function to columns of the resulting pandas DataFrame.
-
-    Example usage: UUIDs in BigQuery are represented as strings, we convert these strings to UUID objects in
-    to_pandas().
-    """
-
     def __init__(self,
                  engine: Engine,
                  base_node: BachSqlModel,
@@ -132,7 +118,7 @@ class Series(ABC):
                  group_by: Optional['GroupBy'],
                  sorted_ascending: Optional[bool],
                  index_sorting: List[bool],
-                 instance_dtype: Optional[StructuredDtype] = None):
+                 instance_dtype: StructuredDtype):
         """
         Initialize a new Series object.
         If a Series is associated with a DataFrame. The engine, base_node and index
@@ -162,12 +148,15 @@ class Series(ABC):
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
         :param index_sorting: list of bools indicating whether to sort ascending/descending on the different
             columns of the index. Empty list for no sorting on index.
+        :param instance_dtype: dtype of this specific instance. For basic scalar types this should be the
+            same value as self.dtype. For structured types (e.g. SeriesDict) this should indicate what the
+            structure of the data is.
         """
         # Series is an abstract class, besides the abstractmethods subclasses must/may override some
         #   properties:
         #   * subclasses MUST override one class property: 'dtype',
         #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype',
-        #       'supported_value_types', and 'to_pandas_info'
+        #       'supported_value_types'
         # Unfortunately defining these properties as an "abstract-classmethod-property" makes it hard
         # to understand for mypy, sphinx, and python. Therefore, we check here that we are instantiating a
         # proper subclass, instead of just relying on @abstractmethod.
@@ -194,6 +183,7 @@ class Series(ABC):
                              f'length of index ({len(index)}).')
         if not is_valid_column_name(dialect=engine.dialect, name=name):
             raise ValueError(f'Column name "{name}" is not valid for SQL dialect {engine.dialect}')
+        validate_instance_dtype(static_dtype=self.dtype, instance_dtype=instance_dtype)
 
         self._engine = engine
         self._base_node = base_node
@@ -203,8 +193,7 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
-        # TODO: @property and _instance_dtype
-        self.instance_dtype = instance_dtype  # TODO: do some check that this is consistent with cls.dtype
+        self._instance_dtype = instance_dtype  # TODO: do some check that this is consistent with cls.dtype
 
     @classmethod
     @abstractmethod
@@ -312,12 +301,17 @@ class Series(ABC):
         """
         Get this Series' index sorting. An empty list indicates no sorting by index.
         """
-        return self._index_sorting
+        return copy(self._index_sorting)
 
     @property
     def expression(self) -> Expression:
         """ INTERNAL: Get the expression"""
         return self._expression
+
+    @property
+    def instance_dtype(self) -> StructuredDtype:
+        """ Get the instance_dtype """
+        return deepcopy(self._instance_dtype)
 
     @classmethod
     def get_class_instance(
@@ -326,9 +320,9 @@ class Series(ABC):
             name: str,
             expression: Expression,
             group_by: Optional['GroupBy'],
-            sorted_ascending: Optional[bool] = None,
-            index_sorting: List[bool] = None,
-            instance_dtype: Optional[StructuredDtype] = None
+            sorted_ascending: Optional[bool],
+            index_sorting: List[bool],
+            instance_dtype: StructuredDtype
     ):
         """ INTERNAL: Create an instance of this class. """
         return cls(
@@ -428,6 +422,8 @@ class Series(ABC):
             name=name,
             expression=expression,
             group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
             instance_dtype=dtype
         )
         return result
@@ -501,8 +497,23 @@ class Series(ABC):
             expression=self._expression,
             group_by=self._group_by,
             sorted_ascending=self._sorted_ascending,
-            index_sorting=self._index_sorting
+            index_sorting=self._index_sorting,
+            instance_dtype=series_type.dtype
         )
+
+    def to_pandas_info(self) -> Optional['ToPandasInfo']:
+        """
+        INTERNAL: Optional information on how to map query-results to pandas types.
+        Subclasses can override this function as needed. By default, this returns None.
+
+        ToPandasInfo defines both the pandas-dtype of the data, and an optional function to apply to query
+        results. If defined for a given DBDialect, we use this information in :meth:`DataFrame.to_pandas()`,
+        by setting the dtype and applying the function to columns of the resulting pandas DataFrame.
+
+        Example usage: UUIDs in BigQuery are represented as strings, we convert these strings to UUID
+        objects in to_pandas().
+        """
+        return None
 
     def unstack(
         self,
@@ -870,7 +881,8 @@ class Series(ABC):
                 # avoid loops here.
                 (recursion == 'GroupBy' or self.group_by == other.group_by) and
                 self.sorted_ascending == other.sorted_ascending and
-                self.index_sorting == other.index_sorting
+                self.index_sorting == other.index_sorting and
+                self.instance_dtype == other.instance_dtype
         )
 
     def __getitem__(self, key: Union[Any, slice]):
@@ -1727,5 +1739,8 @@ def variable_series(
         name='__variable__',
         expression=ConstValueExpression(variable_expression),
         group_by=None,
+        sorted_ascending=None,
+        index_sorting=[],
+        instance_dtype=series_type.dtype  # TODO: make work for structural types too
     )
     return result

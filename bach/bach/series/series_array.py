@@ -37,9 +37,10 @@ class SeriesArray(Series):
         value: List[Any],
         dtype: StructuredDtype
     ) -> Expression:
+        # validate early, and help mypy
         if not isinstance(dtype, list):
             raise ValueError(f'Dtype should be type list. Type(dtype): {type(dtype)}')
-        validate_dtype_value(dtype=dtype, value=value)
+        validate_dtype_value(static_dtype=cls.dtype, instance_dtype=dtype, value=value)
 
         sub_dtype = dtype[0]
         series_type = get_series_type_from_dtype(sub_dtype)
@@ -66,9 +67,11 @@ class SeriesArray(Series):
 
         """
         # We override the parent class here to allow using Series as sub-values in an array
+
+        # validate early, and help mypy
         if not isinstance(dtype, list):
             raise ValueError(f'Dtype should be type list. Type(dtype): {type(dtype)}')
-        validate_dtype_value(dtype=dtype, value=value)
+        validate_dtype_value(static_dtype=cls.dtype, instance_dtype=dtype, value=value)
 
         sub_dtype = dtype[0]
         series_type = get_series_type_from_dtype(sub_dtype)
@@ -99,6 +102,8 @@ class SeriesArray(Series):
             name=name,
             expression=expression,
             group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
             instance_dtype=dtype
         )
         # TODO: check the stuff that Series.from_value() handles like NULL

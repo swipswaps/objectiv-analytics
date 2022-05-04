@@ -853,29 +853,35 @@ class DataFrame:
 
         if index_dtypes:
             new_index: Dict[str, Series] = {}
-            for key, value in index_dtypes.items():
-                index_type = get_series_type_from_dtype(value)
-                new_index[key] = index_type(
-                    engine=args['engine'], base_node=args['base_node'],
+            for name, dtype in index_dtypes.items():
+                index_type = get_series_type_from_dtype(dtype)
+                new_index[name] = index_type(
+                    engine=args['engine'],
+                    base_node=args['base_node'],
                     index={},  # Empty index for index series
-                    name=key, expression=expression_class.column_reference(key),
+                    name=name,
+                    expression=expression_class.column_reference(name),
                     group_by=args['group_by'],
                     sorted_ascending=None,
-                    index_sorting=[]
+                    index_sorting=[],
+                    instance_dtype=dtype
                 )
             args['index'] = new_index
 
         if series_dtypes:
             new_series: Dict[str, Series] = {}
-            for key, value in series_dtypes.items():
-                series_type = get_series_type_from_dtype(value)
-                new_series[key] = series_type(
-                    engine=args['engine'], base_node=args['base_node'],
+            for name, dtype in series_dtypes.items():
+                series_type = get_series_type_from_dtype(dtype)
+                new_series[name] = series_type(
+                    engine=args['engine'],
+                    base_node=args['base_node'],
                     index=args['index'],
-                    name=key, expression=expression_class.column_reference(key),
+                    name=name,
+                    expression=expression_class.column_reference(name),
                     group_by=args['group_by'],
                     sorted_ascending=None,
-                    index_sorting=[]
+                    index_sorting=[],
+                    instance_dtype=dtype
                 )
                 args['series'] = new_series
 
@@ -973,8 +979,8 @@ class DataFrame:
             Calling materialize() resets the order of the dataframe. Call :py:meth:`sort_values()` again on
             the result if order is important.
         """
-        index_dtypes = {k: v.dtype for k, v in self.index.items()}
-        series_dtypes = {k: v.dtype for k, v in self.data.items()}
+        index_dtypes = {k: v.instance_dtype for k, v in self.index.items()}
+        series_dtypes = {k: v.instance_dtype for k, v in self.data.items()}
         node = self.get_current_node(name=node_name, limit=limit, distinct=distinct)
 
         df = self.get_instance(
@@ -987,15 +993,6 @@ class DataFrame:
             savepoints=self.savepoints,
             variables=self.variables
         )
-        # hackish, but works for now: copy instance dtypes
-        for k, v in self.index.items():
-            if v.instance_dtype is not None:
-                df[k] = df[k].copy_override(instance_dtype=v.instance_dtype)
-        for k, v in self.data.items():
-            df[k] = df[k].copy_override(index=df.index)
-            if v.instance_dtype is not None:
-                df[k] = df[k].copy_override(instance_dtype=v.instance_dtype)
-        # end of: copy instance dtypes
 
         if not inplace:
             return df
@@ -1890,13 +1887,11 @@ class DataFrame:
         .. note::
             This function queries the database.
         """
-        db_dialect = DBDialect.from_engine(self.engine)
-
         sql = self.view_sql(limit=limit)
 
         series_name_to_dtype = {}
         for series in self.all_series.values():
-            pandas_info = series.to_pandas_info.get(db_dialect)
+            pandas_info = series.to_pandas_info()
             if pandas_info is not None:
                 series_name_to_dtype[series.name] = pandas_info.dtype
 
@@ -1908,7 +1903,7 @@ class DataFrame:
         # Post-process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
         # the strings that the query gives us into UUID objects
         for name, series in self.data.items():
-            to_pandas_info = series.to_pandas_info.get(db_dialect)
+            to_pandas_info = series.to_pandas_info()
             if to_pandas_info is not None and to_pandas_info.function is not None:
                 pandas_df[name] = pandas_df[name].apply(to_pandas_info.function)
 

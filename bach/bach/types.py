@@ -8,7 +8,7 @@ To prevent cyclic imports, the functions in this file should not be used by data
 is fully initialized (that is, only use within functions).
 """
 from collections import defaultdict
-from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Union, Sequence, Mapping
+from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Union, Sequence, Mapping, Set
 import datetime
 from uuid import UUID
 
@@ -60,15 +60,63 @@ def get_dtype_from_db_dtype(db_dialect: DBDialect, db_dtype: str) -> StructuredD
     return _registry.get_dtype_from_db_dtype(db_dialect=db_dialect, db_dtype=db_dtype)
 
 
-def value_to_dtype(value: Any) -> str:
+def value_to_dtype(value: Any) -> Dtype:
     """ Give the dtype, as a string of the given value. """
     return _registry.value_to_dtype(value)
 
 
 def value_to_series_type(value: Any) -> Type['Series']:
-    # TODO: not needed, remove again?
     """ Return the Series subclass that can represent value as literal. """
     return get_series_type_from_dtype(dtype=value_to_dtype(value))
+
+
+def validate_instance_dtype(static_dtype: Dtype, instance_dtype: StructuredDtype):
+    """
+    Validate that:
+    1) instance_dtype is a valid instance dtype for the given static_dtype.
+    2) instance_dtype is well-formed.
+
+    Example: `['int64', 'float64']` is not a well formed instance-dtype. a list should have only one item.
+    Example: `['int64']` is not well formed instance-dtype, and a correct instance_dtype
+                if static_dtype='array', but not when static_dtype='bool'
+
+    :raises ValueError: if any check fails
+    """
+    # hardcoded for now, make more elegant in the future when we have a lot of DBs to support
+    structural_type_mapping: Dict[Dtype, Type] = {
+        'array': list,
+        'tuple': tuple,
+        'dict': dict
+    }
+    expected_type = structural_type_mapping.get(static_dtype)
+    if expected_type is not None:
+        if not isinstance(instance_dtype, expected_type):
+            raise ValueError(f'Expected instance dtype of type {expected_type}. '
+                             f'Instance dtype, type: {type(instance_dtype)}, value: {instance_dtype}')
+    else:
+        if static_dtype != instance_dtype:
+            raise ValueError(f'Expected instance dtype {static_dtype}. '
+                             f'Instance dtype, value: {instance_dtype}')
+
+    return _registry.validate_is_dtype(instance_dtype)
+
+
+def validate_dtype_value(
+    static_dtype: Dtype,
+    instance_dtype: StructuredDtype,
+    value: Union['Series', AllSupportedLiteralTypes]
+):
+    """
+    Check that static_dtype is a valid instance dtype for the given static_dtype, and that value is of the
+    given instance-dtype.
+
+    :param static_dtype: static dtype against which to validate the instance_dtype
+    :param instance_dtype: instance dtype against which to validate value.
+    :param value: Value to validate. Can either be a python value or a Series.
+    :raises ValueError: if any checks fail
+    """
+    validate_instance_dtype(static_dtype=static_dtype, instance_dtype=instance_dtype)
+    _validate_dtype_of_value(dtype=instance_dtype, value=value)
 
 
 T = TypeVar('T', bound='Series')
@@ -98,11 +146,11 @@ class TypeRegistry:
         # Do the real initialisation in _real_init, which we'll defer until usage so we won't get
         # problems with cyclic imports.
 
-        # dtype_series: Mapping of dtype to a subclass of Series
+        # dtype_series: Mapping of dtype and dtype-alias to a subclass of Series
         self.dtype_to_series: Dict[DtypeOrAlias, Type['Series']] = {}
 
         # db_dtype_to_series: Mapping per database dialect, of database types to a subclass of Series
-        self.db_dtype_to_series: Dict[DBDialect, Dict[str, Type['Series']]] = defaultdict(dict)
+        self.db_dtype_to_series: Dict[DBDialect, Dict[Dtype, Type['Series']]] = defaultdict(dict)
 
         # value_type_to_series: Mapping of python types to matching Series types
         # note that some types could be in this dictionary multiple times. For a subtype its super types
@@ -209,7 +257,7 @@ class TypeRegistry:
         Given a dtype string or a dtype alias, will return the correct Series object to represent such data.
         """
         self._real_init()
-        # list and dict are hardcoded exceptions for now.
+        # list, dict, and tuples are hardcoded exceptions for now.
         # TODO: make this nicer, e.g. make sure that no class can register this as an alias
         #  maybe switch to all strings, e.g. `'list[int64]'` instead of `list['int64']` ?
         if isinstance(dtype, list):
@@ -253,10 +301,12 @@ class TypeRegistry:
             raise ValueError(f'Unknown db_dtype: {db_dtype}')
         return self.db_dtype_to_series[db_dialect][db_dtype]
 
-    def value_to_dtype(self, value: Any) -> str:
+    def value_to_dtype(self, value: Any) -> Dtype:
         """
         Given a python value, return the dtype string of the Series that's registered as the default
         for the type of value.
+        For non-scalar types this will give the base Dtype, not the StructuredDtype. E.g. for an array of
+            integers this will return 'array' and not ['int64']
         """
         self._real_init()
         # exception for values that are Series. Check: do we need this exception?
@@ -270,24 +320,24 @@ class TypeRegistry:
                 return series_type.dtype
         raise ValueError(f'No dtype known for {type(value)}')
 
+    def validate_is_dtype(self, dtype: StructuredDtype):
+        """
+        Validate that dtype is a valid dtype, either as a regular dtype string that is one of the registered
+        dtypes, or a structured dtype that is well-formed.
+        :raises ValueError: if dtype is not a valid Dtype
+        """
+        self._real_init()
+        base_dtypes = set(series.dtype for series in self.dtype_to_series.values())
+        _assert_is_valid_dtype(base_dtypes=base_dtypes, dtype=dtype)
+
 
 _registry = TypeRegistry()
 
 
-def is_structural_dtype(dtype: StructuredDtype) -> bool:
-    return isinstance(dtype, (list, dict, tuple))
-
-
-def validate_dtype_value(dtype: StructuredDtype, value: Any):
+def _validate_dtype_of_value(dtype: StructuredDtype, value: Union['Series', AllSupportedLiteralTypes]):
     """
-    Check that value is of the given dtype.
-
-    Additionally, checks that if dtype is a structured dtype, that it is structured well.
-
-    If any check fails a ValueError is raised.
-
-    :param dtype: dtype against which to validate value.
-    :param value: Value to validate. Can either be a constant or a Series.
+    Recursively validate that value has the given dtype.
+    Assumes dtype is a well-formed dtype.
     """
     # TODO: add information on where in the dtype/value the error occurred
     # TODO: support dtype-aliasses?
@@ -309,11 +359,9 @@ def validate_dtype_value(dtype: StructuredDtype, value: Any):
     elif isinstance(dtype, list):
         if not isinstance(value, list):
             raise ValueError(f'Dtype is a list, value is not a list. Value: {value}')
-        if not len(dtype) == 1:
-            raise ValueError(f'Expected dtype list to have length 1. Dtype: {dtype}')
         sub_dtype = dtype[0]
         for sub_value in value:
-            validate_dtype_value(sub_dtype, sub_value)
+            _validate_dtype_of_value(sub_dtype, sub_value)
     elif isinstance(dtype, tuple):
         if not isinstance(value, tuple):
             raise ValueError(f'Dtype is a tuple, value is not a tuple. Value: {value}')
@@ -322,7 +370,7 @@ def validate_dtype_value(dtype: StructuredDtype, value: Any):
                              f'dtype: {dtype}, value: {value}')
         for i, sub_value in enumerate(value):
             sub_dtype = dtype[i]
-            validate_dtype_value(sub_dtype, sub_value)
+            _validate_dtype_of_value(sub_dtype, sub_value)
 
     elif isinstance(dtype, dict):
         if not isinstance(value, dict):
@@ -332,10 +380,35 @@ def validate_dtype_value(dtype: StructuredDtype, value: Any):
         if dtype_keys != value_keys:
             raise ValueError(f'Dtype keys do not match value keys. '
                              f'Dtype keys: {dtype_keys}, value keys: {value_keys}')
-        if any(not isinstance(key, str) for key in dtype_keys):
-            raise ValueError(f'All dtype keys should be strings. Dtype keys: {dtype_keys}')
         for key, sub_dtype in dtype.items():
             sub_value = value[key]
-            validate_dtype_value(sub_dtype, sub_value)
+            _validate_dtype_of_value(sub_dtype, sub_value)
     else:
         raise ValueError(f'Dtype not supported. Dtype: {dtype}')
+
+
+def _assert_is_valid_dtype(base_dtypes: Set[Dtype], dtype: StructuredDtype):
+    """
+    Validate that dtype is a valid dtype, either a regular dtype or a recursively defined structural dtype.
+    :raise ValueError: if dtype is not a valid Dtype
+    """
+    # TODO: test
+    # TODO: support dtype-aliasses?
+    if isinstance(dtype, Dtype):
+        if dtype not in base_dtypes:
+            raise ValueError(f'Unknown dtype string: {dtype}')
+    if isinstance(dtype, list):
+        if len(dtype) != 1:
+            raise AssertionError(f'Expected list of length one, got: {dtype}')
+        sub_dtype = dtype[0]
+        _assert_is_valid_dtype(base_dtypes=base_dtypes, dtype=sub_dtype)
+    if isinstance(dtype, dict):
+        non_string_keys = sorted(key for key in dtype.keys() if not isinstance(key, str))
+        if non_string_keys:
+            raise ValueError(f'Expected all keys to be strings. '
+                             f'Found non string keys: {non_string_keys}')
+        for sub_dtype in dtype.values():
+            _assert_is_valid_dtype(base_dtypes=base_dtypes, dtype=sub_dtype)
+    if isinstance(dtype, tuple):
+        for sub_dtype in dtype:
+            _assert_is_valid_dtype(base_dtypes=base_dtypes, dtype=sub_dtype)

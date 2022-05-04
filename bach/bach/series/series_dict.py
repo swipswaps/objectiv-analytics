@@ -40,11 +40,11 @@ class SeriesDict(Series):
             value: Dict[str, Any],
             dtype: StructuredDtype
     ) -> Expression:
+        # validate early, and help mypy
         cls._validate_is_bigquery(dialect)
-
         if not isinstance(dtype, dict):
             raise ValueError(f'Dtype should be type dict. Type(dtype): {type(dtype)}')
-        validate_dtype_value(dtype=dtype, value=value)
+        validate_dtype_value(static_dtype=cls.dtype, instance_dtype=dtype, value=value)
 
         sub_exprs = []
         for key, item in value.items():
@@ -74,9 +74,10 @@ class SeriesDict(Series):
         # We override the parent class here to allow using Series as sub-values in a dict
         cls._validate_is_bigquery(base.engine.dialect)
 
+        # validate early, and help mypy
         if not isinstance(dtype, dict):
             raise ValueError(f'Dtype should be type dict. Type(dtype): {type(dtype)}')
-        validate_dtype_value(dtype=dtype, value=value)
+        validate_dtype_value(static_dtype=cls.dtype, instance_dtype=dtype, value=value)
 
         sub_exprs = []
         for key, item in value.items():
@@ -103,6 +104,8 @@ class SeriesDict(Series):
             name=name,
             expression=expr,
             group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
             instance_dtype=dtype
         )
         # TODO: check the stuff that Series.from_value() handles like NULL

@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Union
+from typing import Union, Optional
 from uuid import UUID
 
 from sqlalchemy.engine import Dialect
@@ -35,11 +35,6 @@ class SeriesUuid(Series):
     }
 
     supported_value_types = (UUID, str)
-
-    to_pandas_info = {
-        DBDialect.POSTGRES: None,
-        DBDialect.BIGQUERY: ToPandasInfo('object', UUID)
-    }
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
@@ -111,8 +106,16 @@ class SeriesUuid(Series):
             base=base,
             name='__tmp',
             expression=Expression.construct(expr_str),
-            group_by=None
+            group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
+            instance_dtype=cls.dtype
         )
+
+    def to_pandas_info(self) -> Optional[ToPandasInfo]:
+        if is_bigquery(self.engine):
+            return ToPandasInfo('object', UUID)
+        return None
 
     def _comparator_operation(self, other, comparator, other_dtypes=('uuid', 'string')):
         from bach import SeriesBoolean
