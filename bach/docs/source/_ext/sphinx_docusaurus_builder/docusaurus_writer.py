@@ -59,6 +59,8 @@ class DocusaurusTranslator(Translator):
         if doc_frontmatter and 'slug' in doc_frontmatter:
             return doc_frontmatter['slug']
 
+        slug = docname
+
         # Format API reference slugs
         for api_pattern, config in self.builder.api_frontmatter.items():
             if docname.startswith(api_pattern):
@@ -69,10 +71,12 @@ class DocusaurusTranslator(Translator):
                     last_part = docname[index_last_part:]
                     parts = last_part.split('.')
                     last_part_formatted = '.'.join(parts[-levels:])
-                    docname = docname[0:index_last_part] + last_part_formatted
+                    slug = docname[0:index_last_part] + last_part_formatted
 
-        slug = '/modeling/' + docname + '/'
-        if docname == 'index' or slug[-6:] == "index/":
+        # add base path and trailing slash
+        slug = '/modeling/' + slug + '/'
+        if docname == 'index' or docname[-6:] == "/index":
+            # this is an index page, so should just end in '/'
             slug = slug[:-6]
         return slug
 
