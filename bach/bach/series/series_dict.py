@@ -155,14 +155,12 @@ class DictAccessor:
         # TODO: a bit hacky that we have an if-else here for structural sub-dtypes
         elif isinstance(sub_dtype, dict):
             return self._series \
-                .copy_override_type(SeriesDict) \
-                .copy_override(instance_dtype=sub_dtype) \
+                .copy_override_type(SeriesDict, instance_dtype=sub_dtype) \
                 .copy_override(expression=expression)
         elif isinstance(sub_dtype, list):
             from bach import SeriesArray
             return self._series \
-                .copy_override_type(SeriesArray) \
-                .copy_override(instance_dtype=sub_dtype) \
+                .copy_override_type(SeriesArray, instance_dtype=sub_dtype) \
                 .copy_override(expression=expression)
         else:
             raise Exception('TODO')

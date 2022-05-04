@@ -477,18 +477,29 @@ class Series(ABC):
             instance_dtype=self.instance_dtype if instance_dtype is None else instance_dtype
         )
 
-    def copy_override_dtype(self, dtype: Optional[str]) -> 'Series':
+    def copy_override_dtype(
+        self,
+        dtype: Optional[str],
+        *,
+        instance_dtype: Optional[StructuredDtype] = None
+    ) -> 'Series':
         """
         INTERNAL: create an instance of the Series subtype with the given dtype, and copy
         all values from self into that instance.
         """
         klass: Type['Series'] = get_series_type_from_dtype(self.dtype if dtype is None else dtype)
-        return self.copy_override_type(klass)
+        return self.copy_override_type(klass, instance_dtype=instance_dtype)
 
-    def copy_override_type(self, series_type: Type[T]) -> T:
+    def copy_override_type(
+        self,
+        series_type: Type[T],
+        *,
+        instance_dtype: Optional[StructuredDtype] = None
+    ) -> T:
         """
         INTERNAL: create an instance of the given Series subtype, copy all values from self.
         """
+        instance_dtype = series_type.dtype if instance_dtype is None else instance_dtype
         return series_type(
             engine=self._engine,
             base_node=self._base_node,
@@ -498,7 +509,7 @@ class Series(ABC):
             group_by=self._group_by,
             sorted_ascending=self._sorted_ascending,
             index_sorting=self._index_sorting,
-            instance_dtype=series_type.dtype
+            instance_dtype=instance_dtype
         )
 
     def to_pandas_info(self) -> Optional['ToPandasInfo']:

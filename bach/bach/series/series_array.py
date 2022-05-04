@@ -185,11 +185,9 @@ class ArrayAccessor:
                     .copy_override(instance_dtype=sub_dtype) \
                     .copy_override(expression=expression)
             elif isinstance(sub_dtype, dict):
-                # TODO: this type doesn't exist yet!
                 from bach import SeriesDict
                 return self._series \
-                    .copy_override_type(SeriesDict) \
-                    .copy_override(instance_dtype=sub_dtype) \
+                    .copy_override_type(SeriesDict, instance_dtype=sub_dtype) \
                     .copy_override(expression=expression)
             else:
                 raise Exception(f'Unexpected type of sub_dtype. sub_dtype: {sub_dtype}')
