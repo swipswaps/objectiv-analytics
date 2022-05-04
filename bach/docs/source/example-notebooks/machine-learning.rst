@@ -9,8 +9,7 @@ Bach and sklearn
 With Objectiv you can do all your analysis and Machine Learning directly on the raw data in your SQL database.
 This example shows in the simplest way possible how you can use Objectiv to create a basic feature set and use
 sklearn to do machine learning on this data set. We also have an example that goes deeper into
-feature engineering `here
-<feature_engineering.html>`_.
+feature engineering :ref:`here <example_feature_engineering>`.
 
 This example is also available in a `notebook
 <https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/sklearn-example.ipynb>`_

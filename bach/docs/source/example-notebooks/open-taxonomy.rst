@@ -87,11 +87,17 @@ column is set as an `objectiv_location_stack` type, and therefore location stack
 used to access the data from the `location_stack`. These methods can be used using the `.ls` accessor on
 the column. The methods are:
 
-* The property accessors :ref:`.ls.navigation_features <ls_navigation_features>`, :ref:`.ls.feature_stack
-  <ls_feature_stack>`, :ref:`.ls.nice_name <ls_nice_name>`.
+.. currentmodule:: modelhub.series.series_objectiv.SeriesLocationStack
+
+* The property accessors:
+    * :ref:`.ls.navigation_features <ls_navigation_features>`
+    * :ref:`.ls.feature_stack <ls_feature_stack>`
+    * :ref:`.ls.nice_name <ls_nice_name>` 
 * all :ref:`methods <json_accessor>` for the json(b) type can also be accessed using `.ls`
 
 For example,
+
+.. code-block:: python
 
     df.location_stack.ls.nice_name
 
@@ -112,7 +118,10 @@ global_contexts
 The `global_contexts` column in the DataFrame contain all information that is relevant to the logged event. As it is set as an `objectiv_global_context` type, specific methods can be used to access the data from the `global_contexts`. These methods can be used using the `.gc` accessor on the column. The methods are:
 
 * :ref:`.gc.get_from_context_with_type_series(type, key) <get_from_context_with_type_series>`.
-* The property accessors :ref:`.gc.cookie_id <gc_cookie_id>`, :ref:`.gc.user_agent <gc_user_agent>`, :ref:`.gc.application <gc_application>`.
+* The property accessors:
+    * :ref:`.gc.cookie_id <gc_cookie_id>`
+    * :ref:`.gc.user_agent <gc_user_agent>`
+    * :ref:`.gc.application <gc_application>`
 * all :ref:`methods <json_accessor>` for the json(b) type can also be accessed using `.gc`
 
 The full `reference of global contexts is here

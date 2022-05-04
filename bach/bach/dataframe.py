@@ -2877,10 +2877,10 @@ class DataFrame:
         :return: a new dataframe with filled missing values.
 
         .. note::
-            sort_by is required if method is specified and the DataFrame has no order_by.
+            `sort_by` is required if method is specified and the DataFrame has no order_by.
 
         .. warning::
-            If sort_by is non-deterministic, this operation might yield different results after
+            If `sort_by` is non-deterministic, this operation might yield different results after
             performing other operations over the resultant dataframe.
         """
         df = self.copy()
@@ -2921,10 +2921,10 @@ class DataFrame:
         :return: a new dataframe with filled missing values.
 
         .. note::
-            sort_by is required if DataFrame has no order_by.
+            `sort_by` is required if DataFrame has no order_by.
 
         .. warning::
-            If sort_by is non-deterministic, this operation might yield different results after
+            If `sort_by` is non-deterministic, this operation might yield different results after
             performing other operations over the resultant dataframe.
         """
         from bach.partitioning import Window, WindowFrameMode
@@ -2987,10 +2987,10 @@ class DataFrame:
         :return: a new dataframe with filled missing values.
 
         .. note::
-            sort_by is required if DataFrame has no order_by.
+            `sort_by` is required if DataFrame has no order_by.
 
         .. warning::
-            If sort_by is non-deterministic, this operation might yield different results after
+            If `sort_by` is non-deterministic, this operation might yield different results after
             performing other operations over the resultant dataframe.
         """
         df = self.copy()

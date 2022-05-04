@@ -28,7 +28,7 @@ class DocusaurusBuilder(Builder):
 
     out_suffix = '.mdx'
     link_suffix = '/'
-    markdown_http_base = '/docs/modeling'
+    markdown_http_base = '/modeling'
     api_frontmatter = {
         'open-model-hub/models': {
             'title_tree_levels': 1,
