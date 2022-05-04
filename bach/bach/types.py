@@ -91,12 +91,13 @@ def validate_instance_dtype(static_dtype: Dtype, instance_dtype: StructuredDtype
     expected_type = structural_type_mapping.get(static_dtype)
     if expected_type is not None:
         if not isinstance(instance_dtype, expected_type):
-            raise ValueError(f'Expected instance dtype of type {expected_type}. '
-                             f'Instance dtype, type: {type(instance_dtype)}, value: {instance_dtype}')
+            raise ValueError(f'Expected instance dtype of type "{expected_type}". '
+                             f'instance_dtype type: {type(instance_dtype)}, '
+                             f'instance_dtype: {instance_dtype}')
     else:
         if static_dtype != instance_dtype:
-            raise ValueError(f'Expected instance dtype {static_dtype}. '
-                             f'Instance dtype, value: {instance_dtype}')
+            raise ValueError(f'Expected instance dtype "{static_dtype}". '
+                             f'instance_dtype: "{instance_dtype}"')
 
     return _registry.validate_is_dtype(instance_dtype)
 
