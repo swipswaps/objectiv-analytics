@@ -15,7 +15,6 @@ import pytest
 from _pytest.main import Session
 from _pytest.python import Metafunc, Function
 from _pytest.config.argparsing import Parser
-import sqlalchemy
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine, Dialect
 
@@ -27,17 +26,15 @@ DB_BQ_CREDENTIALS_PATH = os.environ.get(
 )
 
 
+MARK_DB_INDEPENDENT = 'db_independent'
+MARK_SKIP_POSTGRES = 'skip_postgres'
+MARK_SKIP_BIGQUERY = 'skip_bigquery'
+
+
 @pytest.fixture()
 def pg_engine() -> Engine:
-    # TODO: port all tests that use this to be multi-database>
-    return get_postgres_engine_dialect().engine
-
-
-@pytest.fixture()
-def bq_engine() -> Engine:
-    # TODO: port all tests that use this to be multi-database>
-    # TODO: get rid of this completely, allow tests to be marked as BigQuery-only or something like that
-    return get_bigquery_engine_dialect().engine
+    # TODO: port all tests that use this to be multi-database. Or explicitly mark them as skip-bigquery
+    return ENGINE_DIALECTS['postgres'].engine
 
 
 def pytest_addoption(parser: Parser):
@@ -68,18 +65,14 @@ def pytest_sessionstart(session: Session):
     # For more information, please see:
     # https://pytest-xdist.readthedocs.io/en/latest/distribution.html
     # https://docs.pytest.org/en/6.2.x/reference.html#pytest.hookspec.pytest_sessionstart
-    load_engine = True
-    if session.config.args == ['tests/unit']:
-        # create dialect, only if we are running unit tests
-        load_engine = False
 
     if session.config.getoption("all"):
-        ENGINE_DIALECTS['postgres'] = get_postgres_engine_dialect(load_engine)
-        ENGINE_DIALECTS['bigquery'] = get_bigquery_engine_dialect(load_engine)
+        ENGINE_DIALECTS['postgres'] = get_postgres_engine_dialect()
+        ENGINE_DIALECTS['bigquery'] = get_bigquery_engine_dialect()
     elif session.config.getoption("big_query"):
-        ENGINE_DIALECTS['bigquery'] = get_bigquery_engine_dialect(load_engine)
+        ENGINE_DIALECTS['bigquery'] = get_bigquery_engine_dialect()
     else:  # default option, don't even check if --postgres is set
-        ENGINE_DIALECTS['postgres'] = get_postgres_engine_dialect(load_engine)
+        ENGINE_DIALECTS['postgres'] = get_postgres_engine_dialect()
 
 
 def pytest_generate_tests(metafunc: Metafunc):
@@ -88,7 +81,18 @@ def pytest_generate_tests(metafunc: Metafunc):
 
     # This function will automatically be called by pytest while it is creating the list of tests to run,
     # see: https://docs.pytest.org/en/6.2.x/reference.html#collection-hooks
-    engine_dialects = list(ENGINE_DIALECTS.values())
+    markers = metafunc.definition.own_markers
+    skip_postgres = any(mark.name == MARK_SKIP_POSTGRES for mark in markers)
+    skip_bigquery = any(mark.name == MARK_SKIP_BIGQUERY for mark in markers)
+
+    engine_dialects = []
+    for name, engine_dialect in ENGINE_DIALECTS.items():
+        if name == 'postgres' and skip_postgres:
+            continue
+        if name == 'bigquery' and skip_bigquery:
+            continue
+        engine_dialects.append(engine_dialect)
+
     if 'dialect' in metafunc.fixturenames:
         dialects = [ed.dialect for ed in engine_dialects]
         metafunc.parametrize("dialect", dialects)
@@ -102,18 +106,22 @@ def pytest_runtest_setup(item: Function):
     # `engine` parameter.
     #
     #  ### Background ###
-    #  We broadly want two categories of tests:
+    #  We broadly want four categories of tests:
     #  1. tests that are database independent.
-    #  2. tests that we want to run against all supported databases.
+    #  2. tests that we want to run against all databases except Postgres
+    #  3. tests that we want to run against all databases except BigQuery
+    #  4. tests that we want to run against all supported databases.
     #
-    # These categories shouldn't overlap. We use the `db_independent` mark to track category one, and we can
-    # distinguish tests from category two by their 'dialect' and 'engine' parameters. This way we can verify
-    # that all tests are clearly marked as being in either category.
+    # These categories shouldn't overlap.
+    # We use the `db_independent` mark to track category one.
+    # We use the 'skip_postgres' mark to track category two.
+    # We use the 'skip_bigquery' mark to track category three.
+    # We can distinguish category four test from others by their 'dialect' and 'engine' parameters.
 
     # This function will automatically be called by pytest before running a specific test function. See:
     # https://docs.pytest.org/en/6.2.x/reference.html#test-running-runtest-hooks
     fixture_names = item.fixturenames
-    is_db_independent_test = any(mark.name == 'db_independent' for mark in item.own_markers)
+    is_db_independent_test = any(mark.name == MARK_DB_INDEPENDENT for mark in item.own_markers)
     is_multi_db_test = 'dialect' in fixture_names or 'engine' in fixture_names
     if is_db_independent_test and is_multi_db_test:
         raise Exception('Test has both the `db_independent` mark as well as either the `dialect` or '
@@ -122,19 +130,11 @@ def pytest_runtest_setup(item: Function):
 # Below: helper functions for pytest_sessionstart
 
 
-def get_postgres_engine_dialect(need_engine: bool = True) -> EngineDialect:
-    if need_engine:
-        engine = create_engine(DB_PG_TEST_URL)
-        return EngineDialect(engine, engine.dialect)
-    # Import locally. This way a missing library doesn't break anything, if we don't hit this code path
-    from sqlalchemy.dialects.postgresql.base import PGDialect
-    return EngineDialect(None, PGDialect())
+def get_postgres_engine_dialect() -> EngineDialect:
+    engine = create_engine(DB_PG_TEST_URL)
+    return EngineDialect(engine, engine.dialect)
 
 
-def get_bigquery_engine_dialect(need_engine: bool = True) -> EngineDialect:
-    if need_engine:
-        engine = create_engine(DB_BQ_TEST_URL, credentials_path=DB_BQ_CREDENTIALS_PATH)
-        return EngineDialect(engine, engine.dialect)
-    # Import locally. This way a missing library doesn't break anything, if we don't hit this code path
-    from sqlalchemy_bigquery import BigQueryDialect
-    return EngineDialect(None, BigQueryDialect())
+def get_bigquery_engine_dialect() -> EngineDialect:
+    engine = create_engine(DB_BQ_TEST_URL, credentials_path=DB_BQ_CREDENTIALS_PATH)
+    return EngineDialect(engine, engine.dialect)

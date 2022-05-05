@@ -1,15 +1,16 @@
 """
 Copyright 2022 Objectiv B.V.
 """
+import pytest
+
 from bach.series import SeriesDict
 from tests.functional.bach.test_data_and_utils import get_df_with_test_data, assert_equals_data
 
 
-def test_basic_value_to_expression(bq_engine):
-    engine = bq_engine
-    # TODO: works on bigquery only. Do we want to make this BigQuery only, or fallback to json for pg?
-    # Or do more magic in PG to support this partially?
+# TODO: a unit-test that postgres users get a proper error
 
+@pytest.mark.skip_postgres
+def test_basic_value_to_expression(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
     struct = {
@@ -26,11 +27,8 @@ def test_basic_value_to_expression(bq_engine):
     )
 
 
-def test_series_to_dict(bq_engine):
-    engine = bq_engine
-    # TODO: works on bigquery only. Do we want to make this BigQuery only, or fallback to json for pg?
-    # Or do more magic in PG to support this partially?
-
+@pytest.mark.skip_postgres
+def test_series_to_dict(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()
     struct = {
@@ -51,12 +49,8 @@ def test_series_to_dict(bq_engine):
     )
 
 
-def test_getitem(bq_engine):
-    engine = bq_engine
-
-    # TODO: works on bigquery only. Do we want to make this BigQuery only, or fallback to json for pg?
-    # Or do more magic in PG to support this partially?
-
+@pytest.mark.skip_postgres
+def test_getitem(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
     struct = {
@@ -78,11 +72,8 @@ def test_getitem(bq_engine):
     )
 
 
-def test_nested(bq_engine):
-    engine = bq_engine
-    # TODO: works on bigquery only. Do we want to make this BigQuery only, or fallback to json for pg?
-    # Or do more magic in PG to support this partially?
-
+@pytest.mark.skip_postgres
+def test_nested(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
     struct = {

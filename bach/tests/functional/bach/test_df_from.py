@@ -27,10 +27,9 @@ def _create_test_table(engine: Engine, table_name: str):
         conn.execute(sql)
 
 
-# TODO: PROPER TEST
+@pytest.mark.skip_postgres
 @pytest.mark.xdist_group(name="test_table_writers")
-def test_from_table_structural(bq_engine):
-    engine = bq_engine
+def test_from_table_structural_big_query(engine):
     table_name = 'test_df_from_table'
     if is_bigquery(engine):
         sql = f'drop table if exists {table_name}; ' \
@@ -43,7 +42,7 @@ def test_from_table_structural(bq_engine):
     with engine.connect() as conn:
         conn.execute(sql)
 
-    df = DataFrame.from_table(engine=bq_engine, table_name=table_name, index=['a'])
+    df = DataFrame.from_table(engine=engine, table_name=table_name, index=['a'])
     assert df.index_dtypes == {'a': 'int64'}
     assert df.dtypes == {'b': 'dict', 'c': 'array'}
     assert df.is_materialized

@@ -5,6 +5,10 @@ import pytest
 
 from bach.types_bq import bq_db_dtype_to_dtype
 
+pytestmark = [pytest.mark.db_independent]
+# mark all tests here as database independent. Obviously this code relates to BigQuery. But it does not
+# require an Engine or Dialect. The tested code only converts strings to strings, dicts, lists, or tuples.
+
 
 def test_basic_types():
     assert bq_db_dtype_to_dtype('STRING') == 'string'
