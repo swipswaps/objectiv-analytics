@@ -87,7 +87,7 @@ def test_series_numeric_interval_append(engine, interval_data_pdf: pd.DataFrame)
     df = DataFrame.from_pandas(engine=engine, df=interval_data_pdf, convert_objects=True)
     df['range_1'] = SeriesNumericInterval.from_const(
         base=df,
-        name='num_interval',
+        name='range_1',
         value={
             'lower': df['lower'],
             'upper': df['upper'],
@@ -96,7 +96,7 @@ def test_series_numeric_interval_append(engine, interval_data_pdf: pd.DataFrame)
     )
     df['range_2'] = SeriesNumericInterval.from_const(
         base=df,
-        name='num_interval',
+        name='range_2',
         value={
             'lower': df['lower'] + 1,
             'upper': df['upper'] + 2,

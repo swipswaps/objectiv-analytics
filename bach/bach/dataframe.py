@@ -783,15 +783,15 @@ class DataFrame:
             for key, value in index_dtypes.items()
         }
 
-        series: Dict[str, Series] = {}
-        for key, value in dtypes.items():
-            series_type = get_series_type_from_dtype(value)
-            series[key] = series_type.get_instance(
+        series: Dict[str, Series] = {
+            key: get_series_type_from_dtype(value).get_instance(
                 index=index,
                 name=key,
                 expression=Expression.column_reference(key),
                 **base_params,
             )
+            for key, value in dtypes.items()
+        }
 
         return cls(
             engine=engine,
@@ -870,8 +870,7 @@ class DataFrame:
             for key, value in series_dtypes.items():
                 series_type = get_series_type_from_dtype(value)
                 extra_params = copy(args)
-                extra_params['sorted_ascending'] = None
-                extra_params['index_sorting'] = None
+
                 if issubclass(series_type, SeriesAbstractMultiLevel):
                     if key not in self._data:
                         raise Exception(
@@ -880,18 +879,18 @@ class DataFrame:
                     multi_level_series = cast(SeriesAbstractMultiLevel, self.all_series[key])
                     extra_params.update(
                         {
-                            level_name: lvl.get_instance(
-                                name=lvl.name,
-                                expression=expression_class.column_reference(lvl.name),
-                                **extra_params,
+                            lvl_name: lvl.copy_override(
+                                expression=expression_class.column_reference(f'_{key}_{lvl_name}')
                             )
-                            for level_name, lvl in multi_level_series.levels.items()
+                            for lvl_name, lvl in multi_level_series.levels.items()
                         }
                     )
 
-                new_series[key] = series_type(
+                new_series[key] = series_type.get_instance(
                     name=key,
                     expression=expression_class.column_reference(key),
+                    sorted_ascending=None,
+                    index_sorting=[],
                     **extra_params
                 )
                 args['series'] = new_series
@@ -2002,6 +2001,8 @@ class DataFrame:
         :param distinct: if distinct statement needs to be applied
         :param where_clause: The where-clause to apply, if any
         :param having_clause: The having-clause to apply in case group_by is set, if any
+        :param construct_multi_levels: if False, each level from a multi-level series will be treated as an
+            individual column, else the column expression from the parent series will be used instead.
         :returns: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
         from bach.series import SeriesAbstractMultiLevel
@@ -2093,6 +2094,8 @@ class DataFrame:
         :param limit: the limit to apply, either as a max amount of rows or a slice of the data.
         :returns: SQL query
         """
+
+        # we need to construct each multi-level series, since it should resemble the final result
         model = self.get_current_node('view_sql', limit=limit, construct_multi_levels=True)
         placeholder_values = get_variable_values_sql(
             dialect=self.engine.dialect,

@@ -1,3 +1,6 @@
+"""
+Copyright 2022 Objectiv B.V.
+"""
 import operator
 from abc import ABC, abstractmethod
 from copy import copy
@@ -28,6 +31,22 @@ if TYPE_CHECKING:
 
 
 class SeriesAbstractMultiLevel(Series, ABC):
+    """
+    A Series that represent the base multi-level types. Works as a data structure containing multiple series
+    of different dtypes (based on the structure defined by the child class).
+
+    Each level is treated as an individual series till user calls the following methods:
+        * `SeriesAbstractMultiLevel.to_pandas`
+        * `SeriesAbstractMultiLevel.to_numpy`
+        * `SeriesAbstractMultiLevel.view_sql`
+
+    Each child class must be in charge of:
+        * having each level as a property (ensuring immutability)
+        * a column expression representing the final structure to be built.
+
+    ** Operations **
+        Adapts all supported methods by Series class. Currently, aggregations are not supported.
+    """
     def copy_override(
         self: T,
         *,
@@ -41,6 +60,11 @@ class SeriesAbstractMultiLevel(Series, ABC):
         index_sorting: Optional[List[bool]] = None,
         **kwargs,
     ) -> T:
+        """
+        INTERNAL: Copy this instance into a new one, with the given overrides
+
+        SeriesAbstractMultiLevel only provides current levels if not present in extra arguments
+        """
         extra_params = copy(self.levels)
         extra_params.update(kwargs)
         return cast(T, super().copy_override(
@@ -68,7 +92,11 @@ class SeriesAbstractMultiLevel(Series, ABC):
         index_sorting: List[bool] = None,
         **kwargs,
     ):
-        """ INTERNAL: Create an instance of this class. """
+        """
+        INTERNAL: Create an instance of this class.
+
+        Creates a new instance for each level series.
+        """
         base_params = {
             'engine': engine,
             'base_node': base_node,
@@ -78,13 +106,20 @@ class SeriesAbstractMultiLevel(Series, ABC):
             'index_sorting': [] if index_sorting is None else index_sorting,
         }
 
-        if not (set(cls.get_supported_level_dtypes().keys()) - set(kwargs)):
-            sub_levels = kwargs
-        else:
+        default_level_dtypes = cls.get_supported_level_dtypes()
+
+        # check if all level are provided in kwargs and each of them is a series instance
+        levels_are_provided = all(
+            level in kwargs and isinstance(kwargs[level], Series)
+            for level in default_level_dtypes.keys()
+        )
+
+        if not levels_are_provided:
             # if levels are not provided, search for them in base node
-            # base node MUST contain each referenced column from the class
+            # this can only happen when instantiating a new DataFrame, if df is containing a multilevel series
+            # then levels MUST be in the base node.
             missing_references = [
-                f'_{name}_{level_name}' for level_name in cls.get_supported_level_dtypes().keys()
+                f'_{name}_{level_name}' for level_name in default_level_dtypes.keys()
                 if f'_{name}_{level_name}' not in base_node.columns
             ]
             if missing_references:
@@ -92,14 +127,23 @@ class SeriesAbstractMultiLevel(Series, ABC):
                     f'base node must include all referenced columns {missing_references} '
                     f'for the "{cls.__name__}" instance.'
                 )
-            sub_levels = {
-                level_name: get_series_type_from_dtype(dtypes[0]).get_instance(
-                    name=level_name,
-                    expression=Expression.column_reference(f'_{name}_{level_name}'),
-                    **base_params
-                )
-                for level_name, dtypes in cls.get_supported_level_dtypes().items()
-            }
+
+        sub_levels = {}
+        for level_name in default_level_dtypes.keys():
+            if levels_are_provided:
+                # caller should be responsible for providing correct column references
+                level_base = kwargs[level_name]
+                dtype = level_base.dtype
+                expr = level_base.expression
+            else:
+                dtype = default_level_dtypes[level_name][0]
+                expr = Expression.column_reference(f'_{name}_{level_name}')
+
+            sub_levels[level_name] = get_series_type_from_dtype(dtype).get_instance(
+                name=f'_{name}_{level_name}',
+                expression=expr,
+                **base_params
+            )
 
         return cls(
             engine=engine,
@@ -115,21 +159,26 @@ class SeriesAbstractMultiLevel(Series, ABC):
 
     @property
     def levels(self) -> Dict[str, Series]:
+        """returns mapping between level name and series"""
         return {
             attr: getattr(self, attr) for attr in self.get_supported_level_dtypes().keys()
         }
 
     @property
     def expression(self) -> Expression:
-        """ INTERNAL: Get the expression"""
+        """ INTERNAL: Get the MultiLevelExpression composed by all levels' expression"""
         return MultiLevelExpression([level.expression for level in self.levels.values()])
 
     @abstractmethod
     def get_column_expression(self, table_alias: str = None) -> Expression:
+        """
+        INTERNAL: Child class must be in charge of providing the correct expression that represents the type.
+        """
         raise NotImplementedError()
 
     @classmethod
     def get_supported_level_dtypes(cls) -> Dict[str, Tuple[str, ...]]:
+        """returns mapping of supported dtypes per level"""
         raise NotImplementedError()
 
     @classmethod
@@ -144,7 +193,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
         The returned Series will be similar to the Series given as base. In case a DataFrame is given,
         it can be used immediately with that frame.
         :param base:    The DataFrame or Series that the internal parameters are taken from
-        :param value:   The value that this constant Series will have
+        :param value:   Mapping between each level and constant. All levels must be present.
         :param name:    The name that it will be known by (only for representation)
         """
         if (
@@ -153,6 +202,12 @@ class SeriesAbstractMultiLevel(Series, ABC):
         ):
             raise ValueError(f'value should contain mapping for each {cls.__name__} level')
 
+        from bach.series.series import const_to_series
+
+        levels = {
+            level_name: const_to_series(base, value=level_value)
+            for level_name, level_value in value.items()
+        }
         result = cls.get_instance(
             engine=base.engine,
             base_node=base.base_node,
@@ -160,7 +215,9 @@ class SeriesAbstractMultiLevel(Series, ABC):
             name=name,
             expression=Expression.construct(''),
             group_by=None,
-            **value,
+            sorted_ascending=None,
+            index_sorting=[],
+            **levels,
         )
 
         return result
@@ -181,6 +238,11 @@ class SeriesAbstractMultiLevel(Series, ABC):
         raise NotImplementedError(f'{self.__class__.__name__} cannot be casted to other types.')
 
     def equals(self, other: Any, recursion: str = None) -> bool:
+        """
+        Checks if all levels between both multi-level series are the same.
+
+        For more information look at :py:meth:`bach.Series.equals()`
+        """
         if not isinstance(other, self.__class__):
             return False
 
@@ -191,14 +253,31 @@ class SeriesAbstractMultiLevel(Series, ABC):
         return same_levels and super().equals(other, recursion)
 
     def isnull(self) -> 'SeriesBoolean':
+        """
+        Checks if all levels are null.
+
+        For more information look at :py:meth:`bach.Series.isnull()`
+        """
         all_series = [lvl.isnull() for lvl in self.levels.values()]
         return reduce(operator.and_, all_series)
 
     def notnull(self) -> 'SeriesBoolean':
+        """
+        Checks if all levels are not null.
+
+        For more information look at :py:meth:`bach.Series.notnull()`
+        """
         all_series = [lvl.notnull() for lvl in self.levels.values()]
         return reduce(operator.and_, all_series)
 
     def fillna(self, other: AllSupportedLiteralTypes):
+        """
+        Fill any NULL value of any or all levels.
+        For more information look at :py:meth:`bach.Series.fillna()`
+
+        ..note:
+            "other" should be a dict object containing at least one level to be filled.
+        """
         if (
             not isinstance(other, dict)
             or not all(level in self.levels for level in other.keys())
@@ -218,6 +297,13 @@ class SeriesAbstractMultiLevel(Series, ABC):
         other: Union['Series', List['Series']],
         ignore_index: bool = False,
     ) -> 'Series':
+        """
+        Append rows of other multi-level series to the caller series.
+        For more information look at :py:meth:`bach.Series.append()`
+
+        ..note:
+            All elements to be appended must be the same multi-level dtype as the caller.
+        """
         if not other:
             return self
 
@@ -239,6 +325,10 @@ class SeriesAbstractMultiLevel(Series, ABC):
         )
 
     def flatten(self) -> 'DataFrame':
+        """
+        Converts the multi-level series into a DataFrame,
+        where each level is a series of the resultant DataFrame.
+        """
         from bach.dataframe import DataFrame
         from bach.savepoints import Savepoints
         return DataFrame(
@@ -253,6 +343,9 @@ class SeriesAbstractMultiLevel(Series, ABC):
         )
 
     def _parse_level_value(self, level_name: str, value: Union[AllSupportedLiteralTypes, Series]) -> 'Series':
+        """
+        INTERNAL: validates that the level value is supported by the caller.
+        """
         supported_dtypes = self.get_supported_level_dtypes()
         if level_name not in supported_dtypes:
             raise ValueError(f'{level_name} is not a supported level in {self.__class__.__name__}.')
@@ -268,6 +361,8 @@ class SeriesAbstractMultiLevel(Series, ABC):
         # level should have same attributes as parent
         return level.copy_override(
             name=f'_{self.name}_{level_name}',
+            engine=self.engine,
+            base_node=self.base_node,
             index=self.index,
             group_by=self.group_by,
             sorted_ascending=self.sorted_ascending,
@@ -276,6 +371,9 @@ class SeriesAbstractMultiLevel(Series, ABC):
 
 
 def _parse_numeric_interval_value(dialect: DBDialect, value):
+    """
+    Helper function that converts SeriesNumericInterval final values into a pandas.Interval object.
+    """
     if value is None:
         return value
 
@@ -308,6 +406,23 @@ def _parse_numeric_interval_value(dialect: DBDialect, value):
 
 
 class SeriesNumericInterval(SeriesAbstractMultiLevel):
+    """
+    Multi-Level Series representing a structure for numeric intervals. This is due that not all supported
+    databases have a type that emulates a similar behavior as pandas.Interval dtype.
+
+    For each supported database, structure is composed by 3 levels:
+        * `lower`: a numerical value representing the lowest edge of the interval
+        * `upper`: a numerical value representing the upper edge of the interval
+        * `bounds`: a string value representing the boundary type of the interval:
+            Supported values are: '[]', '[)' and '()', if value is not supported,
+            then '()' will be used as default when parsing results into `pandas.DataFrame`
+
+    DB representation per engine:
+        * postgres: NUMRANGE type will be built as a result.
+            For more information: https://www.postgresql.org/docs/current/rangetypes.html
+        * bigquery: BigQuery has no direct type that handles ranges, therefore a STRUCT type column is used as
+            a final representation.
+    """
     dtype = 'numeric_interval'
     dtype_aliases = (pandas.Interval, 'numrange')
     supported_db_dtype = {
@@ -334,6 +449,7 @@ class SeriesNumericInterval(SeriesAbstractMultiLevel):
         bounds: Union['SeriesString', str],
         **kwargs,
     ) -> None:
+        # multi-level series should have an empty expression
         kwargs['expression'] = Expression.construct('')
         super().__init__(**kwargs)
 
