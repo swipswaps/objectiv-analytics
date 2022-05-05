@@ -1,5 +1,6 @@
 import operator
 from abc import ABC, abstractmethod
+from copy import copy
 from functools import reduce
 from typing import Union, List, Optional, Dict, Any, cast, TypeVar, Tuple, Type, TYPE_CHECKING
 
@@ -26,38 +27,6 @@ if TYPE_CHECKING:
     from bach.dataframe import DataFrame
 
 
-def _parse_numeric_interval_value(dialect: DBDialect, value):
-    if value is None:
-        return value
-
-    # expects a NUMRANGE db type
-    if dialect == DBDialect.POSTGRES:
-        if value.lower_inc and value.upper_inc:
-            closed = 'both'
-        elif value.lower_inc:
-            closed = 'left'
-        else:
-            closed = 'right'
-        return pandas.Interval(float(value.lower), float(value.upper), closed=closed)
-
-    # expects a dict with interval information
-    elif dialect == DBDialect.BIGQUERY:
-        expected_keys = ['lower', 'upper', 'bounds']
-        if not isinstance(value, dict) or not all(k in value for k in expected_keys):
-            raise ValueError(f'{value} has not the expected structure.')
-
-        if value['bounds'] == '[]':
-            closed = 'both'
-        elif value['bounds'] == '[)':
-            closed = 'left'
-        else:
-            closed = 'right'
-        return pandas.Interval(float(value['lower']), float(value['upper']), closed=closed)
-
-    else:
-        raise DatabaseNotSupportedException(dialect)
-
-
 class SeriesAbstractMultiLevel(Series, ABC):
     def copy_override(
         self: T,
@@ -72,6 +41,8 @@ class SeriesAbstractMultiLevel(Series, ABC):
         index_sorting: Optional[List[bool]] = None,
         **kwargs,
     ) -> T:
+        extra_params = copy(self.levels)
+        extra_params.update(kwargs)
         return cast(T, super().copy_override(
             engine=engine,
             base_node=base_node,
@@ -81,7 +52,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
             group_by=group_by,
             sorted_ascending=sorted_ascending,
             index_sorting=index_sorting,
-            **self.levels,
+            **extra_params,
         ))
 
     @classmethod
@@ -232,7 +203,9 @@ class SeriesAbstractMultiLevel(Series, ABC):
             not isinstance(other, dict)
             or not all(level in self.levels for level in other.keys())
         ):
-            raise ValueError(f'"other" should contain mapping for at least one of {self.__name__} levels')
+            raise ValueError(
+                f'"other" should contain mapping for at least one of {self.__class__.__name__} levels'
+            )
 
         self_cp = self.copy()
         for level_name, value in other.items():
@@ -259,7 +232,9 @@ class SeriesAbstractMultiLevel(Series, ABC):
         appended_df = self.flatten().append(levels_df_to_append)
         return self.from_const(
             base=appended_df,
-            value={level_name: appended_df[f'_{self.name}_{level_name}'] for level_name in self.levels.keys()},
+            value={
+                level_name: appended_df[f'_{self.name}_{level_name}'] for level_name in self.levels.keys()
+            },
             name=self.name,
         )
 
@@ -285,7 +260,9 @@ class SeriesAbstractMultiLevel(Series, ABC):
         from bach.series.series import const_to_series
         level = const_to_series(self, value=value)
 
-        if not any(isinstance(level, get_series_type_from_dtype(dtype)) for dtype in supported_dtypes[level_name]):
+        if not any(
+            isinstance(level, get_series_type_from_dtype(dtype)) for dtype in supported_dtypes[level_name]
+        ):
             raise ValueError(f'"{level_name}" level should be any of {supported_dtypes[level_name]} dtypes.')
 
         # level should have same attributes as parent
@@ -296,6 +273,38 @@ class SeriesAbstractMultiLevel(Series, ABC):
             sorted_ascending=self.sorted_ascending,
             index_sorting=self.index_sorting,
         )
+
+
+def _parse_numeric_interval_value(dialect: DBDialect, value):
+    if value is None:
+        return value
+
+    # expects a NUMRANGE db type
+    if dialect == DBDialect.POSTGRES:
+        if value.lower_inc and value.upper_inc:
+            closed = 'both'
+        elif value.lower_inc:
+            closed = 'left'
+        else:
+            closed = 'right'
+        return pandas.Interval(float(value.lower), float(value.upper), closed=closed)
+
+    # expects a dict with interval information
+    elif dialect == DBDialect.BIGQUERY:
+        expected_keys = ['lower', 'upper', 'bounds']
+        if not isinstance(value, dict) or not all(k in value for k in expected_keys):
+            raise ValueError(f'{value} has not the expected structure.')
+
+        if value['bounds'] == '[]':
+            closed = 'both'
+        elif value['bounds'] == '[)':
+            closed = 'left'
+        else:
+            closed = 'right'
+        return pandas.Interval(float(value['lower']), float(value['upper']), closed=closed)
+
+    else:
+        raise DatabaseNotSupportedException(dialect)
 
 
 class SeriesNumericInterval(SeriesAbstractMultiLevel):
@@ -367,4 +376,3 @@ class SeriesNumericInterval(SeriesAbstractMultiLevel):
 
         expr = Expression.construct(base_expr_stmt, self.lower, self.upper, self.bounds)
         return Expression.construct_expr_as_name(expr, self.name)
-

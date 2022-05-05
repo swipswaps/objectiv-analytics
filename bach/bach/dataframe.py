@@ -865,16 +865,34 @@ class DataFrame:
             args['index'] = new_index
 
         if series_dtypes:
+            from bach.series import SeriesAbstractMultiLevel
             new_series: Dict[str, Series] = {}
             for key, value in series_dtypes.items():
                 series_type = get_series_type_from_dtype(value)
+                extra_params = copy(args)
+                extra_params['sorted_ascending'] = None
+                extra_params['index_sorting'] = None
+                if issubclass(series_type, SeriesAbstractMultiLevel):
+                    if key not in self._data:
+                        raise Exception(
+                            f'cannot instantiate {series_type.__name__} class without level information.'
+                        )
+                    multi_level_series = cast(SeriesAbstractMultiLevel, self.all_series[key])
+                    extra_params.update(
+                        {
+                            level_name: lvl.get_instance(
+                                name=lvl.name,
+                                expression=expression_class.column_reference(lvl.name),
+                                **extra_params,
+                            )
+                            for level_name, lvl in multi_level_series.levels.items()
+                        }
+                    )
+
                 new_series[key] = series_type(
-                    engine=args['engine'], base_node=args['base_node'],
-                    index=args['index'],
-                    name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by'],
-                    sorted_ascending=None,
-                    index_sorting=[]
+                    name=key,
+                    expression=expression_class.column_reference(key),
+                    **extra_params
                 )
                 args['series'] = new_series
 
@@ -1660,7 +1678,12 @@ class DataFrame:
         df_new = df_new.materialize(node_name='bq_materialize_before_groupby')
         group_by_columns = df_new._partition_by_series(gbc_names)
         group_by = GroupBy(group_by_columns=group_by_columns)
-        return DataFrame._groupby_to_frame(df_new, group_by)
+
+        # grouped dataframe should contain original order by property,
+        # else it will cause conflicts with window functions
+        grouped_df = DataFrame._groupby_to_frame(df_new, group_by)
+        grouped_df._order_by = df._order_by
+        return grouped_df
 
     def window(self, **frame_args) -> 'DataFrame':
         """
@@ -2009,44 +2032,47 @@ class DataFrame:
         limit_clause = Expression.construct('' if limit_str is None else f'{limit_str}')
         where_clause = where_clause if where_clause else Expression.construct('')
         group_by_clause = None
+
+        column_exprs = []
+        column_names = []
+
+        non_group_by_series = self.all_series
         if self.group_by:
-
-            not_aggregated = [s.name for s in self._data.values()
-                              if not s.expression.has_aggregate_function]
+            not_aggregated = [
+                s.name for s in self._data.values()
+                if not s.expression.has_aggregate_function
+            ]
             if len(not_aggregated) > 0:
-                raise ValueError(f'The df has groupby set, but contains Series that have no aggregation '
-                                 f'function yet. Please make sure to first: remove these from the frame, '
-                                 f'setup aggregation through agg(), or on all individual series.'
-                                 f'Unaggregated series: {not_aggregated}')
+                raise ValueError(
+                    f'The df has groupby set, but contains Series that have no aggregation '
+                    f'function yet. Please make sure to first: remove these from the frame, '
+                    f'setup aggregation through agg(), or on all individual series.'
+                    f'Unaggregated series: {not_aggregated}'
+                )
 
-            group_by_column_expr = self.group_by.get_group_by_column_expression()
-            if group_by_column_expr:
-                column_exprs = self.group_by.get_index_column_expressions(construct_multi_levels)
-                column_names = tuple(self.group_by.index.keys())
-                group_by_clause = Expression.construct('group by {}', group_by_column_expr)
-            else:
-                column_exprs = []
-                column_names = tuple()
-                group_by_clause = Expression.construct('')
+            group_by_clause = Expression.construct('')
             having_clause = having_clause if having_clause else Expression.construct('')
+            group_by_column_expr = self.group_by.get_group_by_column_expression()
 
-            column_exprs += [s.get_column_expression() for s in self._data.values()]
-            column_names += tuple(self._data.keys())
-        else:
-            column_exprs = []
-            column_names = []
-            for s in self.all_series.values():
-                if not construct_multi_levels and isinstance(s, SeriesAbstractMultiLevel):
-                    column_names += [s.name for s in s.levels.values()]
-                    column_exprs += [s.get_column_expression() for s in s.levels.values()]
-                else:
-                    column_names.append(s.name)
-                    column_exprs.append(s.get_column_expression())
+            if group_by_column_expr:
+                group_by_clause = Expression.construct('group by {}', group_by_column_expr)
+                column_exprs = self.group_by.get_index_column_expressions(construct_multi_levels)
+                column_names = list(self.group_by.index.keys())
+
+                non_group_by_series = self.data
+
+        for s in non_group_by_series.values():
+            if not construct_multi_levels and isinstance(s, SeriesAbstractMultiLevel):
+                column_names += [s.name for s in s.levels.values()]
+                column_exprs += [s.get_column_expression() for s in s.levels.values()]
+            else:
+                column_names.append(s.name)
+                column_exprs.append(s.get_column_expression())
 
         return CurrentNodeSqlModel.get_instance(
             dialect=self.engine.dialect,
             name=name,
-            column_names=column_names if isinstance(column_names, tuple) else tuple(column_names),
+            column_names=tuple(column_names),
             column_exprs=column_exprs,
             distinct=distinct,
             where_clause=where_clause,

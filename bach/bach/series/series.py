@@ -1073,7 +1073,7 @@ class Series(ABC):
             You should probably not use this method directly.
         """
         if self.expression.has_multi_level_expressions:
-            raise TypeError('cannot apply functions to a series with multiple levels.')
+            raise NotImplementedError('cannot apply functions to a series with multiple levels.')
 
         if isinstance(func, str) or callable(func):
             func = [func]

@@ -150,7 +150,7 @@ class GroupBy:
                 exprs.append(g.get_column_expression())
                 continue
 
-            exprs += [l.get_column_expression() for l in g.levels.values()]
+            exprs += [level.get_column_expression() for level in g.levels.values()]
 
         return exprs
 
@@ -173,9 +173,11 @@ class GroupBy:
                 fmt_strs.append('{}')
                 continue
 
+            # get each expression from the parent
             multi_lvl_exprs = [expr for expr in g.expression.data if isinstance(expr, Expression)]
             exprs.extend(multi_lvl_exprs)
             fmt_strs.extend(['{}'] * len(multi_lvl_exprs))
+
         fmtstr = ', '.join(fmt_strs)
         return Expression.construct(f'{fmtstr}', *exprs)
 
