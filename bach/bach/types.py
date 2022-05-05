@@ -8,6 +8,7 @@ To prevent cyclic imports, the functions in this file should not be used by data
 is fully initialized (that is, only use within functions).
 """
 from collections import defaultdict
+from copy import copy
 from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Union, Sequence, Mapping, Set
 import datetime
 from uuid import UUID
@@ -68,6 +69,11 @@ def value_to_dtype(value: Any) -> Dtype:
 def value_to_series_type(value: Any) -> Type['Series']:
     """ Return the Series subclass that can represent value as literal. """
     return get_series_type_from_dtype(dtype=value_to_dtype(value))
+
+
+def get_all_db_dtype_to_series() -> Mapping[DBDialect, Mapping[Dtype, Type['Series']]]:
+    """ Get all registered mappings from db_dtype to Series type"""
+    return _registry.get_all_db_dtype_to_series()
 
 
 def validate_instance_dtype(static_dtype: Dtype, instance_dtype: StructuredDtype):
@@ -151,7 +157,7 @@ class TypeRegistry:
         self.dtype_to_series: Dict[DtypeOrAlias, Type['Series']] = {}
 
         # db_dtype_to_series: Mapping per database dialect, of database types to a subclass of Series
-        self.db_dtype_to_series: Dict[DBDialect, Dict[Dtype, Type['Series']]] = defaultdict(dict)
+        self.db_dtype_to_series: Dict[DBDialect, Dict[Dtype, Type['Series']]] = {}
 
         # value_type_to_series: Mapping of python types to matching Series types
         # note that some types could be in this dictionary multiple times. For a subtype its super types
@@ -225,9 +231,11 @@ class TypeRegistry:
 
     def _register_db_dtype_klass(self, klass: Type['Series'], override=False):
         for db_dialect, db_dtype in klass.supported_db_dtype.items():
-            if db_dtype in self.db_dtype_to_series[db_dialect] and not override:
+            if db_dtype in self.db_dtype_to_series.get(db_dialect, {}) and not override:
                 raise Exception(f'Type {klass} claims db_dtype {db_dtype} for {db_dialect.value}, which is '
                                 f'already assigned to dtype {self.db_dtype_to_series[db_dialect][db_dtype]}')
+            if db_dialect not in self.db_dtype_to_series:
+                self.db_dtype_to_series[db_dialect] = {}
             self.db_dtype_to_series[db_dialect][db_dtype] = klass
 
     def _register_value_klass(self, value_type: Type, klass: Type['Series'], override=False):
@@ -285,8 +293,7 @@ class TypeRegistry:
         if db_dialect == DBDialect.BIGQUERY:
             # TODO: clean this up when we support more than two databases
             from bach.types_bq import bq_db_dtype_to_dtype
-            scalars = {key: value.dtype for key, value in self.db_dtype_to_series[db_dialect].items()}
-            return bq_db_dtype_to_dtype(db_dtype=db_dtype, scalar_mapping=scalars)
+            return bq_db_dtype_to_dtype(db_dtype=db_dtype)
         raise ValueError(f'Unknown db_dtype: {db_dtype}')
 
     def get_series_type_from_db_dtype(self, db_dialect: DBDialect, db_dtype: str) -> Type['Series']:
@@ -301,6 +308,11 @@ class TypeRegistry:
         if db_dtype not in self.db_dtype_to_series[db_dialect]:
             raise ValueError(f'Unknown db_dtype: {db_dtype}')
         return self.db_dtype_to_series[db_dialect][db_dtype]
+
+    def get_all_db_dtype_to_series(self) -> Mapping[DBDialect, Mapping[Dtype, Type['Series']]]:
+        """ Get all registered mappings from db_dtype to Series type"""
+        self._real_init()
+        return {db_dialect: copy(mapping) for db_dialect, mapping in self.db_dtype_to_series.items()}
 
     def value_to_dtype(self, value: Any) -> Dtype:
         """

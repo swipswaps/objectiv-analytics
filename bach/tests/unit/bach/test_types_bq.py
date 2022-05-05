@@ -5,25 +5,12 @@ import pytest
 
 from bach.types_bq import bq_db_dtype_to_dtype
 
-# TODO: get this from types.py dynamically
-SCALAR_MAPPING = {
-    'BOOL': 'bool',
-    'INT64': 'int64',
-    'FLOAT64': 'float64',
-    'STRING': 'string',
-    'TIMESTAMP': 'timestamp',
-    'DATE': 'date',
-    'TIME': 'time',
-    'ARRAY': 'array',  # not an actual scalar, but test should still pass
-    'STRUCT': 'struct'
-}
-
 
 def test_basic_types():
-    assert bq_db_dtype_to_dtype('STRING', SCALAR_MAPPING) == 'string'
-    assert bq_db_dtype_to_dtype('INT64', SCALAR_MAPPING) == 'int64'
-    assert bq_db_dtype_to_dtype('TIMESTAMP', SCALAR_MAPPING) == 'timestamp'
-    assert bq_db_dtype_to_dtype('BOOL', SCALAR_MAPPING) == 'bool'
+    assert bq_db_dtype_to_dtype('STRING') == 'string'
+    assert bq_db_dtype_to_dtype('INT64') == 'int64'
+    assert bq_db_dtype_to_dtype('TIMESTAMP') == 'timestamp'
+    assert bq_db_dtype_to_dtype('BOOL') == 'bool'
 
 
 def test_struct_types():
@@ -39,7 +26,7 @@ def test_struct_types():
             'time': 'int64'
         }
     ]
-    assert bq_db_dtype_to_dtype(db_dtype, SCALAR_MAPPING) == expected_dtype
+    assert bq_db_dtype_to_dtype(db_dtype) == expected_dtype
 
 
 def test_nested_types():
@@ -70,27 +57,27 @@ def test_nested_types():
             ]
         }
     ]
-    assert bq_db_dtype_to_dtype(db_dtype, SCALAR_MAPPING) == expected_dtype
+    assert bq_db_dtype_to_dtype(db_dtype) == expected_dtype
 
 
 def test_non_happy_path():
     with pytest.raises(ValueError, match='found no token'):
-        bq_db_dtype_to_dtype('', SCALAR_MAPPING)
+        bq_db_dtype_to_dtype('')
 
     with pytest.raises(ValueError, match='Unexpected token'):
-        bq_db_dtype_to_dtype('blabla', SCALAR_MAPPING)
+        bq_db_dtype_to_dtype('blabla')
 
     with pytest.raises(ValueError, match='Expected token "<"'):
-        bq_db_dtype_to_dtype('STRUCT', SCALAR_MAPPING)
+        bq_db_dtype_to_dtype('STRUCT')
 
     with pytest.raises(ValueError, match='Expected token ">"'):
-        bq_db_dtype_to_dtype('STRUCT<', SCALAR_MAPPING)
+        bq_db_dtype_to_dtype('STRUCT<')
 
     with pytest.raises(ValueError, match='Expected token ">"'):
-        bq_db_dtype_to_dtype('STRUCT<a INT64', SCALAR_MAPPING)
+        bq_db_dtype_to_dtype('STRUCT<a INT64')
 
     with pytest.raises(ValueError, match='Unexpected tokens after last parsed tokens'):
-        bq_db_dtype_to_dtype('STRUCT<a INT64>>', SCALAR_MAPPING)
+        bq_db_dtype_to_dtype('STRUCT<a INT64>>')
 
     with pytest.raises(ValueError):
-        bq_db_dtype_to_dtype('STRUCT<a INT64> bla bla bla', SCALAR_MAPPING)
+        bq_db_dtype_to_dtype('STRUCT<a INT64> bla bla bla')

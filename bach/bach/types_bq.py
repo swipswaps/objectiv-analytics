@@ -5,22 +5,25 @@ Functions for parsing data-type strings from BigQuery to our representation for 
 """
 from typing import Mapping, List, Tuple
 
-from bach.types import StructuredDtype, Dtype
+from bach.types import StructuredDtype, Dtype, get_all_db_dtype_to_series
+from sql_models.constants import DBDialect
 
 
-def bq_db_dtype_to_dtype(db_dtype: str, scalar_mapping: Mapping[str, Dtype]) -> StructuredDtype:
+def bq_db_dtype_to_dtype(db_dtype: str) -> StructuredDtype:
     """
     Given a db_dtype as returned by BigQuery, parse this to an instance-dtype.
 
     Note: We don't yet support Structs with unnamed fields (e.g. 'STRUCT<INT64>' is not supported.
 
     :param db_dtype: BigQuery db-dtype, e.g. 'STRING', or 'STRUCT<column_name INT64>', etc
-    :param scalar_mapping: Mapping from BigQuery Scalar types to our dtypes.
     :return: Instance dtype
     """
     print()
     print(db_dtype)
     print()
+    bq_db_dtype_to_series = get_all_db_dtype_to_series()[DBDialect.BIGQUERY]
+    scalar_mapping = {db_dtype: series.dtype for db_dtype, series in bq_db_dtype_to_series.items()}
+
     tokens = _tokenize(db_dtype)
     pos, result = _tokens_to_dtype(tokens=tokens, pos=0, scalar_mapping=scalar_mapping)
     if pos != len(tokens) - 1:
