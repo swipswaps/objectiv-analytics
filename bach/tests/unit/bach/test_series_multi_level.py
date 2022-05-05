@@ -104,7 +104,7 @@ def test_series_numeric_interval_copy_override(dialect) -> None:
     )
 
     new_name = 'num_interval_copy'
-    result = numeric_interval.copy_override(name='num_interval_copy')
+    result = numeric_interval.copy_override(name='num_interval_copy', bounds='[)')
     assert result.lower.name == f'_{new_name}_lower'
     assert 'inhabitants_min' in result.lower.expression.to_sql(dialect)
 
@@ -112,7 +112,7 @@ def test_series_numeric_interval_copy_override(dialect) -> None:
     assert 'inhabitants_max' in result.upper.expression.to_sql(dialect)
 
     assert result.bounds.name == f'_{new_name}_bounds'
-    assert '[]' in result.bounds.expression.to_sql(dialect)
+    assert '[)' in result.bounds.expression.to_sql(dialect)
 
 
 def test_series_numeric_interval_parse_level_value(dialect) -> None:
