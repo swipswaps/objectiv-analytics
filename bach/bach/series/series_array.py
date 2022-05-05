@@ -1,7 +1,7 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import Any, Tuple, List, Union, TYPE_CHECKING, Optional
+from typing import Any, Tuple, List, Union, TYPE_CHECKING, Optional, Mapping
 
 from sqlalchemy.engine import Dialect
 
@@ -17,13 +17,19 @@ if TYPE_CHECKING:
 
 
 class SeriesArray(Series):
+    """
+    A Series that represents a list/array-like type and its specific operations.
+    On BigQuery this is backed by the ARRAY data type. On other databases this type is not yet supported.
+
+    .. note::
+        SeriesArray is only supported on BigQuery.
+        On Postgres use SeriesJson for similar functionality.
+    """
     dtype = 'array'
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
-    supported_db_dtype = {
-        # TODO: some dynamic stuff here, to detect types like `bigint[]` as an array
-        DBDialect.POSTGRES: 'ARRAY',
-        DBDialect.BIGQUERY: 'ARRAY',
-    }
+    # no static types registered through supported_db_dtype, as exact db_type depends on what kind of data
+    # the array holds (e.g. 'ARRAY<INT64>'
+    supported_db_dtype: Mapping[DBDialect, str] = {}
     supported_value_types = (list, )
 
     @classmethod
@@ -117,21 +123,31 @@ class SeriesArray(Series):
     ) -> Expression:
         """ Internal function: create an array expression from a list of expressions """
         series_type = get_series_type_from_dtype(sub_dtype)
-        sub_db_dtype = series_type.get_db_dtype(dialect)
-        if is_postgres(dialect):
-            if not sub_expressions:
+        if not sub_expressions:
+            # Special case: empty array, we need to tell the database the type of the array
+            try:
+                sub_db_dtype = series_type.get_db_dtype(dialect)
+            except DatabaseNotSupportedException:
+                raise ValueError("Empty arrays of structured types are not supported.")
+
+            if is_postgres(dialect):
                 return Expression.construct(f'ARRAY[]::{sub_db_dtype}[]',)
+            if is_bigquery(dialect):
+                return Expression.construct(f'ARRAY<{sub_db_dtype}>[]', )
+            raise DatabaseNotSupportedException(dialect)
+
+        if is_postgres(dialect):
             return Expression.construct(
                 'ARRAY[{}]',
                 join_expressions(expressions=sub_expressions, join_str=', ')
             )
+
         if is_bigquery(dialect):
-            if not sub_expressions:
-                return Expression.construct(f'ARRAY<{sub_db_dtype}>[]', )
             return Expression.construct(
                 '[{}]',
                 join_expressions(expressions=sub_expressions, join_str=', ')
             )
+
         raise DatabaseNotSupportedException(dialect)
 
     @classmethod

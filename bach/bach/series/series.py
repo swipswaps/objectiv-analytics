@@ -23,7 +23,7 @@ from bach.types import DtypeOrAlias, AllSupportedLiteralTypes, value_to_series_t
     Dtype, validate_instance_dtype
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
-from sql_models.util import is_bigquery
+from sql_models.util import is_bigquery, DatabaseNotSupportedException
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
@@ -234,7 +234,7 @@ class Series(ABC):
 
         :param dialect: Database dialect
         :param value: All values of types listed by self.supported_value_types should be supported.
-        :param dtype: TODO
+        :param dtype: instance-dtype TODO: more info
         :return: Expression of a sql-literal for the value
         """
         raise NotImplementedError()
@@ -339,8 +339,17 @@ class Series(ABC):
 
     @classmethod
     def get_db_dtype(cls, dialect: Dialect) -> str:
-        """ Given the db_dtype of this Series, for the given database dialect. """
+        """
+        Given the static db_dtype of this Series, for the given database dialect.
+        :raises DatabaseNotSupportedException:  If the db_dtype is not defined for the given dialect. This
+            will also happen if the db_dtype is not static (e.g. an array has 'dynamic' type that depends
+            on the data, like 'ARRAY<INT64>')
+        """
         db_dialect = DBDialect.from_dialect(dialect)
+        if db_dialect not in cls.supported_db_dtype:
+            raise DatabaseNotSupportedException(
+                dialect,
+                message_override=f'Cannot get db type of {cls.name} for {dialect}')
         return cls.supported_db_dtype[db_dialect]
 
     @classmethod
@@ -392,7 +401,7 @@ class Series(ABC):
 
         :param dialect: Database dialect
         :param value: value to convert to an expression
-        :param dtype: TODO
+        :param dtype: instance-dtype TODO: more info
         :raises TypeError: if value is not an instance of cls.supported_value_types, and not None
         """
         literal = cls.value_to_literal(dialect=dialect, value=value, dtype=dtype)

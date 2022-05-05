@@ -1,7 +1,7 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import Any, Tuple, TYPE_CHECKING, Dict, Optional
+from typing import Any, Tuple, TYPE_CHECKING, Dict, Optional, Mapping
 
 from sqlalchemy.engine import Dialect
 
@@ -18,15 +18,18 @@ if TYPE_CHECKING:
 
 class SeriesDict(Series):
     """
-    TODO: docs
+    A Series that represents a dictionary-like type and its specific operations.
+    On BigQuery this is backed by the STRUCT data type. On other databases this type is not supported.
 
-    - don't support postgres
+    .. note::
+        SeriesDict is only supported on BigQuery.
+        On Postgres use SeriesJson for similar functionality.
     """
     dtype = 'dict'
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
-    supported_db_dtype = {
-        DBDialect.BIGQUERY: 'STRUCT'
-    }
+    # no static types registered through supported_db_dtype, as exact db_type depends on what kind of data
+    # the dict/struct holds (e.g. 'STRUCT< xINT64>'
+    supported_db_dtype: Mapping[DBDialect, str] = {}
     supported_value_types = (dict, )
 
     @classmethod

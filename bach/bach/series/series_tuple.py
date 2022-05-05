@@ -18,18 +18,12 @@ if TYPE_CHECKING:
     from bach import DataFrameOrSeries
 
 
-def to_pandas_function_bigquery(data):
-    # data is dict of format: `{'_field_1': value, '_field_2': value}`
-    return tuple(data[f'_field_{i + 1}'] for i, _key in enumerate(data))
-
-
 class SeriesTuple(Series):
     dtype = 'tuple'
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
-    supported_db_dtype: Mapping[DBDialect, str] = {
-        # TODO: some dynamic stuff here
-        # DBDialect.POSTGRES: 'record'
-    }
+    # no static types registered through supported_db_dtype, as exact db_type depends on what kind of data
+    # the record/struct holds
+    supported_db_dtype: Mapping[DBDialect, str] = {}
     supported_value_types = (list, )
 
     @classmethod
@@ -132,7 +126,7 @@ class SeriesTuple(Series):
 
     def to_pandas_info(self) -> Optional[ToPandasInfo]:
         if is_bigquery(self.engine):
-            return ToPandasInfo(dtype='object', function=to_pandas_function_bigquery)
+            return ToPandasInfo(dtype='object', function=_to_pandas_function_bigquery)
         if is_postgres(self.engine):
             def split_func(data):
                 # TODO: extremely hackish. probably best not to support this
@@ -155,3 +149,8 @@ class SeriesTuple(Series):
                 return tuple(result)
             return ToPandasInfo(dtype='object', function=split_func)
         return None
+
+
+def _to_pandas_function_bigquery(data):
+    # data is dict of format: `{'_field_1': value, '_field_2': value}`
+    return tuple(data[f'_field_{i + 1}'] for i, _key in enumerate(data))

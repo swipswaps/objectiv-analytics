@@ -1176,7 +1176,6 @@ class DataFrame:
         """
         For usage see general introduction DataFrame class.
         """
-        # TODO: all types from types.TypeRegistry are supported.
         from bach.series import Series, value_to_series
         if isinstance(key, str):
             if key in self.index:
