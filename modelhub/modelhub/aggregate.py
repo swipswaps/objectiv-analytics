@@ -257,10 +257,10 @@ class Aggregate:
         df_copy['is_converted'] = self._mh.map.conversions_counter(data=df_copy, name=name,
                                                                   partition=partition) > 0
 
-        user_conversion = df_copy[['is_converted', partition]].drop_duplicates()
+        user_conversion = df_copy[['is_converted', partition]].drop_duplicates().set_index('user_id')
 
         # combine
-        features_set = features_unstacked.merge(user_conversion, left_index=True, right_on='user_id')
+        features_set = features_unstacked.merge(user_conversion, left_index=True, right_index=True)
         # pdf = features_set.to_pandas()
 
         y = features_set.is_converted
@@ -287,54 +287,76 @@ class Aggregate:
             name=name,
             feature_column=feature_column)
 
-        X = X.to_pandas()
-        y = y.to_pandas().astype(int)
-
         model = self.feature_importance_proto(X, y)
 
         return X, y, model
 
+    @staticmethod
+    def Kfold_get(X, y, folds, stratified=True):
+        # todo not random, should be random but with optional seed
+        data_set = X.copy()
+        # todo test y.name not in data X (should not be anyway)
+        data_set[y.name] = y
+        from bach.partitioning import WindowFrameBoundary, WindowFrameMode
+        window = data_set.groupby(y.name).window(
+            mode=WindowFrameMode.ROWS,
+            start_boundary=WindowFrameBoundary.PRECEDING,
+            start_value=None,
+            end_boundary=WindowFrameBoundary.FOLLOWING,
+            end_value=None)
+        data_set['part'] = window.user_id.window_ntile(folds)
+        data_set = data_set.materialize()
+
+        for i in range(folds):
+            train = data_set[data_set.part != i + 1]
+            test = data_set[data_set.part == i + 1]
+            X_train = train[X.data_columns]
+            X_test = test[X.data_columns]
+            y_train = train[y.name]
+            y_test = test[y.name]
+
+            yield X_train, X_test, y_train, y_test
+
+
+
     def feature_importance_proto(self, X,y, print_report=False):
-        kf = StratifiedKFold(5, shuffle=True, random_state=42)
+
 
         # todo now just a method that returns a dict, but could be improved returning a class with the
         #  models and metrics etc
 
         result_dict = {}
 
-        coef = pd.DataFrame(columns=X.columns)
+        coef = pd.DataFrame(columns=X.data_columns)
         i = 1
         # todo split based on bach: maybe save a last test set of complete unseen data in the database (the
         #  biggest set)
-        for train, test in kf.split(X, y):
-            X_train, X_test, y_train, y_test = X.iloc[train], X.iloc[test], y[train], y[test]
-
+        for X_train, X_test, y_train, y_test in self.Kfold_get(X, y, folds=5):
             report = f"fold {i}\n"
             report += "==============================\n"
-            report += f"{y_test.value_counts()=}\n"
-            report += f"{y_train.value_counts()=}\n"
 
-            lr = LogisticRegression_sklearn()
+            lr = LogisticRegression()
             lr.fit(X_train, y_train)
 
             report += f"score: {lr.score(X_test, y_test)}\n"
 
-            cr = self._mh.metrics.get_classification_report(y_test, lr.predict(X_test), output_dict=True)
+            cr = self._mh.metrics.get_classification_report(y_test.to_pandas(), lr.predict(X_test).to_pandas(),
+                                                            output_dict=True)
 
             x_results = X_test.copy()
             x_results['is_converted'] = y_test
             x_results['yhat'] = lr.predict(X_test)
 
-            proba = lr.predict_proba(X_test)[:, 1]
-            fpr, tpr, thresholds = roc_curve(y_test, proba)
+            proba = lr.predict_proba(X_test,return_bach=False)[:, 1]
+            fpr, tpr, thresholds = roc_curve(y_test.to_pandas(), proba)
 
             report += f"\npredicted converted correct: " \
-                f"{len(x_results[(x_results['yhat'] == 1) & (x_results['is_converted'] == 1)])}\n"
+                      f"{x_results[(x_results['yhat'] == True) & (x_results['is_converted'] == True)].yhat.count().value}\n"
             report += f"recall: {cr[True]['recall']}\n"
             report += f"precision: {cr[True]['precision']}\n"
             report += f"roc auc: {auc(fpr, tpr)}\n"
 
-            coef_fold = pd.DataFrame(lr.coef_, columns=X.columns)
+            coef_fold = pd.DataFrame(lr.coef_, columns=X.data_columns)
 
             coef = pd.concat([coef, coef_fold])
 
@@ -356,3 +378,4 @@ class Aggregate:
         result_dict['auc_mean'] = np.mean([y['auc'] for x, y in result_dict.items() if x[:4] == 'fold'])
 
         return result_dict
+

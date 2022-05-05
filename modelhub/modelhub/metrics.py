@@ -27,8 +27,10 @@ class Metrics:
             return_data = precision
 
         if return_class_true == True:
-            return return_data.loc[1, 1]
-        return return_data.loc[0, 0]
+            if True in return_data.columns:
+                return return_data.loc[True, True]
+        if False in return_data.columns:
+            return return_data.loc[False, False]
 
     @classmethod
     def get_precision(cls, y, y_pred, return_class_true=True):
