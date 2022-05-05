@@ -2,14 +2,14 @@
 Copyright 2022 Objectiv B.V.
 """
 import pytest
-
 from bach.series import SeriesDict
 from tests.functional.bach.test_data_and_utils import get_df_with_test_data, assert_equals_data
 
 
+pytestmark = [pytest.mark.skip_postgres]  # SeriesDict is not supported on Postgres at all.
 # TODO: a unit-test that postgres users get a proper error
 
-@pytest.mark.skip_postgres
+
 def test_basic_value_to_expression(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
@@ -27,7 +27,6 @@ def test_basic_value_to_expression(engine):
     )
 
 
-@pytest.mark.skip_postgres
 def test_series_to_dict(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()
@@ -49,7 +48,6 @@ def test_series_to_dict(engine):
     )
 
 
-@pytest.mark.skip_postgres
 def test_getitem(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
@@ -72,7 +70,6 @@ def test_getitem(engine):
     )
 
 
-@pytest.mark.skip_postgres
 def test_nested(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()

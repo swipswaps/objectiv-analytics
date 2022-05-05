@@ -30,7 +30,9 @@ def _create_test_table(engine: Engine, table_name: str):
 @pytest.mark.skip_postgres
 @pytest.mark.xdist_group(name="test_table_writers")
 def test_from_table_structural_big_query(engine):
-    table_name = 'test_df_from_table'
+    # Test specifically for structural types on BigQuery. We don't support that on Postgres, so we skip
+    # postgres for this test
+    table_name = 'test_df_from_table_structural_types'
     if is_bigquery(engine):
         sql = f'drop table if exists {table_name}; ' \
               f'create table {table_name}(' \
