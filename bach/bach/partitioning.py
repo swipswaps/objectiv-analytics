@@ -4,6 +4,7 @@ from typing import List, Dict, Optional, cast, TypeVar
 
 from sqlalchemy.engine import Dialect
 
+from bach import SeriesAbstractMultiLevel
 from bach.series import Series
 from bach.expression import Expression, WindowFunctionExpression
 from bach.dataframe import SortColumn
@@ -109,6 +110,15 @@ class GroupBy:
         for col in group_by_columns:
             if not isinstance(col, Series):
                 raise ValueError(f'Unsupported argument type: {type(col)}')
+
+            if (
+                isinstance(col, SeriesAbstractMultiLevel)
+                and any(lvl.expression.is_constant for lvl in col.levels.values())
+            ):
+                raise ValueError(
+                    'Level in multi-level series has a constant expression, '
+                    'please materialize first.'
+                )
             if col.expression.is_constant:
                 # We don't support this currently. If we allow this we would generate sql of the form (this
                 # assumes the constants is '5'): `... group by (5)`. The sql is valid, it groups by the
