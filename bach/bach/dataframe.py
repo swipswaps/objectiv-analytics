@@ -774,7 +774,7 @@ class DataFrame:
             'index_sorting': [],
         }
         index: Dict[str, Series] = {
-            key: get_series_type_from_dtype(value).get_instance(
+            key: get_series_type_from_dtype(value).get_class_instance(
                 index={},  # Empty index for index series
                 name=key,
                 expression=Expression.column_reference(key),
@@ -784,7 +784,7 @@ class DataFrame:
         }
 
         series: Dict[str, Series] = {
-            key: get_series_type_from_dtype(value).get_instance(
+            key: get_series_type_from_dtype(value).get_class_instance(
                 index=index,
                 name=key,
                 expression=Expression.column_reference(key),
@@ -886,7 +886,7 @@ class DataFrame:
                         }
                     )
 
-                new_series[key] = series_type.get_instance(
+                new_series[key] = series_type.get_class_instance(
                     name=key,
                     expression=expression_class.column_reference(key),
                     sorted_ascending=None,

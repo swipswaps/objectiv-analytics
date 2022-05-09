@@ -455,13 +455,12 @@ class WindowFunctionExpression(Expression):
 
 
 class MultiLevelExpression(Expression):
+    """
+    A MultiLevelExpression contains multiple expressions referencing to different columns.
+    """
     def to_sql(self, dialect: Dialect, table_name: Optional[str] = None) -> str:
-        """
-        Compile the expression to a SQL fragment by calling to_sql() on every token or expression in data
-        :param table_name: Optional table name, if set all column-references will be compiled as
-            '"{table_name}"."{column_name}"' instead of just '"{column_name}"'.
-        :return SQL representation of the expression.
-        """
+        # same as original function, we just need to join by a comma since parent expression is composed
+        # by multiple column references
         resolved_tables_expression = self.resolve_column_references(dialect, table_name)
         return ','.join(
             d.to_sql(dialect=dialect) for d in resolved_tables_expression.data

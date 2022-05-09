@@ -80,7 +80,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
         ))
 
     @classmethod
-    def get_instance(
+    def get_class_instance(
         cls,
         engine: Engine,
         base_node: BachSqlModel,
@@ -139,7 +139,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
                 dtype = default_level_dtypes[level_name][0]
                 expr = Expression.column_reference(f'_{name}_{level_name}')
 
-            sub_levels[level_name] = get_series_type_from_dtype(dtype).get_instance(
+            sub_levels[level_name] = get_series_type_from_dtype(dtype).get_class_instance(
                 name=f'_{name}_{level_name}',
                 expression=expr,
                 **base_params
@@ -168,6 +168,17 @@ class SeriesAbstractMultiLevel(Series, ABC):
     def expression(self) -> Expression:
         """ INTERNAL: Get the MultiLevelExpression composed by all levels' expression"""
         return MultiLevelExpression([level.expression for level in self.levels.values()])
+
+    @property
+    def level_expressions(self) -> List[Expression]:
+        """ INTERNAL: Returns a list with each level expression"""
+        return [level.expression for level in self.levels.values()]
+
+    def get_all_level_column_expression(self, table_alias: str = None) -> List[Expression]:
+        """
+        INTERNAL: Returns a list with each level column expression
+        """
+        return [level.get_column_expression(table_alias) for level in self.levels.values()]
 
     @abstractmethod
     def get_column_expression(self, table_alias: str = None) -> Expression:
@@ -208,7 +219,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
             level_name: const_to_series(base, value=level_value)
             for level_name, level_value in value.items()
         }
-        result = cls.get_instance(
+        result = cls.get_class_instance(
             engine=base.engine,
             base_node=base.base_node,
             index=base.index,

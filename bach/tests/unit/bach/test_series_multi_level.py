@@ -31,14 +31,14 @@ def test_series_numeric_interval_get_instance(dialect) -> None:
         'name': 'interval'
     }
     with pytest.raises(ValueError, match=r'base node must include all referenced'):
-        SeriesNumericInterval.get_instance(**params)
+        SeriesNumericInterval.get_class_instance(**params)
 
     bt['_interval_lower'] = bt['inhabitants']
     bt['_interval_upper'] = bt['inhabitants']
     bt['_interval_bounds'] = '[]'
     bt = bt.materialize()
     params['base_node'] = bt.base_node
-    numeric_interval = SeriesNumericInterval.get_instance(
+    numeric_interval = SeriesNumericInterval.get_class_instance(
         engine=bt.engine,
         base_node=bt.base_node,
         expression=Expression.construct(''),

@@ -101,7 +101,7 @@ class SeriesUuid(Series):
             expr_str = 'GENERATE_UUID()'
         else:
             raise DatabaseNotSupportedException(base.engine)
-        return cls.get_instance(
+        return cls.get_class_instance(
             engine=base.engine,
             base_node=base.base_node,
             index=base.engine,

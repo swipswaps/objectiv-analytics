@@ -313,7 +313,7 @@ class Series(ABC):
         return self._expression
 
     @classmethod
-    def get_instance(
+    def get_class_instance(
         cls,
         engine: Engine,
         base_node: BachSqlModel,
@@ -381,7 +381,7 @@ class Series(ABC):
         :param name:    The name that it will be known by (only for representation)
         """
         expression = ConstValueExpression(cls.value_to_expression(dialect=base.engine.dialect, value=value))
-        result = cls.get_instance(
+        result = cls.get_class_instance(
             engine=base.engine,
             base_node=base.base_node,
             index=base.index,
@@ -1714,7 +1714,7 @@ def variable_series(
         dialect=base.engine.dialect,
         literal=variable_placeholder
     )
-    result = series_type.get_instance(
+    result = series_type.get_class_instance(
         engine=base.engine,
         base_node=base.base_node,
         index=base.index,

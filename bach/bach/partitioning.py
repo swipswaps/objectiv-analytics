@@ -1,3 +1,4 @@
+import itertools
 from copy import copy
 from enum import Enum
 from typing import List, Dict, Optional, cast, TypeVar
@@ -154,15 +155,23 @@ class GroupBy:
             return [g.get_column_expression() for g in self._index.values()]
 
         from bach.series import SeriesAbstractMultiLevel
-        exprs = []
-        for g in self._index.values():
-            if not isinstance(g, SeriesAbstractMultiLevel):
-                exprs.append(g.get_column_expression())
-                continue
+        exprs = [
+            [g.get_column_expression()] if not isinstance(g, SeriesAbstractMultiLevel)
+            else g.get_all_level_column_expression()
+            for g in self._index.values()
+        ]
 
-            exprs += [level.get_column_expression() for level in g.levels.values()]
+        return list(itertools.chain.from_iterable(exprs))
 
-        return exprs
+    def get_index_expressions(self) -> List[Expression]:
+        from bach.series import SeriesAbstractMultiLevel
+        exprs = [
+            [g.expression]
+            if not isinstance(g, SeriesAbstractMultiLevel)
+            else g.level_expressions
+            for g in self.index.values()
+        ]
+        return list(itertools.chain.from_iterable(exprs))
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
         """
@@ -175,18 +184,8 @@ class GroupBy:
         if not self.index:
             return None
 
-        exprs = []
-        fmt_strs = []
-        for g in self.index.values():
-            if not g.expression.has_multi_level_expressions:
-                exprs.append(g.expression)
-                fmt_strs.append('{}')
-                continue
-
-            # get each expression from the parent
-            multi_lvl_exprs = [expr for expr in g.expression.data if isinstance(expr, Expression)]
-            exprs.extend(multi_lvl_exprs)
-            fmt_strs.extend(['{}'] * len(multi_lvl_exprs))
+        exprs = self.get_index_expressions()
+        fmt_strs = ['{}'] * len(exprs)
 
         fmtstr = ', '.join(fmt_strs)
         return Expression.construct(f'{fmtstr}', *exprs)
@@ -458,7 +457,6 @@ class Window(GroupBy):
         """
         # TODO implement NULLS FIRST / NULLS LAST, probably not here but in the sorting logic.
         order_by = self._get_order_by_expression()
-        from bach.series.series_multi_level import SeriesAbstractMultiLevel
 
         if self.frame_clause is None:
             frame_clause = ''
@@ -469,14 +467,8 @@ class Window(GroupBy):
         if len(self._index) == 0:
             partition_fmt = ''
         else:
-            fmt_stmts = []
-            for series in self.index.values():
-                if not isinstance(series, SeriesAbstractMultiLevel):
-                    index_exprs.append(series.expression)
-                    fmt_stmts.append('{}')
-                else:
-                    index_exprs.extend([level.expression for level in series.levels.values()])
-                    fmt_stmts.extend(['{}'] * len(series.levels))
+            index_exprs = self.get_index_expressions()
+            fmt_stmts = ['{}'] * len(index_exprs)
             partition_fmt = 'partition by ' + ', '.join(fmt_stmts)
 
         over_fmt = f'over ({partition_fmt} {{}} {frame_clause})'
