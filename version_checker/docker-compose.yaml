@@ -1,0 +1,25 @@
+version: "3"
+services:
+  objectiv_version_checker:
+    container_name: objectiv_version_checker
+    image: ${OBJECTIV_CONTAINER_URL-objectiv}/version_checker:${OBJECTIV_CONTAINER_TAG-latest}
+    environment:
+      - PORT=8001
+      - TRACKER_URL=https://collector-staging.objectiv.io
+      - VIRTUAL_HOST=version-check.objectiv.io
+      - VIRTUAL_PORT=8001
+      - LETSENCRYPT_HOST=version-check.objectiv.io
+    expose:
+      - 8001     
+    networks:
+      - obj-proxy
+    healthcheck:
+      test: [ "CMD", "printf",  "\"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/80" ]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+
+# use bridged networking, so we can access services provided from the host
+networks:
+  obj-proxy:
+    driver: bridge
