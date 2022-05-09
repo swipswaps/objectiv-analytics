@@ -41,7 +41,7 @@ def calculate_quantiles(
 
         if is_bigquery(series.engine):
             # BigQuery names should start with a letter or underscore. Dots are not valid
-            q_col_name = f"q_{str(qt).replace('.', '_')}"
+            q_col_name = f"__q_{str(qt).replace('.', '_')}"
             agg_result = series.copy_override(name=q_col_name)._derived_agg_func(
                 partition=window,
                 expression=Expression.construct(f'percentile_cont({{}}, {qt})', series),

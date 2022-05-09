@@ -9,19 +9,14 @@ import pandas as pd
 from bach import DataFrame
 from sql_models.util import is_bigquery
 from tests.functional.bach.test_data_and_utils import (
-    get_bt_with_test_data, assert_equals_data, get_df_with_test_data, convert_expected_data_timestamps,
+    get_bt_with_test_data, assert_equals_data, get_df_with_test_data,
 )
+from unittest.mock import ANY
 
 
 def test_df_categorical_describe(engine) -> None:
     df = get_df_with_test_data(engine)[['city', 'municipality']]
     result = df.describe()
-
-    mode_result = ['mode', 'Drylts', 'Súdwest-Fryslân']
-    if is_bigquery(engine):
-        # cannot change sorting for APPROX_TOP_COUNT
-        mode_result = ['mode', 'Snits', 'Súdwest-Fryslân']
-
     assert isinstance(result, DataFrame)
     assert_equals_data(
         result,
@@ -35,7 +30,7 @@ def test_df_categorical_describe(engine) -> None:
             ['min', 'Drylts', 'Leeuwarden'],
             ['max', 'Snits', 'Súdwest-Fryslân'],
             ['nunique', '3', '2'],
-            mode_result,
+            ['mode', ANY, 'Súdwest-Fryslân'],
         ],
     )
 
@@ -45,11 +40,10 @@ def test_df_numerical_describe(engine) -> None:
     result = df.describe(percentiles=[0.5])
     assert isinstance(result, DataFrame)
 
-    result = result.reset_index(drop=False)
-    mode_result = ['mode', 1., 3055.]
-    if is_bigquery(engine):
-        # cannot change sorting for APPROX_TOP_COUNT
-        mode_result = ['mode', 3., 93485.]
+    result = result.reset_index(drop=False).materialize()
+    # mode for PG and BQ yield different results, because we cannot change sorting for APPROX_TOP_COUNT
+    # have to exclude mode form
+    result = result[result['__stat'] != 'mode']
 
     expected_df = pd.DataFrame(
         data=[
@@ -59,7 +53,6 @@ def test_df_numerical_describe(engine) -> None:
             ['min', 1., 3055.],
             ['max', 3., 93485.],
             ['nunique', 3., 3.],
-            mode_result,
             ['0.5', 2., 33520.],
         ],
         columns=[
@@ -75,8 +68,11 @@ def test_df_numerical_describe(engine) -> None:
 
     df2 = df.copy_override()
     df2['inhabitants'] = df['inhabitants'].astype('float64')
+
     result2 = df2.describe(include=['int64'], exclude=['float64'], percentiles=[0.5])
-    result2 = result2.reset_index(drop=False)
+    result2 = result2.reset_index(drop=False).materialize()
+    result2 = result2[result2['__stat'] != 'mode']
+
     np.testing.assert_equal(
         expected_df[['__stat', 'skating_order']].to_numpy(),
         result2.to_numpy(),
