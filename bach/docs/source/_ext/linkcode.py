@@ -1,4 +1,9 @@
-"""Add external links to module code in Python object descriptions."""
+"""Add external links to module code in Python object descriptions.
+
+  Near copy of https://github.com/sphinx-doc/sphinx/blob/master/sphinx/ext/linkcode.py 
+  Adjustments made to .mdx files for Docusaurus.
+
+"""
 
 from typing import Any, Dict, Set
 
@@ -59,11 +64,14 @@ def doctree_read(app: Sphinx, doctree: Node) -> None:
                 continue
             uris.add(uri)
 
+            ##################################################################################
+            # Only changes below
             reference = nodes.reference(internal=False, refuri=uri, classes=['viewcode-link'])
             reference += nodes.inline(text='[source]')
             onlynode = addnodes.only(expr='docusaurus')
             onlynode += reference
             signature_node.replace_self([signature_node, onlynode]) 
+            ##################################################################################
 
 
 def setup(app: Sphinx) -> Dict[str, Any]:
