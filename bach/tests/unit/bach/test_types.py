@@ -63,7 +63,16 @@ def test_validate_dtype_value():
     validate_dtype_value(static_dtype='bool', instance_dtype='bool', value=True)
     validate_dtype_value(static_dtype='bool', instance_dtype='bool', value=False)
     _test_validate_dtype_value_false(static_dtype='bool', instance_dtype='bool', value='False')
-    # TODO more
+    _test_validate_dtype_value_false(static_dtype='bool', instance_dtype='int64', value=False)
+
+    validate_dtype_value(static_dtype='int64', instance_dtype='int64', value=123)
+    _test_validate_dtype_value_false(static_dtype='int64', instance_dtype='in64', value=123.0)
+
+    validate_dtype_value(static_dtype='dict', instance_dtype={'a': 'string'}, value={'a': 'test'})
+    _test_validate_dtype_value_false(static_dtype='dict', instance_dtype='dict', value={'a': 'test'})
+    validate_dtype_value(static_dtype='dict', instance_dtype={'a': ['int64']}, value={'a': [1, 2, 3]})
+    _test_validate_dtype_value_false(static_dtype='dict', instance_dtype={'a': ['int64']},
+                                     value={'a': [1, 2, 3.0, 4]})  # one float in there
 
 
 def _test_validate_dtype_value_false(
