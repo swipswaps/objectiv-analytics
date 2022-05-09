@@ -145,6 +145,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
             sub_levels[level_name] = get_series_type_from_dtype(dtype).get_class_instance(
                 name=f'_{name}_{level_name}',
                 expression=expr,
+                instance_dtype=dtype,
                 **base_params
             )
 
