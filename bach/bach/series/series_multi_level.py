@@ -26,7 +26,7 @@ T = TypeVar('T', bound='SeriesAbstractMultiLevel')
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy
-    from bach.series import Series, SeriesBoolean
+    from bach.series import SeriesBoolean
     from bach.dataframe import DataFrame
 
 
@@ -216,7 +216,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
         from bach.series.series import value_to_series
 
         levels = {
-            level_name: value_to_series(base, value=level_value)
+            level_name: value_to_series(base=base, value=level_value)
             for level_name, level_value in value.items()
         }
         result = cls.get_class_instance(
@@ -362,7 +362,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
             raise ValueError(f'{level_name} is not a supported level in {self.__class__.__name__}.')
 
         from bach.series.series import value_to_series
-        level = value_to_series(self, value=value)
+        level = value_to_series(base=self, value=value)
 
         if not any(
             isinstance(level, get_series_type_from_dtype(dtype)) for dtype in supported_dtypes[level_name]

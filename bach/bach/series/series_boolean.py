@@ -6,7 +6,7 @@ from typing import cast
 
 from sqlalchemy.engine import Dialect
 
-from bach.series import Series, value_to_series
+from bach.series import Series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from sql_models.constants import DBDialect
