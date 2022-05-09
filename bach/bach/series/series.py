@@ -1679,7 +1679,7 @@ def value_to_series(base: DataFrameOrSeries,
 
     If value is already a Series it is returned unchanged unless it has no base_node set, in case
     it's a subquery. We create a copy and hook it to our base node in that case, so we can work with it.
-    If value is a constant then the right BuhTuh subclass is found for that type and instantiated
+    If value is a constant then the right Series subclass is found for that type and instantiated
     with the constant value.
     :param base: Base series or DataFrame. In case a new Series object is created and returned, it will
         share its engine, index, and base_node with this one. Only applies if value is not a Series
