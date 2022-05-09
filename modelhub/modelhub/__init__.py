@@ -20,7 +20,6 @@ if os.environ.get('OBJECTIV_VERSION_CHECK_DISABLE', 'false') == 'false':
 
     CHECK_URL = os.environ.get('OBJECTIV_VERSION_CHECK_URL',
                                'https://version-check.objectiv.io/check_version')
-    # CHECK_URL = 'http://localhost:8000/check_version'
 
     async def check_package_version():
         packages = [
@@ -49,13 +48,14 @@ if os.environ.get('OBJECTIV_VERSION_CHECK_DISABLE', 'false') == 'false':
                                     warnings.warn(category=Warning, message=message)
         except Exception as e:
             # if this fails, we don't want to know
-            # pass
-            print(f'exception caught: {e}')
+            pass
 
     try:
         loop = asyncio.get_running_loop()
-    except RuntimeError as re:
-        loop = asyncio.new_event_loop()
-
-    if loop:
         loop.create_task(check_package_version())
+    except RuntimeError as re:
+        try:
+            loop = asyncio.new_event_loop()
+            loop.run_until_complete(check_package_version())
+        except Exception as e:
+            pass
