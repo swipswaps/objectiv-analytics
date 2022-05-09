@@ -381,7 +381,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
         )
 
 
-def _parse_numeric_interval_value(dialect: DBDialect, value):
+def _parse_numeric_interval_value(dialect: DBDialect, value) -> Optional[pandas.Interval]:
     """
     Helper function that converts SeriesNumericInterval final values into a pandas.Interval object.
     """
