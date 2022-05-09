@@ -1,5 +1,4 @@
 docutils==0.17.1
-html2text==2020.1.16
 munch==2.5.0
 pydash==5.1.0
 PyYAML==6.0
