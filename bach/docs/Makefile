@@ -7,7 +7,8 @@ SPHINXOPTS    ?=
 SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
-TARGETDIR			= ../../../objectiv.io/docs/docs/
+DOCUSAURUSDIR = docusaurus
+TARGETDIR			= ../../../objectiv.io/docs/docs/modeling/
 
 # Put it first so that "make" without argument is like "make help".
 help:
@@ -28,7 +29,10 @@ clean:
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) 0$(O)
 
 clean-target:
-	rm -rf $(TARGETDIR)/modeling/**/
+	rm -rf $(TARGETDIR)/**/
+
+copy-target:
+	cp -a $(BUILDDIR)/$(DOCUSAURUSDIR)/* $(TARGETDIR)
 
 .PHONY: help Makefile
 

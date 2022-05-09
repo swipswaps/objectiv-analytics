@@ -120,6 +120,8 @@ class DocusaurusTranslator(Translator):
         """The root of the tree.
         https://docutils.sourceforge.io/docs/ref/doctree.html#document"""
         self.title = getattr(self.builder, 'current_docname')
+        if 'ModelHub.aggregate' in self.title:
+            print("DOCUMENT:", node)
 
 
     def depart_document(self, node):
@@ -620,6 +622,7 @@ class DocusaurusTranslator(Translator):
 
     def visit_desc(self, node):
         """Container for class and method and property descriptions."""
+        self.depth.ascend('desc')
         desctype = node.attributes["desctype"] if "desctype" in node.attributes else None
         self.current_desc_type = desctype
         if desctype in ['class', 'method', 'property']:
@@ -630,12 +633,15 @@ class DocusaurusTranslator(Translator):
 
     def depart_desc(self, node):
         """Container for class and method descriptions."""
+        self.depth.descend('desc')
         self.add('\n</div>\n\n')
 
 
     def visit_desc_signature(self, node):
         """The main signature (i.e. its name + parameters) of a class/method/property."""
         self.in_signature = True
+        # TODO: increase heading levels if description is nested in another one (e.g. in modelhub.ModelHub.aggregate)
+        desc_depth = self.depth.get('desc')
         if self.current_desc_type in ['class', 'method', 'property']:
             self.add('\n<h2 className="signature-' + self.current_desc_type + '">')
         else:
