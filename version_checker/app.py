@@ -10,13 +10,13 @@ import json
 import semver
 import requests
 
-from typing import Generator
+from typing import Generator, Dict
 import time
 
 from objectiv_backend.schema.schema import make_event_from_dict, AbstractEvent
 
 
-TRACKER_URL = os.environ.get('TRACKER_URL', 'http://localhost:5000')
+TRACKER_URL = os.environ.get('TRACKER_URL', 'http://localhost:8081')
 
 
 def get_current_version(package: str) -> str:
@@ -65,12 +65,13 @@ def check_version() -> Response:
             update_available = semver.compare(current_version, package['version']) > 0
             packages[package['name']] = {
                     'update': update_available,
-                    'current_version': current_version}
+                    'current_version': current_version,
+                    'local_version': package['version']}
 
     response = []
     if packages:
         # only try to track if this request contains a valid payload
-        event = make_event(request)
+        event = make_event(request=request, packages=packages)
         try:
             track_event(event)
         except requests.exceptions.RequestException as re:
@@ -87,7 +88,14 @@ def check_version() -> Response:
     return Response(mimetype='application/text', status=200, response='\n'.join(response))
 
 
-def make_event(request: Request) -> AbstractEvent:
+def make_event(request: Request, packages: Dict[str, str]) -> AbstractEvent:
+    user_agent = str(request.user_agent)
+
+    for package in packages:
+        if package == 'objectiv-modelhub':
+            version = packages[package]['local_version']
+            user_agent += f' {package}/{version}'
+
     event_data = {
         '_type': 'ApplicationLoadedEvent',
         'id': str(uuid.uuid4()),
@@ -96,7 +104,7 @@ def make_event(request: Request) -> AbstractEvent:
                 '_type': 'HttpContext',
                 'id': 'http_context',
                 'referrer': '',
-                'user_agent': str(request.user_agent),
+                'user_agent': user_agent,
                 'remote_address': request.remote_addr
             },
             {
