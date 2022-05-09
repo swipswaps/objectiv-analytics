@@ -1312,6 +1312,10 @@ class Series(ABC):
         :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
         :returns: a new Series with the aggregation applied
 
+        ..warning::
+            The result of this function might be non-deterministic if there are multiple values with
+            the same frequency.
+
         ..note::
             BigQuery has no support for aggregation function ``MODE``, therefore ``APPROX_TOP_COUNT``
             approximate aggregate function is used instead. Which means that an approximate result will
