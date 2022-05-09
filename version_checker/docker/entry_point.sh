@@ -5,6 +5,10 @@
 # impossible
 export PYTHONUNBUFFERED=1
 
+
+# start proxy server
+/etc/init.d/nginx start
+
 echo "starting gunicorn"
 # Run gunicorn. $USER and $PORT are set in the Dockerfile
 cd /services/version_checker

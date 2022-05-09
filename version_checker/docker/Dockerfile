@@ -23,9 +23,9 @@ RUN pip install -r version_checker/requirements.txt
 
 
 COPY docker/gunicorn.conf.py /etc/
-COPY docker/nginx.conf /etc/nginx.conf
+COPY docker/nginx.conf /etc/nginx/
 COPY docker/entry_point.sh /services
 
-USER www-data
+
 CMD /services/entry_point.sh
 ENTRYPOINT /services/entry_point.sh

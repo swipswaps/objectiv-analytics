@@ -20,9 +20,8 @@ TRACKER_URL = os.environ.get('TRACKER_URL', 'http://localhost:8081')
 
 
 def get_current_version(package: str) -> str:
-    return '0.0.5'
 
-    url = f'https://pypi.org/pypi/{package}/json'
+    url = f'http://localhost/pypi/{package}/json'
     headers = {
         'Content-Type': 'application/json'
     }
