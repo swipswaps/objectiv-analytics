@@ -108,20 +108,6 @@ class Series(ABC):
     by :meth:`supported_value_to_literal()`.
     """
 
-    to_pandas_info: Mapping[DBDialect, Optional[ToPandasInfo]] = {}
-    """
-    INTERNAL: Optional information on how to map query-results to pandas types.
-
-    ToPandasInfo defines both the pandas-dtype of the data, and an optional function to apply to query
-    results.
-
-    If defined for a given DBDialect, we use this information in :meth:`DataFrame.to_pandas()`, be setting
-    the dtype and applying the function to columns of the resulting pandas DataFrame.
-
-    Example usage: UUIDs in BigQuery are represented as strings, we convert these strings to UUID objects in
-    to_pandas().
-    """
-
     def __init__(
         self,
         engine: Engine,
@@ -168,7 +154,7 @@ class Series(ABC):
         #   properties:
         #   * subclasses MUST override one class property: 'dtype',
         #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype',
-        #       'supported_value_types', and 'to_pandas_info'
+        #       'supported_value_types'
         # Unfortunately defining these properties as an "abstract-classmethod-property" makes it hard
         # to understand for mypy, sphinx, and python. Therefore, we check here that we are instantiating a
         # proper subclass, instead of just relying on @abstractmethod.
@@ -305,7 +291,7 @@ class Series(ABC):
         """
         Get this Series' index sorting. An empty list indicates no sorting by index.
         """
-        return self._index_sorting
+        return copy(self._index_sorting)
 
     @property
     def expression(self) -> Expression:
@@ -463,6 +449,20 @@ class Series(ABC):
             index_sorting=self._index_sorting,
             **kwargs,
         )
+
+    def to_pandas_info(self) -> Optional['ToPandasInfo']:
+        """
+        INTERNAL: Optional information on how to map query-results to pandas types.
+        Subclasses can override this function as needed. By default, this returns None.
+
+        ToPandasInfo defines both the pandas-dtype of the data, and an optional function to apply to query
+        results. If defined for a given DBDialect, we use this information in :meth:`DataFrame.to_pandas()`,
+        by setting the dtype and applying the function to columns of the resulting pandas DataFrame.
+
+        Example usage: UUIDs in BigQuery are represented as strings, we convert these strings to UUID
+        objects in to_pandas().
+        """
+        return None
 
     def unstack(
         self,
