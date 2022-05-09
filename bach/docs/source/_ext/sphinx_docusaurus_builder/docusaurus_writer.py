@@ -83,8 +83,8 @@ class DocusaurusTranslator(Translator):
 
     def visit_document(self, node):
         self.title = getattr(self.builder, 'current_docname')
-        # if 'example-notebooks/index' in self.title: 
-        #     print("DOCUMENT:", node)
+        # if 'example-notebooks/open-taxonomy' in self.title: 
+            # print("DOCUMENT:", node)
 
 
     def depart_document(self, node):
@@ -730,7 +730,6 @@ class DocusaurusTranslator(Translator):
 
     def depart_list_item(self, node):
         # a bulleted or enumerated list item
-        self.add("\n")
         self.depth.ascend('list_item')
 
 
@@ -760,9 +759,10 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_paragraph(self, node):
-        # Do not add a newline if processing a table, because it will break the markup
+        # Do not add a newline if processing a table or a list item, because it will break the markup
         if not self.in_table:
             self.ensure_eol()
+        if not self.in_table and self.depth.get('list') == 0:
             self.add('\n')
 
 

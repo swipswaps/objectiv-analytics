@@ -13,9 +13,11 @@ Basically, generating and publishing the API docs for `Bach` involve a few steps
   pip install -e ../../modelhub
 ```
 
-2. Generate HTML fragments:
+2. Generate Docusaurus modeling docs:
 ```bash
-  make clean html
+  make clean docusaurus
+  # OR to also clean up the objectiv.io repo's /docs/modeling folder
+  # make clean clean-target docusaurus
 ```
 3. Push generated docs to docusaurus:
    1. Make sure to have a checkout of objectiv/objectiv.io.

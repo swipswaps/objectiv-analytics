@@ -525,7 +525,7 @@ class Translator(nodes.NodeVisitor):
         self.list_prefixes.pop()
 
     def visit_bullet_list(self, node):
-        self.list_prefixes.append('\n* ')
+        self.list_prefixes.append('* ')
 
     depart_bullet_list = depart_enumerated_list
 
@@ -580,9 +580,6 @@ class Translator(nodes.NodeVisitor):
         if not node.get('internal'):
             return url
 
-        if self.builder.current_docname == 'example-notebooks/open-taxonomy':
-            print ("URL1 is now ", url)
-
         if url not in (None, ''):
             # strip off the end starting with '/#', e.g. 'ModelHub/modelhub.ModelHub/#modelhub.ModelHub'
             hash_index = url.rfind('/#')
@@ -592,8 +589,6 @@ class Translator(nodes.NodeVisitor):
             url = url[3:]
             node['refuri'] = url
 
-        if self.builder.current_docname == 'example-notebooks/open-taxonomy':
-            print ("URL2 is now ", url)
         # If HTTP page build URL known, make link relative to that.
         if not self.markdown_http_base:
             return node.get("refuri")
@@ -603,23 +598,15 @@ class Translator(nodes.NodeVisitor):
             this_dir = posixpath.dirname(this_doc)
             if this_dir:
                 url = posixpath.normpath('{}/{}'.format(this_dir, url))
-        if self.builder.current_docname == 'example-notebooks/open-taxonomy':
-            print ("URL3 is now ", url)
         # turn each link into a relative file link to the .mdx file
         # first strip any trailing slash, then add a '.mdx' extension
         if url[-1:] == '/':
             url = url[:-1]
         url = url + '.mdx'
-        if self.builder.current_docname == 'example-notebooks/open-taxonomy':
-            print ("URL4 is now ", url)
         url = '{}/{}'.format(self.markdown_http_base, url)
-        if self.builder.current_docname == 'example-notebooks/open-taxonomy':
-            print ("URL5 is now ", url)
         # TODO: test if we can bring these '#'s back
         if 'refid' in node:
             url += '#' + node['refid']
-        if self.builder.current_docname == 'example-notebooks/open-taxonomy':
-            print ("URL6 is now ", url)
         return url
 
 
