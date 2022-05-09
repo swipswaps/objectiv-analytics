@@ -19,10 +19,10 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes, value_to_series_type
+from bach.types import DtypeOrAlias, AllSupportedLiteralTypes, value_to_series_type
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
-from sql_models.util import is_bigquery
+from sql_models.util import is_bigquery, DatabaseNotSupportedException
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window, WindowFunction
@@ -326,8 +326,15 @@ class Series(ABC):
 
     @classmethod
     def get_db_dtype(cls, dialect: Dialect) -> str:
-        """ Given the db_dtype of this Series, for the given database dialect. """
+        """
+        Give the static db_dtype of this Series, for the given database dialect.
+        :raises DatabaseNotSupportedException:  If the db_dtype is not defined for the given dialect.
+        """
         db_dialect = DBDialect.from_dialect(dialect)
+        if db_dialect not in cls.supported_db_dtype:
+            raise DatabaseNotSupportedException(
+                dialect,
+                message_override=f'Cannot get db type of {cls.name} for {dialect}')
         return cls.supported_db_dtype[db_dialect]
 
     @classmethod
