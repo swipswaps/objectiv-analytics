@@ -170,6 +170,7 @@ __docformat__ = 'reStructuredText'
 from docutils import frontend, nodes, writers, languages
 from collections import OrderedDict
 
+
 class IndentLevel(object):
     """Class to hold text being written for a certain indentation level.
 
@@ -190,17 +191,22 @@ class IndentLevel(object):
         # Our own list to which we append before doing a ``write``
         self.content = []
 
+
     def append(self, new):
         self.content.append(new)
+
 
     def __getitem__(self, index):
         return self.content[index]
 
+
     def __len__(self):
         return len(self.content)
 
+
     def __bool__(self):
         return len(self) != 0
+
 
     def write(self):
         """Add ``self.contents`` with current ``prefix`` and ``first_prefix``
@@ -223,6 +229,7 @@ class IndentLevel(object):
                 texts.append(self.prefix + line)
         self.base.append(''.join(texts))
 
+
 def _make_method(to_add):
     """Make a method that adds `to_add`
 
@@ -233,6 +240,7 @@ def _make_method(to_add):
         self.add(to_add)
 
     return method
+
 
 def add_pref_suff(pref_suff_map):
     """Decorator adds visit, depart methods for prefix/suffix pairs."""
@@ -246,6 +254,7 @@ def add_pref_suff(pref_suff_map):
         return cls
 
     return dec
+
 
 def add_pass_thru(pass_thrus):
     """Decorator adds explicit pass-through visit and depart methods."""
@@ -264,6 +273,7 @@ def add_pass_thru(pass_thrus):
         return cls
 
     return dec
+
 
 # Characters that should be escaped in Markdown
 ESCAPE_RE = re.compile(r'([\\*`])')
@@ -297,11 +307,13 @@ PASS_THRU_ELEMENTS = (
     'line_block',
 )
 
+
 @add_pass_thru(PASS_THRU_ELEMENTS)
 @add_pref_suff(PREF_SUFF_ELEMENTS)
 class Translator(nodes.NodeVisitor):
 
     std_indent = '    '
+
 
     def __init__(self, document, builder=None):
         nodes.NodeVisitor.__init__(self, document)
@@ -322,6 +334,7 @@ class Translator(nodes.NodeVisitor):
         self.reset()
         # Attribute shortcuts
         self.head, self.body, self.foot = self._lists.values()
+
 
     def reset(self):
         """Initialize object for fresh read."""
@@ -349,11 +362,13 @@ class Translator(nodes.NodeVisitor):
         # Flag for whether to escape characters
         self._escape_text = True
 
+
     def astext(self):
         """Return the final formatted document as a string."""
         parts = [''.join(lines).strip() for lines in self._lists.values()]
         parts = [part + '\n\n' for part in parts if part]
         return ''.join(parts).strip() + '\n'
+
 
     def ensure_eol(self):
         """Ensure the last line in current base is terminated by new line."""
@@ -361,12 +376,14 @@ class Translator(nodes.NodeVisitor):
         if out and out[-1] and out[-1][-1] != '\n':
             out.append('\n')
 
+
     def get_current_output(self, section='body'):
         """Get list or IndentLevel to which we are currently writing."""
         return (
             self.indent_levels[-1]
             if self.indent_levels else self._lists[section]
         )
+
 
     def add(self, string, section='body'):
         """Add `string` to `section` or current output.
@@ -383,6 +400,7 @@ class Translator(nodes.NodeVisitor):
         """
         self.get_current_output(section).append(string)
 
+
     def add_section(self, string, section='body'):
         """Add `string` to `section` regardless of current output.
 
@@ -397,6 +415,7 @@ class Translator(nodes.NodeVisitor):
         """
         self._lists[section].append(string)
 
+
     def start_level(self, prefix, first_prefix=None, section='body'):
         """Create a new IndentLevel with `prefix` and `first_prefix`"""
         base = (
@@ -406,173 +425,20 @@ class Translator(nodes.NodeVisitor):
         level = IndentLevel(base, prefix, first_prefix)
         self.indent_levels.append(level)
 
+
     def finish_level(self):
         """Remove most recent IndentLevel and write contents."""
         level = self.indent_levels.pop()
         level.write()
 
+
     def escape_chars(self, txt):
-        # Escape (some) characters with special meaning for Markdown
+        """Escape (some) characters with special meaning for Markdown."""
         return ESCAPE_RE.sub(r'\\\1', txt)
-
-    def visit_Text(self, node):
-        text = node.astext().replace('\r\n', '\n')
-        if self._escape_text:
-            text = self.escape_chars(text)
-        self.add(text)
-
-    def depart_Text(self, node):
-        pass
-
-    def visit_comment(self, node):
-        txt = node.astext()
-        if txt.strip():
-            self.add('<!-- ' + node.astext() + ' -->\n')
-        raise nodes.SkipNode
-
-    def visit_docinfo(self, node):
-        self._in_docinfo = True
-
-    def depart_docinfo(self, node):
-        self._in_docinfo = False
-
-    def process_docinfo_item(self, node):
-        """Called explicitly from methods in this class."""
-        self.add_section('% {}\n'.format(node.astext()), section='head')
-        raise nodes.SkipNode
-
-    def visit_definition(self, node):
-        self.add('\n\n')
-        self.start_level('    ')
-
-    def depart_definition(self, node):
-        self.finish_level()
-
-    visit_field_body = visit_definition
-
-    depart_field_body = depart_definition
-
-    def visit_paragraph(self, node):
-        pass
-
-    def depart_paragraph(self, node):
-        self.ensure_eol()
-        self.add('\n')
-
-    def visit_math_block(self, node):
-        # docutils math block
-        self._escape_text = False
-        self.add('$$\n')
-
-    def depart_math_block(self, node):
-        self._escape_text = True
-        self.ensure_eol()
-        self.add('$$\n\n')
-
-    def visit_displaymath(self, node):
-        # sphinx math blocks become displaymath
-        self.add('$$\n{}\n$$\n\n'.format(node['latex']))
-        raise nodes.SkipNode
-
-    def visit_math(self, node):
-        # sphinx math node has 'latex' attribute, docutils does not
-        if 'latex' in node:  # sphinx math node
-            self.add('${}$'.format(node['latex']))
-            raise nodes.SkipNode
-        # docutils math node
-        self._escape_text = False
-        self.add('$')
-
-    def depart_math(self, node):
-        # sphinx node skipped in visit, only docutils gets here
-        self._escape_text = True
-        self.add('$')
-
-    def visit_literal_block(self, node):
-        self._escape_text = False
-        code_type = node['classes'][1] if 'code' in node['classes'] else ''
-        if 'language' in node:
-            code_type = node['language']
-        self.add('```' + code_type + '\n')
-
-    def depart_literal_block(self, node):
-        self._escape_text = True
-        self.ensure_eol()
-        self.add('```\n\n')
-
-    def visit_doctest_block(self, node):
-        self._escape_text = False
-        self.add('```python\n')
-
-    depart_doctest_block = depart_literal_block
-
-    def visit_block_quote(self, node):
-        self.start_level('> ')
-
-    def depart_block_quote(self, node):
-        self.finish_level()
-
-    def visit_section(self, node):
-        self.section_level += 1
-
-    def depart_section(self, node):
-        self.section_level -= 1
-
-    def visit_enumerated_list(self, node):
-        self.list_prefixes.append('1. ')
-
-    def depart_enumerated_list(self, node):
-        self.list_prefixes.pop()
-
-    def visit_bullet_list(self, node):
-        self.list_prefixes.append('* ')
-
-    depart_bullet_list = depart_enumerated_list
-
-    def visit_list_item(self, node):
-        first_prefix = self.list_prefixes[-1]
-        prefix = ' ' * len(first_prefix)
-        self.start_level(prefix, first_prefix)
-
-    def depart_list_item(self, node):
-        self.finish_level()
-
-    def visit_problematic(self, node):
-        self.add('\n\n```\n{}\n```\n\n'.format(node.astext()))
-        raise nodes.SkipNode
-
-    def visit_system_message(self, node):
-        if node['level'] < self.document.reporter.report_level:
-            # Level is too low to display
-            raise nodes.SkipNode
-        line = ', line %s' % node['line'] if node.hasattr('line') else ''
-        self.add(
-            '```\nSystem Message: {}:{}\n\n{}\n```\n\n'.format(
-                node['source'], line, node.astext()
-            )
-        )
-        raise nodes.SkipNode
-
-    def visit_title(self, node):
-        self.add((self.section_level + 1) * '#' + ' ')
-
-    def depart_title(self, node):
-        self.ensure_eol()
-        self.add('\n')
-
-    def visit_subtitle(self, node):
-        self.add((self.section_level + 2) * '#' + ' ')
-
-    depart_subtitle = depart_title
-
-    def visit_transition(self, node):
-        # Simply replace a transition by a horizontal rule.
-        # Could use three or more '*', '_' or '-'.
-        self.add('\n---\n\n')
-        raise nodes.SkipNode
 
 
     def _refuri2http(self, node):
+        """Parse reference URIs to a proper MDX file link."""
         # Replace 'refuri' in reference with HTTP address, if possible
         # None for no possible address
         this_doc = self.builder.current_docname
@@ -584,8 +450,7 @@ class Translator(nodes.NodeVisitor):
             # strip off the end starting with '/#', e.g. 'ModelHub/modelhub.ModelHub/#modelhub.ModelHub'
             hash_index = url.rfind('/#')
             url = url[0:hash_index]
-
-            # strip off the first '../' (TODO: find out why it's there in the first place)
+            # strip off the first '../'
             url = url[3:]
             node['refuri'] = url
 
@@ -604,41 +469,177 @@ class Translator(nodes.NodeVisitor):
             url = url[:-1]
         url = url + '.mdx'
         url = '{}/{}'.format(self.markdown_http_base, url)
-        # TODO: test if we can bring these '#'s back
         if 'refid' in node:
             url += '#' + node['refid']
         return url
 
 
-    def visit_nbplot_epilogue(self, node):
+    def visit_Text(self, node):
+        """Parses any text to escape (some) characters with special meaning for Markdown."""
+        text = node.astext().replace('\r\n', '\n')
+        if self._escape_text:
+            text = self.escape_chars(text)
+        self.add(text)
+
+
+    def depart_Text(self, node):
+        """Parses any text to escape (some) characters with special meaning for Markdown."""
+        pass
+
+
+    def visit_docinfo(self, node):
+        """Container for document bibliographic or meta data, e.g. the title & copyright page of a book.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#docinfo"""
+        self._in_docinfo = True
+
+
+    def depart_docinfo(self, node):
+        """Container for document bibliographic or meta data, e.g. the title & copyright page of a book.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#docinfo"""
+        self._in_docinfo = False
+        
+
+    def process_docinfo_item(self, node):
+        """Document bibliographic or meta data, e.g. the title & copyright page of a book.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#docinfo"""
+        # called explicitly from methods in this class
+        self.add_section('% {}\n'.format(node.astext()), section='head')
         raise nodes.SkipNode
 
-    def visit_nbplot_not_rendered(self, node):
-        raise nodes.SkipNode
 
-    def visit_code_links(self, node):
-        raise nodes.SkipNode
+    def visit_title(self, node):
+        """The title of a document, section, sidebar, table, topic, or generic admonition:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#title"""
+        self.add((self.section_level + 1) * '#' + ' ')
 
-    def visit_index(self, node):
-        # Drop index entries
-        raise nodes.SkipNode
+
+    def depart_title(self, node):
+        """The title of a document, section, sidebar, table, topic, or generic admonition:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#title"""
+        self.ensure_eol()
+        self.add('\n')
+
+
+    def visit_subtitle(self, node):
+        """The subtitle of a document:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#subtitle"""
+        self.add((self.section_level + 2) * '#' + ' ')
+
+
+    # The subtitle of a document: https://docutils.sourceforge.io/docs/ref/doctree.html#subtitle
+    depart_subtitle = depart_title
+
+
+    def visit_paragraph(self, node):
+        """Text and inline elements of a single paragraph.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
+        pass
+
+
+    def depart_paragraph(self, node):
+        """Text and inline elements of a single paragraph.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
+        self.ensure_eol()
+        self.add('\n')
+
+
+    # A paragraph that could be formatted more compactly; no further formatting"""
+    visit_compact_paragraph = visit_paragraph
+
+
+    # A paragraph that could be formatted more compactly; no further formatting"""
+    depart_compact_paragraph = depart_paragraph
+
+
+    def visit_section(self, node):
+        """Main unit of hierarchy: https://docutils.sourceforge.io/docs/ref/doctree.html#section"""
+        self.section_level += 1
+
+
+    def depart_section(self, node):
+        """Main unit of hierarchy: https://docutils.sourceforge.io/docs/ref/doctree.html#section"""
+        self.section_level -= 1
+
+
+    def visit_enumerated_list(self, node):
+        """Contains list_item elements which are uniformly marked with enumerator labels:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#enumerated-list"""
+        self.list_prefixes.append('1. ')
+
+
+    def depart_enumerated_list(self, node):
+        """Contains list_item elements which are uniformly marked with enumerator labels:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#enumerated-list"""
+        self.list_prefixes.pop()
+
+
+    def visit_bullet_list(self, node):
+        """Contains list_item elements which are uniformly marked with bullets:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#bullet-list"""
+        self.list_prefixes.append('* ')
+
+
+    # Contains list_item elements which are uniformly marked with bullets:
+    # https://docutils.sourceforge.io/docs/ref/doctree.html#bullet-list
+    depart_bullet_list = depart_enumerated_list
+
+
+    def visit_list_item(self, node):
+        """Container for the elements of a (bulleted or enumerated) list item:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#list-item"""
+        first_prefix = self.list_prefixes[-1]
+        prefix = ' ' * len(first_prefix)
+        self.start_level(prefix, first_prefix)
+
+
+    def depart_list_item(self, node):
+        """Container for the elements of a (bulleted or enumerated) list item:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#list-item"""
+        self.finish_level()
+
+
+    def visit_definition(self, node):
+        """Container for the body elements used to define a term in a definition_list: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#definition"""
+        self.add('\n\n')
+        self.start_level('    ')
+
+
+    def depart_definition(self, node):
+        """Container for the body elements used to define a term in a definition_list: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#definition"""
+        self.finish_level()
+
+
+    # Container for the body of a field: https://docutils.sourceforge.io/docs/ref/doctree.html#field-body
+    visit_field_body = visit_definition
+
+
+    # Container for the body of a field: https://docutils.sourceforge.io/docs/ref/doctree.html#field-body
+    depart_field_body = depart_definition
+
 
     def visit_substitution_definition(self, node):
+        """Substition definition: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#substitution-definition"""
         # Drop substitution definitions - the doctree already contains the text
         # with substitutions applied.
         raise nodes.SkipNode
 
-    def visit_only(self, node):
-        if node['expr'] == 'markdown':
-            self.add(dedent(node.astext()) + '\n')
+
+    def visit_transition(self, node):
+        """A gap spanning one or more lines, with or without a type ornament such as a row of asterisks. 
+        Transitions separate body elements and sections, dividing a section into untitled divisions.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#transition"""
+        # Simply replace a transition by a horizontal rule.
+        # Could use three or more '*', '_' or '-'.
+        self.add('\n---\n\n')
         raise nodes.SkipNode
 
-    def visit_runrole_reference(self, node):
-        raise nodes.SkipNode
 
     def visit_download_reference(self, node):
-        # If not resolving internal links, or there is no filename specified,
-        # pass through.
+        """Reference to a download."""
+        # If not resolving internal links, or there is no filename specified, pass through.
         filename = node.get('filename')
         if None in (self.markdown_http_base, filename):
             return
@@ -648,18 +649,170 @@ class Translator(nodes.NodeVisitor):
         self.add('[{}]({})'.format(node.astext(), target_url))
         raise nodes.SkipNode
 
+
     def depart_download_reference(self, node):
+        """Reference to a download."""
         pass
 
-    visit_compact_paragraph = visit_paragraph
 
-    depart_compact_paragraph = depart_paragraph
+    def visit_only(self, node):
+        """Include the content of the directive only if the expression is true.
+        https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-only"""
+        if node['expr'] == 'markdown':
+            self.add(dedent(node.astext()) + '\n')
+        raise nodes.SkipNode
 
+
+    ################################################################################
+    # Code
+
+
+    def visit_literal_block(self, node):
+        """Block of text where line breaks and whitespace are significant and must be preserved, e.g. code:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#literal-block"""
+        self._escape_text = False
+        code_type = node['classes'][1] if 'code' in node['classes'] else ''
+        if 'language' in node:
+            code_type = node['language']
+        self.add('```' + code_type + '\n')
+
+
+    def depart_literal_block(self, node):
+        """Block of text where line breaks and whitespace are significant and must be preserved, e.g. code:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#literal-block"""
+        self._escape_text = True
+        self.ensure_eol()
+        self.add('```\n\n')
+
+
+    def visit_doctest_block(self, node):
+        """Python-specific variant of literal_block:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#doctest-block"""
+        self._escape_text = False
+        self.add('```python\n')
+
+
+    # Python-specific variant of literal_block:
+    # https://docutils.sourceforge.io/docs/ref/doctree.html#doctest-block
+    depart_doctest_block = depart_literal_block
+
+
+    def visit_block_quote(self, node):
+        """Quotations set off from the main text (standalone):
+        https://docutils.sourceforge.io/docs/ref/doctree.html#block-quote"""
+        self.start_level('> ')
+
+
+    def depart_block_quote(self, node):
+        """Quotations set off from the main text (standalone):
+        https://docutils.sourceforge.io/docs/ref/doctree.html#block-quote"""
+        self.finish_level()
+
+
+    def visit_code_links(self, node):
+        """Code links."""
+        raise nodes.SkipNode
+
+
+    ################################################################################
+    # Math
+
+
+    def visit_math_block(self, node):
+        """A block of text in LaTeX math format that is typeset as mathematical notation (display formula). 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#math-block"""
+        self._escape_text = False
+        self.add('$$\n')
+
+
+    def depart_math_block(self, node):
+        """A block of text in LaTeX math format that is typeset as mathematical notation (display formula). 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#math-block"""
+        self._escape_text = True
+        self.ensure_eol()
+        self.add('$$\n\n')
+
+
+    def visit_displaymath(self, node):
+        """Sphinx math blocks become displaymath."""
+        self.add('$$\n{}\n$$\n\n'.format(node['latex']))
+        raise nodes.SkipNode
+
+
+    def visit_math(self, node):
+        """Text in LaTeX math format that is typeset as mathematical notation (inline formula).
+        https://docutils.sourceforge.io/docs/ref/doctree.html#math"""
+        # sphinx math node has 'latex' attribute, docutils does not
+        if 'latex' in node:  # sphinx math node
+            self.add('${}$'.format(node['latex']))
+            raise nodes.SkipNode
+        # docutils math node
+        self._escape_text = False
+        self.add('$')
+
+
+    def depart_math(self, node):
+        """Text in LaTeX math format that is typeset as mathematical notation (inline formula).
+        https://docutils.sourceforge.io/docs/ref/doctree.html#math"""
+        # sphinx node skipped in visit, only docutils gets here
+        self._escape_text = True
+        self.add('$')
+
+
+    ################################################################################
+    # Nbplot
+    #
     def visit_nbplot_container(self, node):
+        """Nbplot container."""
         pass
 
     def depart_nbplot_container(self, node):
+        """Nbplot container."""
         pass
+
+    def visit_nbplot_epilogue(self, node):
+        """Nbplot epoligue."""
+        raise nodes.SkipNode
+
+
+    def visit_nbplot_not_rendered(self, node):
+        """Nbplot not rendered."""
+        raise nodes.SkipNode
+
+
+    ################################################################################
+    # Unknown
+
+    def visit_problematic(self, node):
+        """Unknown: https://docutils.sourceforge.io/docs/ref/doctree.html#problematic."""
+        self.add('\n\n```\n{}\n```\n\n'.format(node.astext()))
+        raise nodes.SkipNode
+
+
+    def visit_system_message(self, node):
+        """Unknown: https://docutils.sourceforge.io/docs/ref/doctree.html#system-message."""
+        if node['level'] < self.document.reporter.report_level:
+            # Level is too low to display
+            raise nodes.SkipNode
+        line = ', line %s' % node['line'] if node.hasattr('line') else ''
+        self.add(
+            '```\nSystem Message: {}:{}\n\n{}\n```\n\n'.format(
+                node['source'], line, node.astext()
+            )
+        )
+        raise nodes.SkipNode
+
+
+    def visit_index(self, node):
+        """Unknown: Index."""
+        # Drop index entries
+        raise nodes.SkipNode
+
+
+    def visit_runrole_reference(self, node):
+        """Unknown: runrole reference."""
+        raise nodes.SkipNode
+        
 
     def unknown_visit(self, node):
         """Warn once per instance for unsupported nodes.
@@ -678,7 +831,9 @@ class Translator(nodes.NodeVisitor):
             self._warned.add(node_type)
         raise nodes.SkipNode
 
+
 class Writer(writers.Writer):
+    """Sphinx Markdown writer."""
 
     supported = ('markdown', )
     """Formats this writer supports."""

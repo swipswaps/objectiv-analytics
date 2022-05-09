@@ -2,28 +2,27 @@ from .depth import Depth
 from .doctree2md import Translator, Writer
 from docutils import nodes
 from pydash import _
-import html2text
 from munch import munchify
 import os
-import sys
 import yaml
-# from docutils.parsers.rst import Directive, directives
 from sphinx.util.docutils import SphinxDirective, directives
-from docutils.nodes import Element, Node, Text
 
-h = html2text.HTML2Text()
-
-frontmatter = {}
+frontmatter = {} # holds any frontmatter forthe current doc
 
 class DocusaurusTranslator(Translator):
-    depth = Depth()
+    """Class to translate to Docusaurus-compatible MDX documentation from Sphinx.
+
+    :param Translator: The top-level Sphinx Translator class.
+
+    """
+    depth = Depth() # class to keep track of depth in lists or sections
     enumerated_count = {}
     section_depth = 0
-    title = None
-    visited_title = False
+    title = None # document title
+    visited_title = False # whether title was parsed yet
     current_desc_type = None # the current class or method or property being parsed (if any)
-    in_signature = False # whether currently processing a signature (e.g. to not insert newlines)
     autosummary_shown = [] # holds for which class/method an autosummary has already been shown (if any)
+    in_signature = False # whether currently processing a signature (e.g. to not insert newlines)
     in_table = False # whether currently processing a table (e.g. to not insert newlines)
     table_entries = []
     table_rows = []
@@ -34,6 +33,12 @@ class DocusaurusTranslator(Translator):
 
 
     def __init__(self, document, builder=None):
+        """Instantiates the Translator.
+        
+        :param document: The document to translate.
+        :param builder: The Sphinx Builder object that provides the document.
+
+        """
         Translator.__init__(self, document, builder=builder)
         self.builder = builder
         self.frontmatter = frontmatter
@@ -41,6 +46,7 @@ class DocusaurusTranslator(Translator):
 
     @property
     def rows(self):
+        """Stores rows in a table in the document."""
         rows = []
         if not len(self.tables):
             return rows
@@ -54,8 +60,17 @@ class DocusaurusTranslator(Translator):
         return rows
 
 
-    # Writes the slug
     def get_slug(self, docname, doc_frontmatter):
+        """Parse the slug used in frontmatter, based on the config.
+
+        :param docname: the current document name/path.
+        :param doc_frontmatter: contents set via the frontmatter directive
+        
+        :returns: a formatted slug.
+
+        """
+        
+        # any slug set via the frontmatter directive takes preference
         if doc_frontmatter and 'slug' in doc_frontmatter:
             return doc_frontmatter['slug']
 
@@ -81,13 +96,36 @@ class DocusaurusTranslator(Translator):
         return slug
 
 
+    ################################################################################
+    # Parse the doctree: https://docutils.sourceforge.io/docs/ref/doctree.html
+    #
+    # +--------------------------------------------------------------------+
+    # | document  [may begin with a title, subtitle, decoration, docinfo]  |
+    # |                             +--------------------------------------+
+    # |                             | sections  [each begins with a title] |
+    # +-----------------------------+-------------------------+------------+
+    # | [body elements:]                                      | (sections) |
+    # |         | - literal | - lists  |       | - hyperlink  +------------+
+    # |         |   blocks  | - tables |       |   targets    |
+    # | para-   | - doctest | - block  | foot- | - sub. defs  |
+    # | graphs  |   blocks  |   quotes | notes | - comments   |
+    # +---------+-----------+----------+-------+--------------+
+    # | [text]+ | [text]    | (body elements)  | [text]       |
+    # | (inline +-----------+------------------+--------------+
+    # | markup) |
+    # +---------+
+
+
     def visit_document(self, node):
+        """The root of the tree.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#document"""
         self.title = getattr(self.builder, 'current_docname')
-        # if 'example-notebooks/open-taxonomy' in self.title: 
-            # print("DOCUMENT:", node)
 
 
     def depart_document(self, node):
+        """The root of the tree.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#document"""
+
         # write the frontmatter after being done with the doc
         current_doc = self.builder.current_docname
         
@@ -116,6 +154,8 @@ class DocusaurusTranslator(Translator):
 
     
     def visit_title(self, node):
+        """The title of a document, section, sidebar, table, topic, or generic admonition:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#title"""
         if not self.visited_title:
             self.title = node.astext()
             self.visited_title = True
@@ -124,290 +164,112 @@ class DocusaurusTranslator(Translator):
         self.add(' ')
 
 
+    def visit_raw(self, node):
+        """Indicates non-reStructuredText data that is to be passed untouched to the Writer, so won't parse:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#raw"""
+        self.descend('raw')
+
+
+    def depart_raw(self, node):
+        """Indicates non-reStructuredText data that is to be passed untouched to the Writer, so won't parse:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#raw"""
+        self.ascend('raw')
+
+
     def visit_comment(self, node):
+        """Internal comments that should not be shown in the output."""
         # comment blocks generally break the Markdown, so skip it
         raise nodes.SkipNode
 
 
     def depart_comment(self, node):
+        """Internal comments that should not be shown in the output."""
         # comment blocks generally break the Markdown, so skip it
         raise nodes.SkipNode
 
 
+    def visit_section(self, node):
+        """Main unit of hierarchy: https://docutils.sourceforge.io/docs/ref/doctree.html#section"""
+        self.section_depth += 1
+
+
+    def depart_section(self, node):
+        """Main unit of hierarchy: https://docutils.sourceforge.io/docs/ref/doctree.html#section"""
+        self.section_depth -= 1
+
+
+    def visit_rubric(self, node):
+        """An informal heading that doesn't correspond to the document's structure.
+        http://docutils.sourceforge.net/docs/ref/rst/directives.html#rubric."""
+        # We do parse it as a 3rd level heading though, because it's useful for a ToC on the right.
+        self.add('### ')
+
+
+    def depart_rubric(self, node):
+        """An informal heading that doesn't correspond to the document's structure.
+        http://docutils.sourceforge.net/docs/ref/rst/directives.html#rubric."""
+        self.add('\n\n')
+
+
+    def visit_versionmodified(self, node):
+        """Deprecation and compatibility messages. Type will hold something like 'deprecated'"""
+        print("Unchecked 'version' directive found in document " + self.builder.current_docname + ":", node) 
+        self.add('**%s:** ' % node.attributes['type'].capitalize())
+
+
+    def depart_versionmodified(self, node):
+        """Deprecation and compatibility messages. Type will hold something like 'deprecated'"""
+        pass
+
+
     def visit_inline(self, node):
-        # general inline nodes, no need for parsing
+        """Generic inline container: https://docutils.sourceforge.io/docs/ref/doctree.html#inline"""
         pass
 
 
     def depart_inline(self, node):
-        # general inline nodes, no need for parsing
+        """Generic inline container: https://docutils.sourceforge.io/docs/ref/doctree.html#inline"""
         pass
 
 
-    def visit_desc(self, node):
-        # container for class and method descriptions
-        desctype = node.attributes["desctype"] if "desctype" in node.attributes else None
-        self.current_desc_type = desctype
-        if (desctype == "class"):
-            self.add('<div className="class">\n')
-        elif (desctype == "method"):
-            self.add('<div className="method">\n')
-        elif (desctype == "property"):
-            self.add('<div className="property">\n')
-        else:
-            self.add('<div>\n')
-
-
-    def depart_desc(self, node):
-        # container for class and method descriptions
-        self.add('\n</div>\n\n')
-
-
-    def visit_desc_signature(self, node):
-        # the main signature (i.e. its name + parameters) of a class/method/property.
-        self.in_signature = True
-        if (self.current_desc_type == 'class'):
-            self.add('\n<h2 className="signature-class">')
-        elif (self.current_desc_type == 'property'):
-            self.add('\n<h2 className="signature-property">')
-        else:
-            self.add('\n<h2 className="signature-method">')
-
-
-    def depart_desc_signature(self, node):
-        # the main signature (i.e. its name + parameters) of a class/method/property.
-        if (self.current_desc_type != 'property'):
-            self.add(')')
-        self.add('</h2>\n\n')
-        self.in_signature = False
-
-
-    def visit_desc_annotation(self, node):
-        # annotation, e.g 'method', 'class'
-        self.add('<span className="type-annotation">')
-        self.add('<em>')
-
-
-    def depart_desc_annotation(self, node):
-        # annotation, e.g 'method', 'class'
-
-        # if this is a property and it has params, properly close it
-        # otherwise, remove the last element (=")" in case of a class/method)
-        if (self.current_desc_type == 'property' and node.children[0].astext() != 'property' and len(node.children) > 0):
-            self.add('\n\n')
-        else:
-            self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
-        
-        self.add('</em>')
-        self.add('</span> ')
-
-
-    def visit_desc_addname(self, node):
-        # module preroll for class/method, e.g. 'classdomain' in 'classdomain.classname'
-        self.add('<span className="additional-name">')
-
-
-    def depart_desc_addname(self, node):
-        # module preroll for class/method, e.g. 'classdomain' in 'classdomain.classname'
-        self.add('</span>')
-
-
-    def visit_desc_name(self, node):
-        # name of the class/method
-        # Escape "__" which is a formatting string for markdown
-        self.add('<span className="name">')
-        if node.rawsource.startswith("__"):
-            self.add('\\')
-
-
-    def depart_desc_name(self, node):
-        # name of the class/method
-        if (self.current_desc_type != 'property'):
-            self.add('(')
-        self.add('</span>')
-
-
-    def visit_desc_parameterlist(self, node):
-        # method/class param list
-        self.add('<small className="parameter-list">')
-
-
-    def depart_desc_parameterlist(self, node):
-        # method/class param list
-        self.add('</small>')
-
-
-    def visit_desc_parameter(self, node):
-        # single method/class param
-        self.add('<span className="parameter" id="'+ node[0].astext() + '">')
-
-
-    def depart_desc_parameter(self, node):
-        # single method/class param
-        # if there are additional params, include a comma
-        self.add('</span>')
-        if node.next_node(descend=False, siblings=True):
-            self.add(', ')
-            
-
-    def visit_desc_content(self, node):
-        # the description of the class/method
-        self.add('\n<div className="content">\n\n')
-        # leave current_desc_type, so there's no custom signature parsing (e.g. newlines for references)
-        self.in_signature = False
-
-
-    def depart_desc_content(self, node):
-        # the description of the class/method
-        self.add('\n</div>\n\n')
-
-
-    # list of parameters/return values/exceptions
-    #
-    # field_list
-    #   field
-    #       field_name (e.g 'returns/parameters/raises')
-    #           field_body (often a bulleted list)    #
-    def visit_field_list(self, node):
+    def visit_paragraph(self, node):
+        """Text and inline elements of a single paragraph.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
         pass
 
 
-    def depart_field_list(self, node):
+    def depart_paragraph(self, node):
+        """Text and inline elements of a single paragraph.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
+        # Do not add a newline if processing a table or a list item, because it will break the markup
+        if not self.in_table:
+            self.ensure_eol()
+        if not self.in_table and self.depth.get('list') == 0:
+            self.add('\n')
+
+
+    def visit_compact_paragraph(self, node):
+        """A paragraph that could be formatted more compactly; further formatting ignored here.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
         pass
 
 
-    def visit_field(self, node):
-        self.add('\n')
-
-
-    def depart_field(self, node):
-        self.add('\n')
-
-
-    def visit_field_name(self, node):
-        # field name, e.g 'returns', 'parameters'
-        self.add('### ')
-
-
-    def depart_field_name(self, node):
-        self.add('\n\n')
-        pass
-
-
-    def visit_field_body(self, node):
-        # container for the body of the field
-        pass
-
-
-    def depart_field_body(self, node):
-        pass
-
-
-
-    def visit_definition_list(self, node):
-        # a list of terms and their definitions; used for glossaries, classification, or subtopics
-        # generally already correctly parsed as a list or paragraphs, so passing here
-        pass
-
-
-    def depart_definition_list(self, node):
-        # a list of terms and their definitions; used for glossaries, classification, or subtopics
-        # generally already correctly parsed as a list or paragraphs, so passing here
-        pass
-
-
-    def visit_definition(self, node):
-        # container for the body elements used to define a term in a definition_list
-        # generally already correctly parsed as a list or paragraphs, so passing here
-        self.add('\n')
-
-
-    def depart_definition(self, node):
-        # container for the body elements used to define a term in a definition_list
-        # generally already correctly parsed as a list or paragraphs, so passing here
-        self.add('\n')
-
-
-    def visit_label(self, node):
-        print("Unchecked 'label' directive found in document " + self.builder.current_docname + ":", node) 
-        self.add('\n')
-
-
-    def depart_label(self, node):
-        self.add('\n')
-
-
-    def visit_literal(self, node):
-        self.add('`')
-        for child in node.children:
-            child.walkabout(self)
-        self.add('`')
-        raise nodes.SkipNode
-
-
-    def depart_literal(self, node):
-        pass
-
-
-    def visit_literal_block(self, node):
-        # code block, with optional language parameter
-        if (node['language']):
-            self.add('```' + node['language'] + '\n')
-        else:
-            self.add('```\n')
-        for child in node.children:
-            child.walkabout(self)
-        self.add('\n```\n\n')
-        raise nodes.SkipNode
-
-
-    def depart_literal_block(self, node):
-        pass
-
-
-    def visit_literal_strong(self, node):
-        # literal (e.g. `string`) to bolden
-        self.add('**`')
-
-
-    def depart_literal_strong(self, node):
-        self.add('`**')
-
-
-    def visit_literal_emphasis(self, node):
-        # literal (e.g. `string`) to emphasize
-        # do not add '_' if we're in a reference with a link
-        if not self.in_reference:
-            self.add('_')
-
-
-    def depart_literal_emphasis(self, node):
-        # literal (e.g. `string`) to emphasize
-        # if in a reference with a link, remove the '_' at the end
-        if self.in_reference:
-            self.add('')
-
-    
-    def visit_title_reference(self, node):
-        self.add('`')
-        for child in node.children:
-            child.walkabout(self)
-        self.add('`')
-        raise nodes.SkipNode
-
-
-    def depart_title_reference(self, node):
+    def depart_compact_paragraph(self, node):
+        """A paragraph that could be formatted more compactly; further formatting ignored here.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
         pass
 
 
     def visit_reference(self, node):
+        """Any reference (aka link), whether external or internal:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#reference"""
         # Docusaurus doesn't support MDXv2 yet: https://github.com/facebook/docusaurus/issues/4029
         # so we cannot add an MD-formatted link in a <span> element, as it won't get parsed.
         # therefore, for now, we add these on a newline.
         if(self.in_signature):
             self.add('\n\n ')
 
-        # do the same for 'view source' links
+        # do the same for 'any view source' links
         if('viewcode-link' in node.attributes['classes']):
             self.add('\n&#8203;<span className="view-source">')
 
@@ -430,20 +292,246 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_reference(self, node):
+        """Any reference (aka link), whether external or internal:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#reference"""
         self.in_reference = False
         pass
 
 
-    def visit_versionmodified(self, node):
-        # deprecation and compatibility messages
-        # type will hold something like 'deprecated'
-        print("Unchecked 'version' directive found in document " + self.builder.current_docname + ":", node) 
-        self.add('**%s:** ' % node.attributes['type'].capitalize())
+    def visit_title_reference(self, node):
+        """A reference in a title.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#title-reference"""
+        self.add('`')
+        for child in node.children:
+            child.walkabout(self)
+        self.add('`')
+        raise nodes.SkipNode
 
 
-    def depart_versionmodified(self, node):
-        # deprecation and compatibility messages
+    def depart_title_reference(self, node):
+        """A reference in a title.
+        https://docutils.sourceforge.io/docs/ref/doctree.html#title-reference"""
         pass
+
+
+    def visit_enumerated_list(self, node):
+        """Contains list_item elements which are uniformly marked with enumerator labels:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#enumerated-list"""
+        self.depth.descend('list')
+        self.depth.descend('enumerated_list')
+
+
+    def depart_enumerated_list(self, node):
+        """Contains list_item elements which are uniformly marked with enumerator labels:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#enumerated-list"""
+        self.enumerated_count[self.depth.get('list')] = 0
+        self.depth.ascend('enumerated_list')
+        self.depth.ascend('list')
+
+    
+    def visit_bullet_list(self, node):
+        """Contains list_item elements which are uniformly marked with bullets:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#bullet-list"""
+        self.depth.descend('list')
+        self.depth.descend('bullet_list')
+
+
+    def depart_bullet_list(self, node):
+        """Contains list_item elements which are uniformly marked with bullets:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#bullet-list"""
+        self.add('\n')
+        self.depth.ascend('bullet_list')
+        self.depth.ascend('list')
+
+
+    def visit_list_item(self, node):
+        """Container for the elements of a (bulleted or enumerated) list item:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#list-item"""
+        self.depth.descend('list_item')
+        depth = self.depth.get('list')
+        depth_padding = ''.join(['  ' for i in range(depth - 1)])
+        marker = '*'
+        if node.parent.tagname == 'enumerated_list':
+            if depth not in self.enumerated_count:
+                self.enumerated_count[depth] = 1
+            else:
+                self.enumerated_count[depth] = self.enumerated_count[depth] + 1
+            marker = str(self.enumerated_count[depth]) + '.'
+        self.add(depth_padding + marker + ' ')
+
+
+    def depart_list_item(self, node):
+        """Container for the elements of a (bulleted or enumerated) list item:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#list-item"""
+        self.depth.ascend('list_item')
+
+
+    def visit_definition_list(self, node):
+        """List of terms and their definitions; used for glossaries, classification, or subtopics: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#definition-list"""
+        # generally already correctly parsed as a list or paragraphs, so passing here
+        pass
+
+
+    def depart_definition_list(self, node):
+        """List of terms and their definitions; used for glossaries, classification, or subtopics: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#definition-list"""
+        # generally already correctly parsed as a list or paragraphs, so passing here
+        pass
+
+
+    def visit_definition(self, node):
+        """Container for the body elements used to define a term in a definition_list: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#definition"""
+        self.add('\n')
+        self.start_level('    ')
+
+
+    def depart_definition(self, node):
+        """Container for the body elements used to define a term in a definition_list: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#definition"""
+        self.add('\n')
+        self.finish_level()
+
+
+    ################################################################################
+    # Field lists of parameters/return values/exceptions
+    #
+    # field_list
+    #   field
+    #       field_name (e.g 'returns/parameters/raises')
+    #           field_body (often a bulleted list)    #
+
+
+    def visit_field_list(self, node):
+        """Two-column table-like structures resembling database records (label & data pairs):
+        https://docutils.sourceforge.io/docs/ref/doctree.html#field-list
+        """
+        pass
+
+
+    def depart_field_list(self, node):
+        """Two-column table-like structures resembling database records (label & data pairs):
+        https://docutils.sourceforge.io/docs/ref/doctree.html#field-list
+        """
+        pass
+
+
+    def visit_field(self, node):
+        """A pair of field_name and field_body elements:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#field
+        """
+        self.add('\n')
+
+
+    def depart_field(self, node):
+        """A pair of field_name and field_body elements:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#field
+        """
+        self.add('\n')
+
+
+    def visit_field_name(self, node):
+        """Analogous to a database field's name, e.g 'returns', 'parameters':
+        https://docutils.sourceforge.io/docs/ref/doctree.html#field-name
+        """
+        self.add('### ')
+
+
+    def depart_field_name(self, node):
+        """Analogous to a database field's name, e.g 'returns', 'parameters':
+        https://docutils.sourceforge.io/docs/ref/doctree.html#field-name
+        """
+        self.add('\n\n')
+        pass
+
+
+    def visit_label(self, node):
+        """Basic label: https://docutils.sourceforge.io/docs/ref/doctree.html#label"""
+        print("Unchecked 'label' directive found in document " + self.builder.current_docname + ":", node) 
+        self.add('\n')
+
+
+    def depart_label(self, node):
+        """Basic label: https://docutils.sourceforge.io/docs/ref/doctree.html#label"""
+        self.add('\n')
+
+
+    ################################################################################
+    # Code blocks
+
+    def visit_literal(self, node):
+        """Literal element, e.g. a code variable: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#literal """
+        self.add('`')
+        for child in node.children:
+            child.walkabout(self)
+        self.add('`')
+        raise nodes.SkipNode
+
+
+    def depart_literal(self, node):
+        """Literal element, e.g. a code variable: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#literal """
+        pass
+
+
+    def visit_literal_strong(self, node):
+        """Literal (e.g. `string`) to make bold."""
+        self.add('**`')
+
+
+    def depart_literal_strong(self, node):
+        """Literal (e.g. `string`) to make bold."""
+        self.add('`**')
+
+
+    def visit_literal_emphasis(self, node):
+        """Literal (e.g. `string`) to emphasize."""
+        # do not add '_' if we're in a reference with a link
+        if not self.in_reference:
+            self.add('_')
+
+
+    def depart_literal_emphasis(self, node):
+        """Literal (e.g. `string`) to emphasize."""
+        # if in a reference with a link, remove the '_' at the end
+        if self.in_reference:
+            self.add('')
+    
+
+    def visit_literal_block(self, node):
+        """Block of text where line breaks and whitespace are significant and must be preserved, e.g. code:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#literal-block
+        
+        Has an optional `language` parameter."""
+        if (node['language']):
+            self.add('```' + node['language'] + '\n')
+        else:
+            self.add('```\n')
+        for child in node.children:
+            child.walkabout(self)
+        self.add('\n```\n\n')
+        raise nodes.SkipNode
+
+
+    def depart_literal_block(self, node):
+        """Block of text where line breaks and whitespace are significant and must be preserved, e.g. code:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#literal-block
+        
+        Has an optional `language` parameter."""
+        pass
+
+
+    ################################################################################
+    # Admonitions: https://docusaurus.io/docs/markdown-features/admonitions
+    #
+    # 
+    # :::note
+    # :::tip
+    # :::info
+    # :::caution
+    # :::danger
 
 
     def visit_note(self, node):
@@ -494,29 +582,11 @@ class DocusaurusTranslator(Translator):
         self.add('\n:::\n\n')
 
 
-    def visit_section(self, node):
-        # container for any section
-        self.section_depth += 1
-
-
-    def depart_section(self, node):
-        self.section_depth -= 1
-
-
-    def visit_rubric(self, node):
-        """Sphinx Rubric, a heading without relation to the document sectioning
-        http://docutils.sourceforge.net/docs/ref/rst/directives.html#rubric."""
-        self.add('### ')
-
-
-    def depart_rubric(self, node):
-        """Sphinx Rubric, a heading without relation to the document sectioning
-        http://docutils.sourceforge.net/docs/ref/rst/directives.html#rubric."""
-        self.add('\n\n')
-
+    ################################################################################
+    # Images
 
     def visit_image(self, node):
-        """Image directive."""
+        """Images: https://docutils.sourceforge.io/docs/ref/doctree.html#image."""
         print("Unchecked 'image' directive found in document " + self.builder.current_docname + ":", node) 
         uri = node.attributes['uri']
         doc_folder = os.path.dirname(self.builder.current_docname)
@@ -529,11 +599,131 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_image(self, node):
-        """Image directive."""
+        """Images: https://docutils.sourceforge.io/docs/ref/doctree.html#image."""
         pass
 
 
+    ################################################################################
+    # Classes/methods/properties and autosummaries
+
+    def visit_desc(self, node):
+        """Container for class and method and property descriptions."""
+        desctype = node.attributes["desctype"] if "desctype" in node.attributes else None
+        self.current_desc_type = desctype
+        if desctype in ['class', 'method', 'property']:
+            self.add('<div className="' + desctype + '">\n')
+        else:
+            self.add('<div>\n')
+
+
+    def depart_desc(self, node):
+        """Container for class and method descriptions."""
+        self.add('\n</div>\n\n')
+
+
+    def visit_desc_signature(self, node):
+        """The main signature (i.e. its name + parameters) of a class/method/property."""
+        self.in_signature = True
+        if self.current_desc_type in ['class', 'method', 'property']:
+            self.add('\n<h2 className="signature-"' + self.current_desc_type + '">')
+        else:
+            self.add("\n<h2>")
+
+
+    def depart_desc_signature(self, node):
+        """The main signature (i.e. its name + parameters) of a class/method/property."""
+        self.in_signature = False
+        # only close the signature if it's not a property (which has no params)
+        if (self.current_desc_type != 'property'):
+            self.add(')')
+        self.add('</h2>\n\n')
+
+
+    def visit_desc_annotation(self, node):
+        """Type annotation of the description, e.g 'method', 'class'."""
+        self.add('<span className="type-annotation">')
+        self.add('<em>')
+
+
+    def depart_desc_annotation(self, node):
+        """Type annotation of the description, e.g 'method', 'class'."""
+        # if this is a property and it has params, properly close it
+        # otherwise, remove the last element (=")" in case of a class/method)
+        if (self.current_desc_type == 'property' 
+                and node.children[0].astext() != 'property' 
+                and len(node.children) > 0):
+            self.add('\n\n')
+        else:
+            self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
+        
+        self.add('</em>')
+        self.add('</span> ')
+
+
+    def visit_desc_addname(self, node):
+        """Module preroll for class/method/property, e.g. 'classdomain' in 'classdomain.classname'."""
+        self.add('<span className="additional-name">')
+
+
+    def depart_desc_addname(self, node):
+        """Module preroll for class/method/property, e.g. 'classdomain' in 'classdomain.classname'."""
+        self.add('</span>')
+
+
+    def visit_desc_name(self, node):
+        """Name of the class/method/property."""
+        self.add('<span className="name">')
+        # Escape any "__", which is a formatting string for markdown
+        if node.rawsource.startswith("__"):
+            self.add('\\')
+
+
+    def depart_desc_name(self, node):
+        """Name of the class/method/property."""
+        # only open the signature if it's not a property (which has no params)
+        if (self.current_desc_type != 'property'):
+            self.add('(')
+        self.add('</span>')
+
+
+    def visit_desc_parameterlist(self, node):
+        """Method/class parameter list."""
+        self.add('<small className="parameter-list">')
+
+
+    def depart_desc_parameterlist(self, node):
+        """Method/class parameter list."""
+        self.add('</small>')
+
+
+    def visit_desc_parameter(self, node):
+        """Single method/class parameter."""
+        self.add('<span className="parameter" id="'+ node[0].astext() + '">')
+
+
+    def depart_desc_parameter(self, node):
+        """Single method/class parameter."""
+        self.add('</span>')
+        # if there are additional params, include a comma
+        if node.next_node(descend=False, siblings=True):
+            self.add(', ')
+            
+
+    def visit_desc_content(self, node):
+        """Description of the class/method/property."""
+        self.add('\n<div className="content">\n\n')
+        # leave current_desc_type, so there's no custom signature parsing (e.g. newlines for references)
+        self.in_signature = False
+
+
+    def depart_desc_content(self, node):
+        """Description of the class/method/property."""
+        self.add('\n</div>\n\n')
+
+
     def visit_autosummary_toc(self, node):
+        """Sphinx autosummary with TOC option specified: 
+        http://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html."""
         # if an autosummary type (table or toc) is not yet shown, show the TOC list
         if self.current_desc_type not in self.autosummary_shown:
             self.autosummary_shown.append(self.current_desc_type)
@@ -542,15 +732,15 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_autosummary_toc(self, node):
+        """Sphinx autosummary with TOC option specified: 
+        http://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html."""
         self.add("\n\n")
 
 
     def visit_autosummary_table(self, node):
-        """Sphinx autosummary See http://www.sphinx-
-        doc.org/en/master/usage/extensions/autosummary.html."""
+        """Sphinx autosummary: http://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html."""
         self.table_entries = [] # reset the table_entries, so depart_thead doesn't generate redundant columns
-        self.autosummary_shown.append(self.current_desc_type) # autosummary shown for this class/method
-        # TODO: add table headers names as an optional attribute to the autosummary
+        self.autosummary_shown.append(self.current_desc_type)
         self.add('<div className="table-autosummary">\n\n')
         node.classes="autosummary"
         tgroup = nodes.tgroup(cols=2)
@@ -569,13 +759,12 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_autosummary_table(self, node):
-        """Sphinx autosummary See http://www.sphinx-
-        doc.org/en/master/usage/extensions/autosummary.html."""
+        """Sphinx autosummary: http://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html."""
         self.add('\n</div>\n\n')
 
 
     ################################################################################
-    # tables
+    # Tables
     #
     # docutils.nodes.table
     #     docutils.nodes.tgroup [cols=x]
@@ -593,11 +782,15 @@ class DocusaurusTranslator(Translator):
 
     
     def visit_table(self, node):
+        """A data arrangement with rows and columns:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#table"""
         self.in_table = True
         self.tables += node
 
 
     def depart_table(self, node):
+        """A data arrangement with rows and columns:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#table"""
         self.in_table = False
         if(len(self.tables) > 0):
             self.tables.pop()
@@ -606,30 +799,41 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_tabular_col_spec(self, node):
+        """Specifications for a column in a table:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#colspec"""
         pass
 
 
     def depart_tabular_col_spec(self, node):
+        """Specifications for a column in a table:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#colspec"""
         pass
 
 
     def visit_colspec(self, node):
+        """Specifications for a column in a table:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#colspec"""
         pass
 
 
     def depart_colspec(self, node):
+        """Specifications for a column in a table:
+        https://docutils.sourceforge.io/docs/ref/doctree.html#colspec"""
         pass
 
 
     def visit_tgroup(self, node):
+        """Table group"""
         self.descend('tgroup')
 
 
     def depart_tgroup(self, node):
+        """Table group"""
         self.ascend('tgroup')
 
 
     def visit_thead(self, node):
+        """Table head: https://docutils.sourceforge.io/docs/ref/doctree.html#thead"""
         if not len(self.tables):
             raise nodes.SkipNode
         
@@ -637,6 +841,7 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_thead(self, node):
+        """Table head: https://docutils.sourceforge.io/docs/ref/doctree.html#thead"""
         # end table head with as many "| -- |"s as there are table entries
         for i in range(len(self.table_entries)):
             length = 0
@@ -652,88 +857,33 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_tbody(self, node):
+        """Table body: https://docutils.sourceforge.io/docs/ref/doctree.html#tbody"""
         if not len(self.tables):
             raise nodes.SkipNode
         self.tbodys.append(node)
 
 
     def depart_tbody(self, node):
+        """Table body: https://docutils.sourceforge.io/docs/ref/doctree.html#tbody"""
         self.tbodys.pop()
 
 
     def visit_row(self, node):
+        """Table row: https://docutils.sourceforge.io/docs/ref/doctree.html#row"""
         if not len(self.theads) and not len(self.tbodys):
             raise nodes.SkipNode
         self.table_rows.append(node)
 
 
     def depart_row(self, node):
+        """Table row: https://docutils.sourceforge.io/docs/ref/doctree.html#row"""
         self.add(' |\n')
         if not len(self.theads):
             self.table_entries = []
 
 
-    def visit_math_block(self, node):
-        print("Unchecked 'math_block' directive found in document " + self.builder.current_docname + ":", node) 
-        pass
-
-
-    def depart_math_block(self, node):
-        pass
-
-
-    def visit_raw(self, node):
-        # indicates non-reStructuredText data that is to be passed untouched to the Writer, so we won't parse
-        self.descend('raw')
-
-
-    def depart_raw(self, node):
-        self.ascend('raw')
-
-
-    def visit_enumerated_list(self, node):
-        self.depth.descend('list')
-        self.depth.descend('enumerated_list')
-
-
-    def depart_enumerated_list(self, node):
-        self.enumerated_count[self.depth.get('list')] = 0
-        self.depth.ascend('enumerated_list')
-        self.depth.ascend('list')
-
-    
-    def visit_bullet_list(self, node):
-        self.depth.descend('list')
-        self.depth.descend('bullet_list')
-
-
-    def depart_bullet_list(self, node):
-        self.add('\n')
-        self.depth.ascend('bullet_list')
-        self.depth.ascend('list')
-
-
-    def visit_list_item(self, node):
-        # a bulleted or enumerated list item
-        self.depth.descend('list_item')
-        depth = self.depth.get('list')
-        depth_padding = ''.join(['  ' for i in range(depth - 1)])
-        marker = '*'
-        if node.parent.tagname == 'enumerated_list':
-            if depth not in self.enumerated_count:
-                self.enumerated_count[depth] = 1
-            else:
-                self.enumerated_count[depth] = self.enumerated_count[depth] + 1
-            marker = str(self.enumerated_count[depth]) + '.'
-        self.add(depth_padding + marker + ' ')
-
-
-    def depart_list_item(self, node):
-        # a bulleted or enumerated list item
-        self.depth.ascend('list_item')
-
-
     def visit_entry(self, node):
+        """Table entry: https://docutils.sourceforge.io/docs/ref/doctree.html#entry"""
         if not len(self.table_rows):
             raise nodes.SkipNode
         self.add("| ")
@@ -741,6 +891,7 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_entry(self, node):
+        """Table entry: https://docutils.sourceforge.io/docs/ref/doctree.html#entry"""
         length = 0
         i = len(self.table_entries) - 1
         for row in self.table_rows:
@@ -754,36 +905,18 @@ class DocusaurusTranslator(Translator):
         self.add(padding + ' ')
 
 
-    def visit_paragraph(self, node):
-        pass
-
-
-    def depart_paragraph(self, node):
-        # Do not add a newline if processing a table or a list item, because it will break the markup
-        if not self.in_table:
-            self.ensure_eol()
-        if not self.in_table and self.depth.get('list') == 0:
-            self.add('\n')
-
-
-    def visit_compact_paragraph(self, node):
-        # a paragraph that could be formatted more compactly; ignored here
-        pass
-
-
-    def depart_compact_paragraph(self, node):
-        pass
-
-
     def descend(self, node_name):
+        """Keep track of how deep we are in the current node (e.g. list or section)."""
         self.depth.descend(node_name)
 
 
     def ascend(self, node_name):
+        """Keep track of how deep we are in the current node (e.g. list or section)."""
         self.depth.ascend(node_name)
 
 
 class FrontMatterPositionDirective(SphinxDirective):
+    """Directive to set a specific position in the sidebar for the document in its frontmatter"""
     required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = True
@@ -799,7 +932,9 @@ class FrontMatterPositionDirective(SphinxDirective):
         empty_node = nodes.raw()
         return [empty_node]
 
+
 class FrontMatterSlugDirective(SphinxDirective):
+    """Directive to set a specific slug for the document in its frontmatter"""
     required_arguments = 1
     optional_arguments = 0
     final_argument_whitespace = True
@@ -815,7 +950,13 @@ class FrontMatterSlugDirective(SphinxDirective):
         empty_node = nodes.raw()
         return [empty_node]
 
+
 class DocusaurusWriter(Writer):
+    """Class to write to Docusaurus-compatible MDX documentation from Sphinx.
+
+    :param Writer: A top-level Sphinx Writer.
+
+    """
     directives.register_directive('frontmatterposition', FrontMatterPositionDirective)
     directives.register_directive('frontmatterslug', FrontMatterSlugDirective)
     translator_class = DocusaurusTranslator

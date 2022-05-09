@@ -1,4 +1,9 @@
 class Depth:
+    """
+    Keep track of depth in lists or sections
+    
+    """
+
     depth = 0
 
     sub_depth = {}
