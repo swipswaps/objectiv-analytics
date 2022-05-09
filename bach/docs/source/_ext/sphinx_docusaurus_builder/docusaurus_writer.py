@@ -431,6 +431,18 @@ class DocusaurusTranslator(Translator):
         self.add('\n')
 
 
+    def visit_field_body(self, node):
+      """Container for the body of a field: 
+      https://docutils.sourceforge.io/docs/ref/doctree.html#field-body"""
+      pass
+
+
+    def depart_field_body(self, node):
+      """Container for the body of a field: 
+      https://docutils.sourceforge.io/docs/ref/doctree.html#field-body"""
+      pass
+
+
     def visit_field_name(self, node):
         """Analogous to a database field's name, e.g 'returns', 'parameters':
         https://docutils.sourceforge.io/docs/ref/doctree.html#field-name
@@ -625,7 +637,7 @@ class DocusaurusTranslator(Translator):
         """The main signature (i.e. its name + parameters) of a class/method/property."""
         self.in_signature = True
         if self.current_desc_type in ['class', 'method', 'property']:
-            self.add('\n<h2 className="signature-"' + self.current_desc_type + '">')
+            self.add('\n<h2 className="signature-' + self.current_desc_type + '">')
         else:
             self.add("\n<h2>")
 
