@@ -102,7 +102,9 @@ class SeriesUuid(Series):
             index=base.engine,
             name='__tmp',
             expression=Expression.construct(expr_str),
-            group_by=None
+            group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
         )
 
     def to_pandas_info(self) -> Optional[ToPandasInfo]:

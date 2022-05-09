@@ -307,8 +307,8 @@ class Series(ABC):
         name: str,
         expression: Expression,
         group_by: Optional['GroupBy'],
-        sorted_ascending: Optional[bool] = None,
-        index_sorting: List[bool] = None,
+        sorted_ascending: Optional[bool],
+        index_sorting: List[bool],
         **kwargs,
     ):
         """ INTERNAL: Create an instance of this class. """
@@ -374,6 +374,8 @@ class Series(ABC):
             name=name,
             expression=expression,
             group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
         )
         return result
 
@@ -1723,5 +1725,7 @@ def variable_series(
         name='__variable__',
         expression=ConstValueExpression(variable_expression),
         group_by=None,
+        sorted_ascending=None,
+        index_sorting=[],
     )
     return result
