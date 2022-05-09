@@ -301,8 +301,8 @@ def write_sync_events(ok_events: EventDataList, nok_events: EventDataList, event
             connection.close()
 
     if output_config.snowplow:
-        write_data_to_snowplow_if_configured(events=ok_events, channel='good')
-        write_data_to_snowplow_if_configured(events=nok_events, channel='bad', event_errors=event_errors)
+        write_data_to_snowplow_if_configured(events=ok_events, good=True)
+        write_data_to_snowplow_if_configured(events=nok_events, good=False, event_errors=event_errors)
 
     if not output_config.file_system and not output_config.aws:
         return

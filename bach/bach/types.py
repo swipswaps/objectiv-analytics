@@ -13,6 +13,7 @@ import datetime
 from uuid import UUID
 
 import numpy
+import pandas
 
 from sql_models.constants import DBDialect
 
@@ -26,7 +27,7 @@ AllSupportedLiteralTypes = Union[
     bool,
     None,
     str,
-    datetime.date, datetime.time, datetime.datetime, datetime.timedelta, numpy.timedelta64,
+    datetime.date, datetime.time, datetime.datetime, numpy.datetime64, datetime.timedelta, numpy.timedelta64,
     UUID,
     dict,
     list
@@ -122,12 +123,12 @@ class TypeRegistry:
         from bach.series import \
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,\
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,\
-            SeriesUuid, SeriesJsonb, SeriesJson
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesNumericInterval
 
         standard_types: List[Type[Series]] = [
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,
-            SeriesUuid, SeriesJsonb, SeriesJson
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesNumericInterval,
         ]
 
         for klass in standard_types:
@@ -147,9 +148,12 @@ class TypeRegistry:
         self._register_value_klass(bool, SeriesBoolean)
         self._register_value_klass(type(None), SeriesString)  # NoneType ends up as a string for now
         self._register_value_klass(str, SeriesString)
+        self._register_value_klass(pandas.Interval, SeriesNumericInterval)
+
         self._register_value_klass(datetime.date, SeriesDate)
         self._register_value_klass(datetime.time, SeriesTime)
         self._register_value_klass(datetime.datetime, SeriesTimestamp)
+        self._register_value_klass(numpy.datetime64, SeriesTimestamp)
         self._register_value_klass(datetime.timedelta, SeriesTimedelta)
         self._register_value_klass(numpy.timedelta64, SeriesTimedelta)
         self._register_value_klass(UUID, SeriesUuid)
