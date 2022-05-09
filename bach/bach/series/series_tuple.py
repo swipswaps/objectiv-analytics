@@ -107,7 +107,9 @@ class SeriesTuple(Series):
         else:
             raise DatabaseNotSupportedException(base.engine)
         result = cls.get_class_instance(
-            base=base,
+            engine=base.engine,
+            base_node=base.base_node,
+            index=base.index,
             name=name,
             expression=expr,
             group_by=None,

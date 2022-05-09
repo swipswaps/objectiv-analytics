@@ -1756,7 +1756,7 @@ class Series(ABC):
         return result
 
 
-def value_to_series(base: Union[Series, DataFrame],
+def value_to_series(base: DataFrameOrSeries,
                     value: Union[AllSupportedLiteralTypes, Series],
                     name: str = None) -> Series:
     """
@@ -1780,7 +1780,7 @@ def value_to_series(base: Union[Series, DataFrame],
 
 
 def variable_series(
-    base: Union[Series, DataFrame],
+    base: DataFrameOrSeries,
     value: Union[AllSupportedLiteralTypes, Series],
     name: str
 ) -> Series:

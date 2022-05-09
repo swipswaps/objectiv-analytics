@@ -103,7 +103,9 @@ class SeriesDict(Series):
             sub_exprs.append(sub_expr)
         expr = Expression.construct('STRUCT({})', join_expressions(expressions=sub_exprs, join_str=', '))
         result = cls.get_class_instance(
-            base=base,
+            engine=base.engine,
+            base_node=base.base_node,
+            index=base.index,
             name=name,
             expression=expr,
             group_by=None,
