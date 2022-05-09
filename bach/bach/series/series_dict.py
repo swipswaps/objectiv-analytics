@@ -157,7 +157,6 @@ class DictAccessor:
             return self._series \
                 .copy_override_dtype(dtype=new_dtype) \
                 .copy_override(expression=expression)
-        # TODO: a bit hacky that we have an if-else here for structural sub-dtypes
         elif isinstance(sub_dtype, dict):
             return self._series \
                 .copy_override_type(SeriesDict, instance_dtype=sub_dtype) \
@@ -168,10 +167,7 @@ class DictAccessor:
                 .copy_override_type(SeriesArray, instance_dtype=sub_dtype) \
                 .copy_override(expression=expression)
         else:
-            raise Exception('TODO')
-
-        # TODO: implementation
-        raise ValueError(f'Invalid key type: {type(key)}')
+            raise Exception(f'Unsupported structural type: {sub_dtype}')
 
     # def len(self) -> 'SeriesInt64':
     #     engine = self._series.engine

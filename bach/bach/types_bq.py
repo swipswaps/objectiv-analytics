@@ -16,11 +16,8 @@ def bq_db_dtype_to_dtype(db_dtype: str) -> StructuredDtype:
     Note: We don't yet support Structs with unnamed fields (e.g. 'STRUCT<INT64>' is not supported.
 
     :param db_dtype: BigQuery db-dtype, e.g. 'STRING', or 'STRUCT<column_name INT64>', etc
-    :return: Instance dtype
+    :return: Instance dtype, e.g. 'string', or {'column_name': 'int64'}
     """
-    print()
-    print(db_dtype)
-    print()
     bq_db_dtype_to_series = get_all_db_dtype_to_series()[DBDialect.BIGQUERY]
     scalar_mapping = {db_dtype: series.dtype for db_dtype, series in bq_db_dtype_to_series.items()}
 
@@ -32,12 +29,19 @@ def bq_db_dtype_to_dtype(db_dtype: str) -> StructuredDtype:
     return result
 
 
-def _tokenize(p):
-    """ TODO: comments """
+# Code below is not super clean, and we should have more tests. But we have tests for bq_db_dtype_to_dtype()
+# so we can always refactor this in the future. For now it will do fine.
+
+def _tokenize(bq_db_dtype: str):
+    """
+    Split the type as received from BigQuery in a way that _tokens_to_dtype can handle:
+    Split on '<', '>', ',' and spaces between struct field name and type. Discards all whitespace except
+    space between struct field name and type.
+    """
     tokens = []
     token = []
 
-    i = iter(p.strip())
+    i = iter(bq_db_dtype.strip())
     c = next(i, None)
     while c:
         while c and c not in '<>,':
@@ -70,8 +74,11 @@ def _tokens_to_dtype(
     scalar_mapping: Mapping[str, Dtype]
 ) -> Tuple[int, StructuredDtype]:
     """
-    TODO: comments
-    :return: tuple: position of the last processed token, parsed dtype
+    Parse token to Dtype
+    :param tokens: list with all tokens
+    :poram pos: token position to start parsing
+    :param scalar_mapping: Mapping from BigQuery db_dtype to our Dtypes. Should contain all scalar types.
+    :return: tuple: position of the last processed token, and parsed dtype
     """
     t = get_token(tokens, pos)
     if t == 'STRUCT':

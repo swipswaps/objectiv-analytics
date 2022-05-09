@@ -196,7 +196,7 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
-        self._instance_dtype = instance_dtype  # TODO: do some check that this is consistent with cls.dtype
+        self._instance_dtype = instance_dtype
 
     @classmethod
     @abstractmethod
@@ -237,7 +237,8 @@ class Series(ABC):
 
         :param dialect: Database dialect
         :param value: All values of types listed by self.supported_value_types should be supported.
-        :param dtype: instance-dtype TODO: more info
+        :param dtype: instance-dtype. For scalar values this should simply be cls.dtype, for structural types
+            this should be a dtype that describes the structure of value.
         :return: Expression of a sql-literal for the value
         """
         raise NotImplementedError()
@@ -408,7 +409,8 @@ class Series(ABC):
 
         :param dialect: Database dialect
         :param value: value to convert to an expression
-        :param dtype: instance-dtype TODO: more info
+        :param dtype: instance-dtype. For scalar values this should simply be cls.dtype, for structural types
+            this should be a dtype that describes the structure of value.
         :raises TypeError: if value is not an instance of cls.supported_value_types, and not None
         """
         literal = cls.value_to_literal(dialect=dialect, value=value, dtype=dtype)

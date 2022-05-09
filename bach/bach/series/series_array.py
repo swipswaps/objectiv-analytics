@@ -159,13 +159,6 @@ class SeriesArray(Series):
         raise Exception('Cannot cast a value to an array.')
 
     @property
-    def arr(self) -> 'ArrayAccessor':
-        # TODO: what is a good name for this property? We already have Series.array. Although that seems like
-        #  something we should remove. It probably doesn't make sense to name this `array`
-        #  `arr` is perhaps to piratey? Maybe `elements` ?
-        return ArrayAccessor(self)
-
-    @property
     def elements(self) -> 'ArrayAccessor':
         return ArrayAccessor(self)
 
@@ -178,7 +171,6 @@ class ArrayAccessor:
         # TODO: do we also want to support Series as key?
         engine = self._series.engine
         if isinstance(key, int):
-            # TODO: track dtype properly
             if is_postgres(engine):
                 # postgres uses 1-based numbering [1]
                 # [1] https://www.postgresql.org/docs/current/arrays.html#ARRAYS-ACCESSING
@@ -189,16 +181,13 @@ class ArrayAccessor:
                 raise DatabaseNotSupportedException(engine)
 
             expression = Expression.construct(expr_str, self._series)
-            # TODO: extract this logic
-            if not isinstance(self._series.instance_dtype, list) or len(self._series.instance_dtype) != 1:
-                raise Exception(f'Unexpected instance_dtype: {self._series.instance_dtype}')
             sub_dtype = self._series.instance_dtype[0]
             if isinstance(sub_dtype, Dtype):
                 new_dtype = sub_dtype
                 return self._series \
                     .copy_override_dtype(dtype=new_dtype) \
                     .copy_override(expression=expression)
-            elif isinstance(sub_dtype, list) and len(sub_dtype) == 1:
+            elif isinstance(sub_dtype, list):
                 return self._series \
                     .copy_override(instance_dtype=sub_dtype) \
                     .copy_override(expression=expression)
@@ -209,10 +198,6 @@ class ArrayAccessor:
                     .copy_override(expression=expression)
             else:
                 raise Exception(f'Unexpected type of sub_dtype. sub_dtype: {sub_dtype}')
-
-            return self._series \
-                .copy_override_dtype(dtype='string') \
-                .copy_override(expression=Expression.construct(expr_str, self._series))
 
         elif isinstance(key, slice):
             # TODO: should be easy on Postgres
