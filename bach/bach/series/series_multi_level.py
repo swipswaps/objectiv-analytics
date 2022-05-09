@@ -26,7 +26,7 @@ T = TypeVar('T', bound='SeriesAbstractMultiLevel')
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy
-    from bach.series import Series, SeriesBoolean
+    from bach.series import SeriesBoolean
     from bach.dataframe import DataFrame
 
 
@@ -224,7 +224,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
         from bach.series.series import value_to_series
 
         levels = {
-            level_name: value_to_series(base, value=level_value)
+            level_name: value_to_series(base=base, value=level_value)
             for level_name, level_value in value.items()
         }
         result = cls.get_class_instance(

@@ -8,7 +8,7 @@ from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, ass
     get_df_with_test_data
 
 
-def test_from_const(engine):
+def test_from_value(engine):
     a = 'a string'
     b = 'a string\'"\'\' "" \\ with quotes'
     c = None

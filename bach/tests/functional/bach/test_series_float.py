@@ -10,7 +10,7 @@ from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, ass
 from tests.functional.bach.test_series_numeric import helper_test_simple_arithmetic
 
 
-def test_from_const(engine):
+def test_from_value(engine):
     a = 123.45
     b = -123.45
     c = -0.0

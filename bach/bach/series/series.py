@@ -19,8 +19,8 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import DtypeOrAlias, AllSupportedLiteralTypes, value_to_series_type, StructuredDtype, \
-    Dtype, validate_instance_dtype
+from bach.types import StructuredDtype, Dtype, validate_instance_dtype, DtypeOrAlias,\
+    AllSupportedLiteralTypes, value_to_series_type
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.util import is_bigquery, DatabaseNotSupportedException
@@ -136,7 +136,7 @@ class Series(ABC):
         set-up (e.g. matching base_node, index and group_by)
 
         To create a new Series object from scratch there are class helper methods
-        from_const(), get_class_instance().
+        from_value(), get_class_instance().
         It is very common to clone a Series with little changes. Use copy_override() for that.
 
         :param engine: db connection
@@ -1764,7 +1764,7 @@ def value_to_series(base: DataFrameOrSeries,
 
     If value is already a Series it is returned unchanged unless it has no base_node set, in case
     it's a subquery. We create a copy and hook it to our base node in that case, so we can work with it.
-    If value is a constant then the right Bach subclass is found for that type and instantiated
+    If value is a constant then the right Series subclass is found for that type and instantiated
     with the constant value.
     :param base: Base series or DataFrame. In case a new Series object is created and returned, it will
         share its engine, index, and base_node with this one. Only applies if value is not a Series
