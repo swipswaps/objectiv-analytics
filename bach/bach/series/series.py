@@ -109,16 +109,19 @@ class Series(ABC):
     by :meth:`supported_value_to_literal()`.
     """
 
-    def __init__(self,
-                 engine: Engine,
-                 base_node: BachSqlModel,
-                 index: Dict[str, 'Series'],
-                 name: str,
-                 expression: Expression,
-                 group_by: Optional['GroupBy'],
-                 sorted_ascending: Optional[bool],
-                 index_sorting: List[bool],
-                 instance_dtype: StructuredDtype):
+    def __init__(
+        self,
+        engine: Engine,
+        base_node: BachSqlModel,
+        index: Dict[str, 'Series'],
+        name: str,
+        expression: Expression,
+        group_by: Optional['GroupBy'],
+        sorted_ascending: Optional[bool],
+        index_sorting: List[bool],
+        instance_dtype: StructuredDtype,
+        **kwargs,
+    ):
         """
         Initialize a new Series object.
         If a Series is associated with a DataFrame. The engine, base_node and index
@@ -315,26 +318,30 @@ class Series(ABC):
 
     @classmethod
     def get_class_instance(
-            cls,
-            base: DataFrameOrSeries,
-            name: str,
-            expression: Expression,
-            group_by: Optional['GroupBy'],
-            sorted_ascending: Optional[bool],
-            index_sorting: List[bool],
-            instance_dtype: StructuredDtype
+        cls,
+        engine: Engine,
+        base_node: BachSqlModel,
+        index: Dict[str, 'Series'],
+        name: str,
+        expression: Expression,
+        group_by: Optional['GroupBy'],
+        sorted_ascending: Optional[bool],
+        index_sorting: List[bool],
+        instance_dtype: StructuredDtype,
+        **kwargs
     ):
         """ INTERNAL: Create an instance of this class. """
         return cls(
-            engine=base.engine,
-            base_node=base.base_node,
-            index=base.index,
+            engine=engine,
+            base_node=base_node,
+            index=index,
             name=name,
             expression=expression,
             group_by=group_by,
             sorted_ascending=sorted_ascending,
             index_sorting=[] if index_sorting is None else index_sorting,
-            instance_dtype=instance_dtype
+            instance_dtype=instance_dtype,
+            **kwargs
         )
 
     @classmethod
@@ -427,7 +434,9 @@ class Series(ABC):
             dtype = cls.dtype
         expression = cls.value_to_expression(dialect=base.engine.dialect, value=value, dtype=dtype)
         result = cls.get_class_instance(
-            base=base,
+            engine=base.engine,
+            base_node=base.base_node,
+            index=base.index,
             name=name,
             expression=expression,
             group_by=None,
@@ -463,7 +472,8 @@ class Series(ABC):
         group_by: Optional[Union['GroupBy', NotSet]] = not_set,
         sorted_ascending: Optional[Union[bool, NotSet]] = not_set,
         index_sorting: Optional[List[bool]] = None,
-        instance_dtype: Optional[StructuredDtype] = None
+        instance_dtype: Optional[StructuredDtype] = None,
+        **kwargs
     ) -> T:
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
@@ -483,7 +493,8 @@ class Series(ABC):
             group_by=self._group_by if group_by is not_set else group_by,
             sorted_ascending=self._sorted_ascending if sorted_ascending is not_set else sorted_ascending,
             index_sorting=self._index_sorting if index_sorting is None else index_sorting,
-            instance_dtype=self.instance_dtype if instance_dtype is None else instance_dtype
+            instance_dtype=self.instance_dtype if instance_dtype is None else instance_dtype,
+            **kwargs
         )
 
     def copy_override_dtype(
@@ -503,7 +514,8 @@ class Series(ABC):
         self,
         series_type: Type[T],
         *,
-        instance_dtype: Optional[StructuredDtype] = None
+        instance_dtype: Optional[StructuredDtype] = None,
+        **kwargs
     ) -> T:
         """
         INTERNAL: create an instance of the given Series subtype, copy all values from self.
@@ -518,7 +530,8 @@ class Series(ABC):
             group_by=self._group_by,
             sorted_ascending=self._sorted_ascending,
             index_sorting=self._index_sorting,
-            instance_dtype=instance_dtype
+            instance_dtype=instance_dtype,
+            **kwargs,
         )
 
     def to_pandas_info(self) -> Optional['ToPandasInfo']:
@@ -809,6 +822,11 @@ class Series(ABC):
             This will maintain Expression.is_single_value status
         """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
+        if series.expression.has_multi_level_expressions:
+            raise NotImplementedError(
+                'Series with multiple level expressions cannot be used as independent subquery.'
+            )
+
         if series.expression.is_independent_subquery:
             expr = series.expression
         else:
@@ -1139,6 +1157,9 @@ class Series(ABC):
         .. warning::
             You should probably not use this method directly.
         """
+        if self.expression.has_multi_level_expressions:
+            raise NotImplementedError('cannot apply functions to a series with multiple levels.')
+
         if isinstance(func, str) or callable(func):
             func = [func]
         if not isinstance(func, list):
@@ -1290,6 +1311,9 @@ class Series(ABC):
                              f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
 
+        if self.expression.has_multi_level_expressions:
+            raise ValueError('Cannot call an aggregation function on a series containing multiple levels.')
+
         if isinstance(expression, str):
             expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
 
@@ -1395,6 +1419,10 @@ class Series(ABC):
         :param partition: The partition or window to apply
         :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
         :returns: a new Series with the aggregation applied
+
+        ..warning::
+            The result of this function might be non-deterministic if there are multiple values with
+            the same frequency.
 
         ..note::
             BigQuery has no support for aggregation function ``MODE``, therefore ``APPROX_TOP_COUNT``
@@ -1774,7 +1802,9 @@ def variable_series(
         literal=variable_placeholder
     )
     result = series_type.get_class_instance(
-        base=base,
+        engine=base.engine,
+        base_node=base.base_node,
+        index=base.index,
         name='__variable__',
         expression=ConstValueExpression(variable_expression),
         group_by=None,

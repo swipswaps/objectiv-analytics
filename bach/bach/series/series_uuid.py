@@ -103,7 +103,9 @@ class SeriesUuid(Series):
         else:
             raise DatabaseNotSupportedException(base.engine)
         return cls.get_class_instance(
-            base=base,
+            engine=base.engine,
+            base_node=base.base_node,
+            index=base.engine,
             name='__tmp',
             expression=Expression.construct(expr_str),
             group_by=None,

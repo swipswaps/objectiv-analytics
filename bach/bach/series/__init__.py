@@ -13,3 +13,4 @@ from bach.series.series_datetime import \
 from bach.series.series_array import SeriesArray
 from bach.series.series_dict import SeriesDict
 from bach.series.series_tuple import SeriesTuple
+from bach.series.series_multi_level import SeriesAbstractMultiLevel, SeriesNumericInterval
