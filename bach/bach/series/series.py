@@ -122,15 +122,18 @@ class Series(ABC):
     to_pandas().
     """
 
-    def __init__(self,
-                 engine: Engine,
-                 base_node: BachSqlModel,
-                 index: Dict[str, 'Series'],
-                 name: str,
-                 expression: Expression,
-                 group_by: Optional['GroupBy'],
-                 sorted_ascending: Optional[bool],
-                 index_sorting: List[bool]):
+    def __init__(
+        self,
+        engine: Engine,
+        base_node: BachSqlModel,
+        index: Dict[str, 'Series'],
+        name: str,
+        expression: Expression,
+        group_by: Optional['GroupBy'],
+        sorted_ascending: Optional[bool],
+        index_sorting: List[bool],
+        **kwargs,
+    ) -> None:
         """
         Initialize a new Series object.
         If a Series is associated with a DataFrame. The engine, base_node and index
@@ -311,24 +314,28 @@ class Series(ABC):
 
     @classmethod
     def get_class_instance(
-            cls,
-            base: DataFrameOrSeries,
-            name: str,
-            expression: Expression,
-            group_by: Optional['GroupBy'],
-            sorted_ascending: Optional[bool] = None,
-            index_sorting: List[bool] = None
+        cls,
+        engine: Engine,
+        base_node: BachSqlModel,
+        index: Dict[str, 'Series'],
+        name: str,
+        expression: Expression,
+        group_by: Optional['GroupBy'],
+        sorted_ascending: Optional[bool] = None,
+        index_sorting: List[bool] = None,
+        **kwargs,
     ):
         """ INTERNAL: Create an instance of this class. """
         return cls(
-            engine=base.engine,
-            base_node=base.base_node,
-            index=base.index,
+            engine=engine,
+            base_node=base_node,
+            index=index,
             name=name,
             expression=expression,
             group_by=group_by,
             sorted_ascending=sorted_ascending,
-            index_sorting=[] if index_sorting is None else index_sorting
+            index_sorting=[] if index_sorting is None else index_sorting,
+            **kwargs,
         )
 
     @classmethod
@@ -375,7 +382,9 @@ class Series(ABC):
         """
         expression = ConstValueExpression(cls.value_to_expression(dialect=base.engine.dialect, value=value))
         result = cls.get_class_instance(
-            base=base,
+            engine=base.engine,
+            base_node=base.base_node,
+            index=base.index,
             name=name,
             expression=expression,
             group_by=None,
@@ -407,7 +416,8 @@ class Series(ABC):
         expression: Optional['Expression'] = None,
         group_by: Optional[Union['GroupBy', NotSet]] = not_set,
         sorted_ascending: Optional[Union[bool, NotSet]] = not_set,
-        index_sorting: Optional[List[bool]] = None
+        index_sorting: Optional[List[bool]] = None,
+        **kwargs,
     ) -> T:
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
@@ -426,7 +436,8 @@ class Series(ABC):
             expression=self._expression if expression is None else expression,
             group_by=self._group_by if group_by is not_set else group_by,
             sorted_ascending=self._sorted_ascending if sorted_ascending is not_set else sorted_ascending,
-            index_sorting=self._index_sorting if index_sorting is None else index_sorting
+            index_sorting=self._index_sorting if index_sorting is None else index_sorting,
+            **kwargs,
         )
 
     def copy_override_dtype(self, dtype: Optional[str]) -> 'Series':
@@ -437,7 +448,7 @@ class Series(ABC):
         klass: Type['Series'] = get_series_type_from_dtype(self.dtype if dtype is None else dtype)
         return self.copy_override_type(klass)
 
-    def copy_override_type(self, series_type: Type[T]) -> T:
+    def copy_override_type(self, series_type: Type[T], **kwargs) -> T:
         """
         INTERNAL: create an instance of the given Series subtype, copy all values from self.
         """
@@ -449,7 +460,8 @@ class Series(ABC):
             expression=self._expression,
             group_by=self._group_by,
             sorted_ascending=self._sorted_ascending,
-            index_sorting=self._index_sorting
+            index_sorting=self._index_sorting,
+            **kwargs,
         )
 
     def unstack(
@@ -726,6 +738,11 @@ class Series(ABC):
             This will maintain Expression.is_single_value status
         """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
+        if series.expression.has_multi_level_expressions:
+            raise NotImplementedError(
+                'Series with multiple level expressions cannot be used as independent subquery.'
+            )
+
         if series.expression.is_independent_subquery:
             expr = series.expression
         else:
@@ -1055,6 +1072,9 @@ class Series(ABC):
         .. warning::
             You should probably not use this method directly.
         """
+        if self.expression.has_multi_level_expressions:
+            raise NotImplementedError('cannot apply functions to a series with multiple levels.')
+
         if isinstance(func, str) or callable(func):
             func = [func]
         if not isinstance(func, list):
@@ -1205,6 +1225,9 @@ class Series(ABC):
             raise ValueError(f'Cannot call an aggregation function on already aggregated column '
                              f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
+
+        if self.expression.has_multi_level_expressions:
+            raise ValueError('Cannot call an aggregation function on a series containing multiple levels.')
 
         if isinstance(expression, str):
             expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
@@ -1696,7 +1719,9 @@ def variable_series(
         literal=variable_placeholder
     )
     result = series_type.get_class_instance(
-        base=base,
+        engine=base.engine,
+        base_node=base.base_node,
+        index=base.index,
         name='__variable__',
         expression=ConstValueExpression(variable_expression),
         group_by=None,

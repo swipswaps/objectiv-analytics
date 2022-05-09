@@ -750,15 +750,15 @@ class DataFrame:
 
     @classmethod
     def get_instance(
-            cls,
-            engine,
-            base_node: BachSqlModel,
-            index_dtypes: Dict[str, str],
-            dtypes: Dict[str, str],
-            group_by: Optional['GroupBy'],
-            order_by: List[SortColumn],
-            savepoints: 'Savepoints',
-            variables: Dict['DtypeNamePair', Hashable]
+        cls,
+        engine,
+        base_node: BachSqlModel,
+        index_dtypes: Dict[str, str],
+        dtypes: Dict[str, str],
+        group_by: Optional['GroupBy'],
+        order_by: List[SortColumn],
+        savepoints: 'Savepoints',
+        variables: Dict['DtypeNamePair', Hashable]
     ) -> 'DataFrame':
         """
         INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
@@ -766,32 +766,33 @@ class DataFrame:
         This assumes that base_node has a column for all names in index_dtypes and dtypes.
         If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
-        index: Dict[str, Series] = {}
-        for key, value in index_dtypes.items():
-            index_type = get_series_type_from_dtype(value)
-            index[key] = index_type(
-                engine=engine,
-                base_node=base_node,
+        base_params = {
+            'engine': engine,
+            'base_node': base_node,
+            'group_by': group_by,
+            'sorted_ascending': None,
+            'index_sorting': [],
+        }
+        index: Dict[str, Series] = {
+            key: get_series_type_from_dtype(value).get_class_instance(
                 index={},  # Empty index for index series
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by,
-                sorted_ascending=None,
-                index_sorting=[]
+                **base_params
             )
-        series: Dict[str, Series] = {}
-        for key, value in dtypes.items():
-            series_type = get_series_type_from_dtype(value)
-            series[key] = series_type(
-                engine=engine,
-                base_node=base_node,
+            for key, value in index_dtypes.items()
+        }
+
+        series: Dict[str, Series] = {
+            key: get_series_type_from_dtype(value).get_class_instance(
                 index=index,
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by,
-                sorted_ascending=None,
-                index_sorting=[]
+                **base_params,
             )
+            for key, value in dtypes.items()
+        }
+
         return cls(
             engine=engine,
             base_node=base_node,
@@ -864,16 +865,33 @@ class DataFrame:
             args['index'] = new_index
 
         if series_dtypes:
+            from bach.series import SeriesAbstractMultiLevel
             new_series: Dict[str, Series] = {}
             for key, value in series_dtypes.items():
                 series_type = get_series_type_from_dtype(value)
-                new_series[key] = series_type(
-                    engine=args['engine'], base_node=args['base_node'],
-                    index=args['index'],
-                    name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by'],
+                extra_params = copy(args)
+
+                if issubclass(series_type, SeriesAbstractMultiLevel):
+                    if key not in self._data:
+                        raise Exception(
+                            f'cannot instantiate {series_type.__name__} class without level information.'
+                        )
+                    multi_level_series = cast(SeriesAbstractMultiLevel, self.all_series[key])
+                    extra_params.update(
+                        {
+                            lvl_name: lvl.copy_override(
+                                expression=expression_class.column_reference(f'_{key}_{lvl_name}')
+                            )
+                            for lvl_name, lvl in multi_level_series.levels.items()
+                        }
+                    )
+
+                new_series[key] = series_type.get_class_instance(
+                    name=key,
+                    expression=expression_class.column_reference(key),
                     sorted_ascending=None,
-                    index_sorting=[]
+                    index_sorting=[],
+                    **extra_params
                 )
                 args['series'] = new_series
 
@@ -1169,11 +1187,18 @@ class DataFrame:
         For usage see general introduction DataFrame class.
         """
         # TODO: all types from types.TypeRegistry are supported.
-        from bach.series import Series, const_to_series
+        from bach.series import Series, const_to_series, SeriesAbstractMultiLevel
         if isinstance(key, str):
             if key in self.index:
                 # Cannot set an index column, and cannot have a column name both in self.index and self.data
                 raise ValueError(f'Column name "{key}" already exists as index.')
+
+            if any(
+                key in [level.name for level in series.levels.values()]
+                for series in self.all_series.values() if isinstance(series, SeriesAbstractMultiLevel)
+            ):
+                raise ValueError(f'Column name "{key}" already exists as a level in a series multilevel')
+
             if isinstance(value, DataFrame):
                 raise ValueError("Can't set a DataFrame as a single column")
             if isinstance(value, pandas.Series):
@@ -1652,7 +1677,12 @@ class DataFrame:
         df_new = df_new.materialize(node_name='bq_materialize_before_groupby')
         group_by_columns = df_new._partition_by_series(gbc_names)
         group_by = GroupBy(group_by_columns=group_by_columns)
-        return DataFrame._groupby_to_frame(df_new, group_by)
+
+        # grouped dataframe should contain original order by property,
+        # else it will cause conflicts with window functions
+        grouped_df = DataFrame._groupby_to_frame(df_new, group_by)
+        grouped_df._order_by = df._order_by
+        return grouped_df
 
     def window(self, **frame_args) -> 'DataFrame':
         """
@@ -1896,7 +1926,7 @@ class DataFrame:
 
         # Post-process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
         # the strings that the query gives us into UUID objects
-        for name, series in self.data.items():
+        for name, series in self.all_series.items():
             to_pandas_info = series.to_pandas_info.get(db_dialect)
             if to_pandas_info is not None and to_pandas_info.function is not None:
                 pandas_df[name] = pandas_df[name].apply(to_pandas_info.function)
@@ -1934,8 +1964,22 @@ class DataFrame:
         Will return an empty Expression in case ordering is not requested.
         """
         if self._order_by:
-            exprs = [sc.expression for sc in self._order_by]
-            fmtstr = [f"{{}} {'asc' if sc.asc else 'desc'}" for sc in self._order_by]
+            exprs = []
+            fmtstr = []
+
+            for sc in self._order_by:
+                fmt = f"{{}} {'asc' if sc.asc else 'desc'}"
+                if not sc.expression.has_multi_level_expressions:
+                    exprs.append(sc.expression)
+                    fmtstr.append(fmt)
+                    continue
+
+                multi_lvl_exprs = [
+                    level_expr for level_expr in sc.expression.data if isinstance(level_expr, Expression)
+                ]
+                exprs.extend(multi_lvl_exprs)
+                fmtstr.extend([fmt] * len(multi_lvl_exprs))
+
             return Expression.construct(f'order by {", ".join(fmtstr)}', *exprs)
         else:
             return Expression.construct('')
@@ -1947,6 +1991,7 @@ class DataFrame:
         distinct: bool = False,
         where_clause: Expression = None,
         having_clause: Expression = None,
+        construct_multi_levels: bool = False,
     ) -> BachSqlModel:
         """
         INTERNAL: Translate the current state of this DataFrame into a SqlModel.
@@ -1956,8 +2001,11 @@ class DataFrame:
         :param distinct: if distinct statement needs to be applied
         :param where_clause: The where-clause to apply, if any
         :param having_clause: The having-clause to apply in case group_by is set, if any
+        :param construct_multi_levels: if False, each level from a multi-level series will be treated as an
+            individual column, else the column expression from the parent series will be used instead.
         :returns: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
+        from bach.series import SeriesAbstractMultiLevel
         self._assert_all_variables_set()
 
         if isinstance(limit, int):
@@ -1985,37 +2033,47 @@ class DataFrame:
         limit_clause = Expression.construct('' if limit_str is None else f'{limit_str}')
         where_clause = where_clause if where_clause else Expression.construct('')
         group_by_clause = None
+
+        column_exprs = []
+        column_names = []
+
+        non_group_by_series = self.all_series
         if self.group_by:
-
-            not_aggregated = [s.name for s in self._data.values()
-                              if not s.expression.has_aggregate_function]
+            not_aggregated = [
+                s.name for s in self._data.values()
+                if not s.expression.has_aggregate_function
+            ]
             if len(not_aggregated) > 0:
-                raise ValueError(f'The df has groupby set, but contains Series that have no aggregation '
-                                 f'function yet. Please make sure to first: remove these from the frame, '
-                                 f'setup aggregation through agg(), or on all individual series.'
-                                 f'Unaggregated series: {not_aggregated}')
+                raise ValueError(
+                    f'The df has groupby set, but contains Series that have no aggregation '
+                    f'function yet. Please make sure to first: remove these from the frame, '
+                    f'setup aggregation through agg(), or on all individual series.'
+                    f'Unaggregated series: {not_aggregated}'
+                )
 
-            group_by_column_expr = self.group_by.get_group_by_column_expression()
-            if group_by_column_expr:
-                column_exprs = self.group_by.get_index_column_expressions()
-                column_names = tuple(self.group_by.index.keys())
-                group_by_clause = Expression.construct('group by {}', group_by_column_expr)
-            else:
-                column_exprs = []
-                column_names = tuple()
-                group_by_clause = Expression.construct('')
+            group_by_clause = Expression.construct('')
             having_clause = having_clause if having_clause else Expression.construct('')
+            group_by_column_expr = self.group_by.get_group_by_column_expression()
 
-            column_exprs += [s.get_column_expression() for s in self._data.values()]
-            column_names += tuple(self._data.keys())
-        else:
-            column_exprs = [s.get_column_expression() for s in self.all_series.values()]
-            column_names = tuple(self.all_series.keys())
+            if group_by_column_expr:
+                group_by_clause = Expression.construct('group by {}', group_by_column_expr)
+                column_exprs = self.group_by.get_index_column_expressions(construct_multi_levels)
+                column_names = list(self.group_by.index.keys())
+
+                non_group_by_series = self.data
+
+        for s in non_group_by_series.values():
+            if not construct_multi_levels and isinstance(s, SeriesAbstractMultiLevel):
+                column_names += [s.name for s in s.levels.values()]
+                column_exprs += [s.get_column_expression() for s in s.levels.values()]
+            else:
+                column_names.append(s.name)
+                column_exprs.append(s.get_column_expression())
 
         return CurrentNodeSqlModel.get_instance(
             dialect=self.engine.dialect,
             name=name,
-            column_names=column_names,
+            column_names=tuple(column_names),
             column_exprs=column_exprs,
             distinct=distinct,
             where_clause=where_clause,
@@ -2036,7 +2094,9 @@ class DataFrame:
         :param limit: the limit to apply, either as a max amount of rows or a slice of the data.
         :returns: SQL query
         """
-        model = self.get_current_node('view_sql', limit=limit)
+
+        # we need to construct each multi-level series, since it should resemble the final result
+        model = self.get_current_node('view_sql', limit=limit, construct_multi_levels=True)
         placeholder_values = get_variable_values_sql(
             dialect=self.engine.dialect,
             variable_values=self.variables
@@ -2778,7 +2838,7 @@ class DataFrame:
 
         # we need to just apply distinct for 'first' and 'last'.
         if keep:
-            df = df.materialize(distinct=True,)
+            df = df.materialize(distinct=True)
 
         df = df if ignore_index else df.set_index(keys=self.index_columns)
         return df
@@ -3225,6 +3285,11 @@ class DataFrame:
 
         level_index = level if isinstance(level, int) else self.index_columns.index(level)
         index_to_unstack = self.index_columns[level_index]
+
+        from bach.series import SeriesAbstractMultiLevel
+        if isinstance(self.index[index_to_unstack], SeriesAbstractMultiLevel):
+            raise IndexError(f'"{level}" cannot be unstacked, since it is a MultiLevel series.')
+
         values = self.index[index_to_unstack].unique().to_numpy()
 
         if None in values or numpy.nan in values:
