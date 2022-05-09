@@ -15,7 +15,7 @@ from bach.expression import Expression
 from bach.series.series import WrappedPartition, ToPandasInfo
 from bach.types import DtypeOrAlias, StructuredDtype
 from sql_models.constants import DBDialect
-from sql_models.util import DatabaseNotSupportedException, is_postgres
+from sql_models.util import DatabaseNotSupportedException, is_postgres, is_bigquery
 
 _SECONDS_IN_DAY = 24 * 60 * 60
 
@@ -235,12 +235,11 @@ class SeriesTimestamp(SeriesAbstractDateTime):
             return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def to_pandas_info(self) -> Optional['ToPandasInfo']:
-        info = {
-            DBDialect.POSTGRES: ToPandasInfo('datetime64[ns]', None),
-            DBDialect.BIGQUERY: ToPandasInfo('datetime64[ns, UTC]', dt_strip_timezone)
-        }
-        db_dialect = DBDialect.from_engine(self.engine)
-        return info.get(db_dialect)
+        if is_postgres(self.engine):
+            return ToPandasInfo('datetime64[ns]', None)
+        if is_bigquery(self.engine):
+            return ToPandasInfo('datetime64[ns, UTC]', dt_strip_timezone)
+        return None
 
     def __add__(self, other) -> 'Series':
         return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))

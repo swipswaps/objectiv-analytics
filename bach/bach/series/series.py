@@ -347,7 +347,7 @@ class Series(ABC):
     @classmethod
     def get_db_dtype(cls, dialect: Dialect) -> str:
         """
-        Given the static db_dtype of this Series, for the given database dialect.
+        Give the static db_dtype of this Series, for the given database dialect.
         :raises DatabaseNotSupportedException:  If the db_dtype is not defined for the given dialect. This
             will also happen if the db_dtype is not static (e.g. an array has 'dynamic' type that depends
             on the data, like 'ARRAY<INT64>')
