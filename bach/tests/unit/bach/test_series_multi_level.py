@@ -59,17 +59,17 @@ def test_series_numeric_interval_get_instance(dialect) -> None:
     assert numeric_interval.bounds.name == '_interval_bounds'
 
 
-def test_series_numeric_interval_from_const(dialect) -> None:
+def test_series_numeric_interval_from_value(dialect) -> None:
     bt = get_fake_df_test_data(dialect)
 
     with pytest.raises(ValueError, match=r'value should contain mapping'):
-        SeriesNumericInterval.from_const(
+        SeriesNumericInterval.from_value(
             base=bt,
             value={'lower': 0},
             name='num_interval',
         )
 
-    result = SeriesNumericInterval.from_const(
+    result = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -93,7 +93,7 @@ def test_series_numeric_interval_copy_override(dialect) -> None:
     bt = get_fake_df_test_data(dialect)[['inhabitants']].agg(['min', 'max'])
     bt = bt.materialize()
 
-    numeric_interval = SeriesNumericInterval.from_const(
+    numeric_interval = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': bt['inhabitants_min'],
@@ -117,7 +117,7 @@ def test_series_numeric_interval_copy_override(dialect) -> None:
 
 def test_series_numeric_interval_parse_level_value(dialect) -> None:
     bt = get_fake_df_test_data(dialect)
-    numeric_interval = SeriesNumericInterval.from_const(
+    numeric_interval = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -140,7 +140,7 @@ def test_series_numeric_interval_parse_level_value(dialect) -> None:
 
 def test_series_numeric_expression(dialect) -> None:
     inhabitants = get_fake_df_test_data(dialect)['inhabitants']
-    numeric_interval = SeriesNumericInterval.from_const(
+    numeric_interval = SeriesNumericInterval.from_value(
         base=inhabitants,
         value={
             'lower': inhabitants,
@@ -163,7 +163,7 @@ def test_series_numeric_expression(dialect) -> None:
 
 def test_series_numeric_interval_get_column_expression(dialect) -> None:
     bt = get_fake_df_test_data(dialect)
-    numeric_interval = SeriesNumericInterval.from_const(
+    numeric_interval = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -187,7 +187,7 @@ def test_series_numeric_interval_get_column_expression(dialect) -> None:
 
 def test_series_numeric_interval_as_index_unstack(dialect) -> None:
     bt = get_fake_df_test_data(dialect)
-    bt['num_interval'] = SeriesNumericInterval.from_const(
+    bt['num_interval'] = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -204,7 +204,7 @@ def test_series_numeric_interval_as_index_unstack(dialect) -> None:
 
 def test_series_numeric_interval_arithmetic_operations(dialect) -> None:
     bt = get_fake_df_test_data(dialect)
-    bt['num_interval'] = SeriesNumericInterval.from_const(
+    bt['num_interval'] = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -223,7 +223,7 @@ def test_series_numeric_interval_arithmetic_operations(dialect) -> None:
 
 def test_series_numeric_interval_as_independent_subquery(dialect) -> None:
     bt = get_fake_df_test_data(dialect)
-    bt['num_interval'] = SeriesNumericInterval.from_const(
+    bt['num_interval'] = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -250,7 +250,7 @@ def test_series_numeric_interval_as_independent_subquery(dialect) -> None:
 
 def test_series_numeric_interval_equals(dialect) -> None:
     bt = get_fake_df_test_data(dialect)
-    bt['num_interval'] = SeriesNumericInterval.from_const(
+    bt['num_interval'] = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -259,7 +259,7 @@ def test_series_numeric_interval_equals(dialect) -> None:
         },
         name='num_interval',
     )
-    bt['num_interval_2'] = SeriesNumericInterval.from_const(
+    bt['num_interval_2'] = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -276,7 +276,7 @@ def test_series_numeric_interval_equals(dialect) -> None:
 
 def test_series_numeric_interval_isnull(dialect) -> None:
     bt = get_fake_df_test_data(dialect)
-    bt['num_interval'] = SeriesNumericInterval.from_const(
+    bt['num_interval'] = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -294,7 +294,7 @@ def test_series_numeric_interval_isnull(dialect) -> None:
 
 def test_series_numeric_interval_notnull(dialect) -> None:
     bt = get_fake_df_test_data(dialect)
-    bt['num_interval'] = SeriesNumericInterval.from_const(
+    bt['num_interval'] = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': 0,
@@ -312,7 +312,7 @@ def test_series_numeric_interval_notnull(dialect) -> None:
 
 def test_series_numeric_interval_fillna(dialect) -> None:
     bt = get_fake_df_test_data(dialect)[['inhabitants']]
-    bt['num_interval'] = SeriesNumericInterval.from_const(
+    bt['num_interval'] = SeriesNumericInterval.from_value(
         base=bt,
         value={
             'lower': bt['inhabitants'],

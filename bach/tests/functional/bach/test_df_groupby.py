@@ -702,7 +702,7 @@ def test_groupby_w_multi_level_series(engine):
 
     bt['upper'] = bt['lower'] * 2 + 1
 
-    bt['range'] = SeriesNumericInterval.from_const(
+    bt['range'] = SeriesNumericInterval.from_value(
         base=bt,
         value={'lower': bt['lower'], 'upper': bt['upper'], 'bounds': '[]'},
         name='range',

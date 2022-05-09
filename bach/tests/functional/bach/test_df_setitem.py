@@ -58,7 +58,7 @@ def test_set_const_float(engine):
         -5.1
     ]
     check_set_const(engine, constants, SeriesFloat64, 'double precision')
-    # See also tests.functional.bach.test_series_float.test_from_const(), which tests some interesting
+    # See also tests.functional.bach.test_series_float.test_from_value(), which tests some interesting
     # special cases.
 
 
