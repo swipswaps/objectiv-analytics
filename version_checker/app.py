@@ -1,4 +1,5 @@
 import uuid
+import os
 
 from flask import Flask, Response, Request
 import flask
@@ -15,8 +16,11 @@ import time
 from objectiv_backend.schema.schema import make_event_from_dict, AbstractEvent
 
 
+TRACKER_URL = os.environ.get('TRACKER_URL', 'http://localhost:5000')
+
+
 def get_current_version(package: str) -> str:
-    # return '0.0.5'
+    return '0.0.5'
 
     url = f'https://pypi.org/pypi/{package}/json'
     headers = {
@@ -36,11 +40,13 @@ def get_current_version(package: str) -> str:
 def parse_payload(request: Request) -> Generator:
     payload = request.data.decode('utf-8')
     for line in payload.split('\n'):
+
         terms = line.split(':')
-        yield {
-            'name': terms[0],
-            'version': terms[1]
-        }
+        if len(terms) > 1:
+            yield {
+                'name': terms[0].strip(),
+                'version': terms[1].strip()
+            }
 
 
 def check_version() -> Response:
@@ -61,11 +67,16 @@ def check_version() -> Response:
                     'update': update_available,
                     'current_version': current_version}
 
-    event = make_event(request)
-    track_event(event)
-
     response = []
-    if not packages:
+    if packages:
+        # only try to track if this request contains a valid payload
+        event = make_event(request)
+        try:
+            track_event(event)
+        except requests.exceptions.RequestException as re:
+            # this shouldn't happen, but we continue, as we can still return version info
+            print(f'Could not send event: {re}')
+    else:
         response.append('error:Could not process request')
 
     for package in packages:
@@ -108,7 +119,7 @@ def track_event(event: AbstractEvent):
         'events': [event],
         'transport_time': int(time.time()*1000)
     }
-    requests.post('http://localhost:8081', data=json.dumps(data), headers=headers)
+    requests.post(TRACKER_URL, data=json.dumps(data), headers=headers)
 
 
 def create_app() -> Flask:
