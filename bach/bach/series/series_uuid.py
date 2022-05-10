@@ -35,11 +35,6 @@ class SeriesUuid(Series):
 
     supported_value_types = (UUID, str)
 
-    to_pandas_info = {
-        DBDialect.POSTGRES: None,
-        DBDialect.BIGQUERY: ToPandasInfo('object', UUID)
-    }
-
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         if is_postgres(dialect):
@@ -107,8 +102,15 @@ class SeriesUuid(Series):
             index=base.engine,
             name='__tmp',
             expression=Expression.construct(expr_str),
-            group_by=None
+            group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
         )
+
+    def to_pandas_info(self) -> Optional[ToPandasInfo]:
+        if is_bigquery(self.engine):
+            return ToPandasInfo('object', UUID)
+        return None
 
     def _comparator_operation(self, other, comparator, other_dtypes=('uuid', 'string')):
         from bach import SeriesBoolean
