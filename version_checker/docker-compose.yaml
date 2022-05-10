@@ -4,17 +4,17 @@ services:
     container_name: objectiv_version_checker
     image: ${OBJECTIV_CONTAINER_URL-objectiv}/version_checker:${OBJECTIV_CONTAINER_TAG-latest}
     environment:
-      - PORT=8001
-      - TRACKER_URL=https://collector-staging.objectiv.io
-      - VIRTUAL_HOST=version-check.objectiv.io
-      - VIRTUAL_PORT=8001
-      - LETSENCRYPT_HOST=version-check.objectiv.io
+      - PORT=${OBJECTIV_VERSION_CHECK_PORT-8001}
+      - TRACKER_URL=${OBJECTIV_TRACKER_URL-http://localhost:8081}|
+      - VIRTUAL_HOST=${OBJECTIV_VERSION_CHECK_URL-http://localhost}
+      - VIRTUAL_PORT=${OBJECTIV_VERSION_CHECK_PORT-8001}
+      - LETSENCRYPT_HOST=${OBJECTIV_VERSION_CHECK_URL-http://localhost}
     expose:
-      - 8001     
+      - ${OBJECTIV_VERSION_CHECK_PORT-8001}
     networks:
       - obj-proxy
     healthcheck:
-      test: [ "CMD", "printf",  "\"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/80" ]
+      test: [ "CMD", "printf",  "\"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/${OBJECTIV_VERSION_CHECK_PORT-8001}" ]
       interval: 30s
       timeout: 2s
       retries: 3
