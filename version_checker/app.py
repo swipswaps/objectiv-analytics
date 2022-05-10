@@ -41,7 +41,6 @@ def get_current_version(package: str) -> str:
 
 def parse_payload(request: Request) -> Generator:
     payload = request.data.decode('utf-8')
-    print(request.data)
     for line in payload.split('\n'):
 
         terms = line.split(':')
