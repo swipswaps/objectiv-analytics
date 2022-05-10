@@ -19,7 +19,7 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes
+from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes, value_to_series_type
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.util import is_bigquery
@@ -148,7 +148,7 @@ class Series(ABC):
         set-up (e.g. matching base_node, index and group_by)
 
         To create a new Series object from scratch there are class helper methods
-        from_const(), get_class_instance().
+        from_value(), get_class_instance().
         It is very common to clone a Series with little changes. Use copy_override() for that.
 
         :param engine: db connection
@@ -368,7 +368,7 @@ class Series(ABC):
         return cls.supported_literal_to_expression(dialect=dialect, literal=literal)
 
     @classmethod
-    def from_const(cls,
+    def from_value(cls,
                    base: DataFrameOrSeries,
                    value: Any,
                    name: str) -> 'Series':
@@ -949,7 +949,7 @@ class Series(ABC):
             raise NotImplementedError(f'binary operation {operation} not supported '
                                       f'for {self.__class__} and {other.__class__}')
 
-        other = const_to_series(base=self, value=other)
+        other = value_to_series(base=self, value=other)
         self_modified, other = self._get_supported(operation, other_dtypes, other)
         expression = NonAtomicExpression.construct(fmt_str, self_modified, other)
 
@@ -1671,7 +1671,7 @@ class Series(ABC):
         return result
 
 
-def const_to_series(base: Union[Series, DataFrame],
+def value_to_series(base: DataFrameOrSeries,
                     value: Union[AllSupportedLiteralTypes, Series],
                     name: str = None) -> Series:
     """
@@ -1679,7 +1679,7 @@ def const_to_series(base: Union[Series, DataFrame],
 
     If value is already a Series it is returned unchanged unless it has no base_node set, in case
     it's a subquery. We create a copy and hook it to our base node in that case, so we can work with it.
-    If value is a constant then the right BuhTuh subclass is found for that type and instantiated
+    If value is a constant then the right Series subclass is found for that type and instantiated
     with the constant value.
     :param base: Base series or DataFrame. In case a new Series object is created and returned, it will
         share its engine, index, and base_node with this one. Only applies if value is not a Series
@@ -1690,13 +1690,12 @@ def const_to_series(base: Union[Series, DataFrame],
     if isinstance(value, Series):
         return value
     name = '__const__' if name is None else name
-    dtype = value_to_dtype(value)
-    series_type = get_series_type_from_dtype(dtype)
-    return series_type.from_const(base=base, value=value, name=name)
+    series_type = value_to_series_type(value)
+    return series_type.from_value(base=base, value=value, name=name)
 
 
 def variable_series(
-    base: Union[Series, DataFrame],
+    base: DataFrameOrSeries,
     value: Union[AllSupportedLiteralTypes, Series],
     name: str
 ) -> Series:
@@ -1711,9 +1710,8 @@ def variable_series(
     """
     if isinstance(value, Series):
         return value
-    dtype = value_to_dtype(value)
-    series_type = get_series_type_from_dtype(dtype)
-    variable_placeholder = Expression.variable(dtype=dtype, name=name)
+    series_type = value_to_series_type(value)
+    variable_placeholder = Expression.variable(dtype=series_type.dtype, name=name)
     variable_expression = series_type.supported_literal_to_expression(
         dialect=base.engine.dialect,
         literal=variable_placeholder

@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy.engine import Dialect
 
 from bach import DataFrameOrSeries
-from bach.series import Series, const_to_series
+from bach.series import Series, value_to_series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition, ToPandasInfo
 from sql_models.constants import DBDialect
@@ -112,7 +112,7 @@ class SeriesUuid(Series):
 
     def _comparator_operation(self, other, comparator, other_dtypes=('uuid', 'string')):
         from bach import SeriesBoolean
-        other = const_to_series(base=self, value=other)
+        other = value_to_series(base=self, value=other)
         self_modified, other = self._get_supported(f"comparator '{comparator}'", other_dtypes, other)
         if other.dtype == 'string' and is_postgres(self.engine):
             expression = Expression.construct(

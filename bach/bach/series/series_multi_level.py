@@ -26,7 +26,7 @@ T = TypeVar('T', bound='SeriesAbstractMultiLevel')
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy
-    from bach.series import Series, SeriesBoolean
+    from bach.series import SeriesBoolean
     from bach.dataframe import DataFrame
 
 
@@ -193,7 +193,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
         raise NotImplementedError()
 
     @classmethod
-    def from_const(
+    def from_value(
         cls,
         base: DataFrameOrSeries,
         value: Any,
@@ -213,10 +213,10 @@ class SeriesAbstractMultiLevel(Series, ABC):
         ):
             raise ValueError(f'value should contain mapping for each {cls.__name__} level')
 
-        from bach.series.series import const_to_series
+        from bach.series.series import value_to_series
 
         levels = {
-            level_name: const_to_series(base, value=level_value)
+            level_name: value_to_series(base=base, value=level_value)
             for level_name, level_value in value.items()
         }
         result = cls.get_class_instance(
@@ -327,7 +327,7 @@ class SeriesAbstractMultiLevel(Series, ABC):
             levels_df_to_append.append(level_df)
 
         appended_df = self.flatten().append(levels_df_to_append)
-        return self.from_const(
+        return self.from_value(
             base=appended_df,
             value={
                 level_name: appended_df[f'_{self.name}_{level_name}'] for level_name in self.levels.keys()
@@ -361,8 +361,8 @@ class SeriesAbstractMultiLevel(Series, ABC):
         if level_name not in supported_dtypes:
             raise ValueError(f'{level_name} is not a supported level in {self.__class__.__name__}.')
 
-        from bach.series.series import const_to_series
-        level = const_to_series(self, value=value)
+        from bach.series.series import value_to_series
+        level = value_to_series(base=self, value=value)
 
         if not any(
             isinstance(level, get_series_type_from_dtype(dtype)) for dtype in supported_dtypes[level_name]
