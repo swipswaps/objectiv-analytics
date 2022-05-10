@@ -10,6 +10,7 @@ from bach import DataFrameOrSeries
 from bach.series import Series, value_to_series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition, ToPandasInfo
+from bach.types import StructuredDtype
 from sql_models.constants import DBDialect
 from sql_models.util import is_postgres, DatabaseNotSupportedException, is_bigquery
 
@@ -44,7 +45,12 @@ class SeriesUuid(Series):
         raise DatabaseNotSupportedException(dialect)
 
     @classmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: Union[UUID, str]) -> Expression:
+    def supported_value_to_literal(
+        cls,
+        dialect: Dialect,
+        value: Union[UUID, str],
+        dtype: StructuredDtype
+    ) -> Expression:
         if isinstance(value, str):
             # Check that the string value is a valid UUID by converting it to a UUID
             value = UUID(value)
@@ -105,6 +111,7 @@ class SeriesUuid(Series):
             group_by=None,
             sorted_ascending=None,
             index_sorting=[],
+            instance_dtype=cls.dtype
         )
 
     def to_pandas_info(self) -> Optional[ToPandasInfo]:
