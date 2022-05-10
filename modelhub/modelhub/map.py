@@ -47,7 +47,6 @@ class Map:
 
         return new_series
 
-    @classmethod
     def is_new_user(self, data: bach.DataFrame, time_aggregation: str = None) -> bach.SeriesBoolean:
         """
         Labels all hits True if the user is first seen in the period given `time_aggregation`.
