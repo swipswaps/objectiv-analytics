@@ -23,6 +23,11 @@ PYPI_URL = os.environ.get('PYPI_HOST', 'http://localhost')
 
 
 def get_current_version(package: str) -> str:
+    """
+    Query PyPi index to find latest version of package
+    :param package: str - name of pacahe
+    :return: str - version if available
+    """
 
     url = f'{PYPI_URL}/pypi/{package}/json'
     headers = {
@@ -40,6 +45,11 @@ def get_current_version(package: str) -> str:
 
 
 def parse_payload(request: Request) -> Generator:
+    """
+    Parse Post payload, should be of the form package:version
+    :param request: Request object
+    :return: Generator with list (if any) of packages and version
+    """
     payload = request.data.decode('utf-8')
     for line in payload.split('\n'):
 
@@ -52,10 +62,17 @@ def parse_payload(request: Request) -> Generator:
 
 
 def check_version() -> Response:
+    """
+    Process incoming version check request:
+    - parse package names and versions from request
+    - query pypi (cache) for current versions
+    - compare, and create response
+    :return:Response object
+    """
+    # we only check our own packages, other packages will be ignored
     packages_to_check = ['objectiv-bach', 'objectiv-modelhub']
 
     request: Request = flask.request
-
     data = parse_payload(request)
     packages = {}
     if data:
@@ -74,7 +91,6 @@ def check_version() -> Response:
                 # this happens if the provided version is invalid
                 pass
 
-    response = []
     if packages:
         # only try to track if this request contains a valid payload
         event = make_event()
@@ -91,17 +107,25 @@ def check_version() -> Response:
             # this shouldn't happen, but we continue, as we can still return version info
             print(f'Could not send event: {re}')
     else:
-        response.append('error:Could not process request')
+        print('error:Could not process request')
 
+    response = []
     for package in packages:
+        # format response, containing package, update status, version, and message
         update = packages[package]['update']
         current_version = packages[package]['current_version']
-        response.append(f'{package}:{update}:{current_version}')
+        message = f'Update available for {package} to {current_version}'
+
+        response.append(f'{package}:{update}:{current_version}:{message}')
 
     return Response(mimetype='application/text', status=200, response='\n'.join(response))
 
 
 def make_event() -> AbstractEvent:
+    """
+    Create valid event to push to collector
+    :return: AbstractEvent
+    """
     event_data = {
         '_type': 'ApplicationLoadedEvent',
         'id': str(uuid.uuid4()),
@@ -118,6 +142,12 @@ def make_event() -> AbstractEvent:
 
 
 def track_event(event: AbstractEvent, user_agent: str):
+    """
+    Post event to collector
+    :param event: AbstractEvent - event to be sent to collector
+    :param user_agent: str - user agent to use in request
+    :return: None
+    """
 
     headers = {
         'Content-Type': 'application/json',

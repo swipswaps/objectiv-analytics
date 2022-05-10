@@ -9,6 +9,12 @@ from modelhub.map import Map
 from modelhub.stack import *
 from modelhub.series import *
 
+
+# Here we do a basic version check, to make sure we are on the most recent versions of objectiv-bach and
+# objectiv-modelhub. This is done by querying the backend that holds a cached version of the latest versions
+# available from the pypi archive. These are compared with the local versions. If a newer version is available
+# a Python warning is emitted.
+
 # we need this to check the environment variables
 import os
 
@@ -42,11 +48,10 @@ if os.environ.get('OBJECTIV_VERSION_CHECK_DISABLE', 'false') == 'false':
                             lines = await resp.text()
                             for line in lines.split('\n'):
                                 items = line.split(':')
-                                if len(items) == 3:
-                                    package, updated, version = items
+                                if len(items) == 4:
+                                    package, updated, version, message = items
                                     # this is a line containing package:updated:version
                                     if updated == 'True':
-                                        message = f'Update available for {package} to {version}'
                                         warnings.warn(category=Warning, message=message)
             except Exception as e:
                 # if this fails, we don't want to know
