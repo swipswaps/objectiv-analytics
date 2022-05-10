@@ -66,13 +66,18 @@ class SeriesDict(Series):
     def from_value(
         cls,
         base: 'DataFrameOrSeries',
-        value: Any,
+        value: Dict[str, Any],
         name: str,
         dtype: Optional[StructuredDtype] = None
     ) -> 'Series':
         """
-        TODO: comments
-        Note: dtype is mandatory for this class
+        Create an instance of this class, that represents a column with the given dict as value.
+        The given base Series/DataFrame will be used to set the engine, base_node, and index.
+
+        :param base:    The DataFrame or Series that the internal parameters are taken from
+        :param value:   The value that this constant Series will have. Cannot be null.
+        :param name:    The name that it will be known by (only for representation)
+        :param dtype:   instance dtype, mandatory. Should be a dict, describing the structure of value.
         """
         # We override the parent class here to allow using Series as sub-values in a dict
         cls._validate_is_bigquery(base.engine.dialect)
@@ -80,6 +85,8 @@ class SeriesDict(Series):
         # validate early, and help mypy
         if not isinstance(dtype, dict):
             raise ValueError(f'Dtype should be type dict. Type(dtype): {type(dtype)}')
+        if value is None:
+            raise ValueError(f'None values are not supported in from_value() by this class.')
         validate_dtype_value(static_dtype=cls.dtype, instance_dtype=dtype, value=value)
 
         sub_exprs = []
@@ -113,7 +120,6 @@ class SeriesDict(Series):
             index_sorting=[],
             instance_dtype=dtype
         )
-        # TODO: check the stuff that Series.from_value() handles like NULL
         return result
 
     @classmethod
@@ -131,14 +137,15 @@ class SeriesDict(Series):
 
     @property
     def elements(self) -> 'DictAccessor':
-        # TODO: what is a good name for this property?
+        """ Accessor to interact with the elements in the dictionary. """
         return DictAccessor(self)
 
 
 class DictAccessor:
     def __init__(self, series: SeriesDict):
         self._series = series
-        # TODO: below checks should not be needed, we should already assure this in Series.__init__()
+        # Below checks on self._series.instance_dtype are not strictly needed, but it helps mypy. We checked
+        # this in Series.__init__(), by calling validate_instance_dtype()
         if not isinstance(self._series.instance_dtype, dict):
             raise Exception('Found type: {self._series.instance_dtype}')
         self._instance_dtype: Dict[str, Any] = self._series.instance_dtype

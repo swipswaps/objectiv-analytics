@@ -68,13 +68,22 @@ class SeriesTuple(Series):
         dtype: Optional[StructuredDtype] = None
     ) -> 'Series':
         """
+        Create an instance of this class, that represents a column with the given tuple as value.
+        The given base Series/DataFrame will be used to set the engine, base_node, and index.
 
+        :param base:    The DataFrame or Series that the internal parameters are taken from
+        :param value:   The value that this constant Series will have. Cannot be null.
+        :param name:    The name that it will be known by (only for representation)
+        :param dtype:   instance dtype, mandatory. Should be a tuple, with the dtypes of the elements of
+                        value.
         """
         # We override the parent class here to allow using Series as sub-values in an array
 
         # validate early, and help mypy
         if not isinstance(dtype, tuple):
             raise ValueError(f'Dtype should be type tuple. Type(dtype): {type(dtype)}')
+        if value is None:
+            raise ValueError(f'None values are not supported in from_value() by this class.')
         validate_dtype_value(static_dtype=cls.dtype, instance_dtype=dtype, value=value)
 
         # Create a deepcopy to prevent any problems if items in the original change.
@@ -117,7 +126,6 @@ class SeriesTuple(Series):
             index_sorting=[],
             instance_dtype=dtype
         )
-        # TODO: check the stuff that Series.from_value() handles like NULL
         return result
 
     @classmethod

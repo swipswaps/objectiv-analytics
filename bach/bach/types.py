@@ -50,6 +50,7 @@ def get_series_type_from_dtype(dtype: DtypeOrAlias) -> Type['Series']:
     """ Given a dtype, return the correct Series subclass. """
     return _registry.get_series_type_from_dtype(dtype)
 
+
 def get_dtype_from_db_dtype(db_dialect: DBDialect, db_dtype: str) -> StructuredDtype:
     """ Given a database datatype, return the dtype of the Series subclass for that datatype. """
     return _registry.get_dtype_from_db_dtype(db_dialect=db_dialect, db_dtype=db_dtype)
@@ -301,7 +302,7 @@ class TypeRegistry:
         if db_dtype in self.db_dtype_to_series[db_dialect]:
             return self.db_dtype_to_series[db_dialect][db_dtype].dtype
         if db_dialect == DBDialect.BIGQUERY:
-            # TODO: clean this up when we support more than two databases
+            # TODO: make this nicer. clean up when we support more than two databases
             from bach.types_bq import bq_db_dtype_to_dtype
             return bq_db_dtype_to_dtype(db_dtype=db_dtype)
         raise ValueError(f'Unknown db_dtype: {db_dtype}')

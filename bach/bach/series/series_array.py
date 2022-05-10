@@ -65,18 +65,27 @@ class SeriesArray(Series):
     def from_value(
         cls,
         base: 'DataFrameOrSeries',
-        value: Any,
+        value: List[Any],
         name: str,
         dtype: Optional[StructuredDtype] = None
     ) -> 'Series':
         """
+        Create an instance of this class, that represents a column with the given list as value.
+        The given base Series/DataFrame will be used to set the engine, base_node, and index.
 
+        :param base:    The DataFrame or Series that the internal parameters are taken from
+        :param value:   The value that this constant Series will have. Cannot be null.
+        :param name:    The name that it will be known by (only for representation)
+        :param dtype:   instance dtype, mandatory. Should be a list with one item in it, the item being the
+                        instance dtype of what is contained in the list
         """
         # We override the parent class here to allow using Series as sub-values in an array
 
         # validate early, and help mypy
         if not isinstance(dtype, list):
             raise ValueError(f'Dtype should be type list. Type(dtype): {type(dtype)}')
+        if value is None:
+            raise ValueError(f'None values are not supported in from_value() by this class.')
         validate_dtype_value(static_dtype=cls.dtype, instance_dtype=dtype, value=value)
 
         sub_dtype = dtype[0]
@@ -114,7 +123,6 @@ class SeriesArray(Series):
             index_sorting=[],
             instance_dtype=dtype
         )
-        # TODO: check the stuff that Series.from_value() handles like NULL
         return result
 
     @staticmethod
@@ -181,7 +189,10 @@ class ArrayAccessor:
                 raise DatabaseNotSupportedException(engine)
 
             expression = Expression.construct(expr_str, self._series)
+            # help mypy. We checked this in Series.__init__(), by calling validate_instance_dtype()
+            assert isinstance(self._series.instance_dtype, list)
             sub_dtype = self._series.instance_dtype[0]
+
             if isinstance(sub_dtype, Dtype):
                 new_dtype = sub_dtype
                 return self._series \

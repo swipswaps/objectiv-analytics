@@ -384,7 +384,6 @@ class Series(ABC):
         if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be one of {cls.supported_value_types}'
                             f', actual type: {type(value)}')
-        # TODO: allow DtypeOrAlias
         if isinstance(dtype, Dtype) and dtype != cls.dtype:
             raise ValueError(f'Dtype "{dtype}" does not match class dtype: {cls.dtype}')
 
@@ -425,8 +424,8 @@ class Series(ABC):
                    dtype: Optional[StructuredDtype] = None) -> 'Series':
         """
         Create an instance of this class, that represents a column with the given value.
-        The returned Series will be similar to the Series given as base. In case a DataFrame is given,
-        it can be used immediately with that frame.
+        The given base Series/DataFrame will be used to set the engine, base_node, and index.
+
         :param base:    The DataFrame or Series that the internal parameters are taken from
         :param value:   The value that this constant Series will have
         :param name:    The name that it will be known by (only for representation)
