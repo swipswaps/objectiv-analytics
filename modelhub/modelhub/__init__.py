@@ -37,7 +37,6 @@ if os.environ.get('OBJECTIV_VERSION_CHECK_DISABLE', 'false') == 'false':
                 timeout = aiohttp.ClientTimeout(total=0.5)
                 async with aiohttp.ClientSession(timeout=timeout) as session:
                     async with session.post(CHECK_URL, data=data) as resp:
-
                         status = resp.status
                         if status == 200:
                             lines = await resp.text()
@@ -52,13 +51,15 @@ if os.environ.get('OBJECTIV_VERSION_CHECK_DISABLE', 'false') == 'false':
             except Exception as e:
                 # if this fails, we don't want to know
                 pass
+
         try:
+            # if there's an existing eventloop, we add a task to it, to run async, non-blocking
             loop = asyncio.get_running_loop()
             loop.create_task(check_package_version())
         except RuntimeError as re:
             try:
-                loop = asyncio.new_event_loop()
-                loop.run_until_complete(check_package_version())
+                # no loop, we create one of our own and run the version check, this is blocking
+                asyncio.run(check_package_version())
             except Exception as e:
                 pass
     except ModuleNotFoundError:
