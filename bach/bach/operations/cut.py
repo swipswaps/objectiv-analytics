@@ -3,12 +3,12 @@ Copyright 2022 Objectiv B.V.
 """
 from enum import Enum
 from typing import cast, List, Union
-from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64, SeriesBoolean
+from bach import (
+    SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame,
+    SeriesBoolean, SeriesString, SeriesNumericInterval,
+)
 from bach.expression import Expression
 import numpy
-
-from bach.series.series_numeric import SeriesNumericInterval
-from sql_models.util import is_bigquery
 
 _RANGE_ADJUSTMENT = 0.001  # Pandas.cut currently uses 1%
 
@@ -63,7 +63,7 @@ class CutOperation:
         self.include_empty_bins = include_empty_bins
         self.method = CutMethod(method)
 
-    def __call__(self) -> SeriesFloat64:
+    def __call__(self) -> SeriesNumericInterval:
         """
         Merges self.series with its correspondent bucket range.
 
@@ -85,7 +85,6 @@ class CutOperation:
         right_df = range_df if not self.include_empty_bins else df
         how = 'inner' if not self.include_empty_bins else 'left'
 
-        #
         fake_merge = left_df.merge(right_df, how='cross')
         if self.right:
             mask = (
@@ -107,7 +106,17 @@ class CutOperation:
         df = left_df.merge(right_df, how=how, on=mask)
 
         df = df.set_index(keys=final_index_keys)
-        return cast(SeriesFloat64, df[self.RANGE_SERIES_NAME])
+
+        range_series = SeriesNumericInterval.from_const(
+            base=df,
+            value={
+                'lower': df['lower_bound'],
+                'upper': df['upper_bound'],
+                'bounds': df['bounds'],
+            },
+            name=self.RANGE_SERIES_NAME,
+        )
+        return cast(SeriesNumericInterval, range_series)
 
     @property
     def bounds(self) -> str:
@@ -207,10 +216,8 @@ class CutOperation:
          * bucket (integer 1 to N)
          * lower_bound (float). if method == 'pandas', adjustments might be performed based on self.right
          * upper_bound (float). if method == 'pandas', adjustments might be performed based on self.right
-         * range (object containing both lower_bound and upper_bound) if method == 'bach', first/last
-            range boundaries will contain both lower and upper edges.
 
-         return a DataFrame with the calculated series from above
+        return a DataFrame with the calculated series from above
         """
 
         # self.series might not have data for all buckets, we need to actually generate the series
@@ -255,20 +262,12 @@ class CutOperation:
             )
 
         range_df = range_df.materialize(node_name='bin_ranges')
-        # casting is needed since numrange does not support float64
-        range_stmt = f'numrange(cast({{}} as numeric), cast({{}} as numeric), {bounds_stmt})'
-        if is_bigquery(self.series.engine):
-            range_stmt = f'struct({{}} as lower, {{}} as upper, {bounds_stmt} as bounds)'
+        range_df['bounds'] = range_df['lower_bound'].copy_override(
+            name='bounds',
+            expression=Expression.construct(bounds_stmt),
+        ).copy_override_type(SeriesString)
 
-        range_df[self.RANGE_SERIES_NAME] = range_df.bucket.copy_override(
-            expression=Expression.construct(range_stmt, range_df['lower_bound'], range_df['upper_bound']),
-        )
-
-        range_df[self.RANGE_SERIES_NAME] = range_df[self.RANGE_SERIES_NAME].copy_override_type(
-            SeriesNumericInterval,
-        )
-
-        return range_df[['bucket', 'lower_bound', 'upper_bound', self.RANGE_SERIES_NAME]]
+        return range_df[['bucket', 'lower_bound', 'upper_bound', 'bounds']]
 
 
 class QCutOperation:
@@ -387,9 +386,7 @@ class QCutOperation:
         quantile_ranges_df[self.RANGE_SERIES_NAME] = lower_bound.copy_override(
             expression=Expression.construct(range_stmt, upper_bound, lower_bound, upper_bound),
         )
-        quantile_ranges_df[self.RANGE_SERIES_NAME] = (
-            quantile_ranges_df[self.RANGE_SERIES_NAME].copy_override_type(SeriesNumericInterval)
-        )
+
         # The expressions of lower_bound and upper_bound are complex and long. Below they are used three
         # times in the expression for the range column. By materializing the dataframe first, we prevent the
         # generated sql from containing duplicated code. Additionally, the generated sql becomes more

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional, Union, List, cast
 import numpy
 import pandas
 
-from bach import SeriesAbstractNumeric
+from bach import SeriesAbstractNumeric, SeriesNumericInterval
 from sql_models.util import is_bigquery
 
 if TYPE_CHECKING:
@@ -52,6 +52,7 @@ class PlotHandler(object):
         freq_df = self._calculate_hist_frequencies(bins, numeric_columns)
 
         # prepare results for Pandas hist compatibility
+        freq_df['lower_edge'] = cast(SeriesNumericInterval, freq_df['range']).lower
         freq_pdf = freq_df.to_pandas()
         freq_pdf = freq_pdf.pivot_table(
             columns='column_label',
@@ -96,11 +97,7 @@ class PlotHandler(object):
 
         # create frequency distribution dataframe per label (numeric column)
         # labels are contained in __stacked_index series (result from DataFrame.stack)
-        from bach.series import SeriesNumericInterval
-        bins_per_col_df['lower_edge'] = (
-            bins_per_col_df['range'].copy_override_type(SeriesNumericInterval).lower
-        )
-        frequencies = bins_per_col_df.groupby(by=['__stacked_index', 'lower_edge']).count()
+        frequencies = bins_per_col_df.groupby(by=['__stacked_index', 'range']).count()
         frequencies = frequencies.reset_index(drop=False)
 
         # rename columns to meaningful names
@@ -108,4 +105,4 @@ class PlotHandler(object):
             columns={'__stacked_index': 'column_label', '__stacked_count': 'frequency'},
         )
         frequencies['column_label'] = frequencies['column_label'].fillna('empty_bins')
-        return frequencies[['column_label', 'frequency', 'lower_edge']]
+        return frequencies[['column_label', 'frequency', 'range']]

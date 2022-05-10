@@ -4,6 +4,7 @@ import pandas as pd
 from bach import Series, DataFrame
 from bach.operations.cut import CutOperation, QCutOperation
 from sql_models.util import quote_identifier, is_bigquery
+from tests.functional.bach.test_data_and_utils import assert_equals_data
 
 PD_TESTING_SETTINGS = {
     'check_dtype': False,
@@ -215,9 +216,17 @@ def test_cut_calculate_bucket_ranges(engine) -> None:
     cut_operation = CutOperation(series=series, bins=bins)
     bucket_properties_df = cut_operation._calculate_bucket_properties()
     result = cut_operation._calculate_bucket_ranges(bucket_properties_df)
-    compare_boundaries(
-        pd.Series([pd.Interval(0.993, 3.333), pd.Interval(3.333, 5.667), pd.Interval(5.667, 8)]),
-        result['range'].sort_index(),
+    assert_equals_data(
+        result,
+        order_by=['lower_bound'],
+        expected_columns=['bucket', 'lower_bound', 'upper_bound', 'bounds'],
+        expected_data=[
+            [1, 0.993, 3.333, '(]'],
+            [2, 3.333, 5.667, '(]'],
+            [3, 5.667, 8, '(]'],
+        ],
+        round_decimals=True,
+        decimal=3,
     )
 
 

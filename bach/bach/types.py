@@ -121,14 +121,14 @@ class TypeRegistry:
 
         # Import locally to prevent cyclic imports
         from bach.series import \
-            SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesNumericInterval, SeriesString,\
+            SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,\
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,\
-            SeriesUuid, SeriesJsonb, SeriesJson
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesNumericInterval
 
         standard_types: List[Type[Series]] = [
-            SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesNumericInterval, SeriesString,
+            SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,
-            SeriesUuid, SeriesJsonb, SeriesJson
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesNumericInterval,
         ]
 
         for klass in standard_types:
@@ -145,10 +145,11 @@ class TypeRegistry:
         self._register_value_klass(numpy.int64, SeriesInt64)
         self._register_value_klass(float, SeriesFloat64)
         self._register_value_klass(numpy.float64, SeriesFloat64)
-        self._register_value_klass(pandas.Interval, SeriesNumericInterval)
         self._register_value_klass(bool, SeriesBoolean)
         self._register_value_klass(type(None), SeriesString)  # NoneType ends up as a string for now
         self._register_value_klass(str, SeriesString)
+        self._register_value_klass(pandas.Interval, SeriesNumericInterval)
+
         self._register_value_klass(datetime.date, SeriesDate)
         self._register_value_klass(datetime.time, SeriesTime)
         self._register_value_klass(datetime.datetime, SeriesTimestamp)

@@ -5,17 +5,16 @@ from abc import ABC
 from typing import cast, Union, TYPE_CHECKING, Optional, List, Tuple
 
 import numpy
-import pandas
 from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression, AggregateFunctionExpression
-from bach.series.series import WrappedPartition, ToPandasInfo
+from bach.series.series import WrappedPartition
 from sql_models.constants import DBDialect
 from sql_models.util import is_postgres, is_bigquery, DatabaseNotSupportedException
 
 if TYPE_CHECKING:
-    from bach.series import SeriesBoolean
+    from bach.series import SeriesBoolean, SeriesNumericInterval
 
 
 class SeriesAbstractNumeric(Series, ABC):
@@ -54,7 +53,7 @@ class SeriesAbstractNumeric(Series, ABC):
             expression=Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
 
-    def cut(self, bins: int, right: bool = True) -> 'SeriesAbstractNumeric':
+    def cut(self, bins: int, right: bool = True) -> 'SeriesNumericInterval':
         """
         Segments values into bins.
 
@@ -318,87 +317,3 @@ class SeriesFloat64(SeriesAbstractNumeric):
         if source_dtype not in ['int64', 'string']:
             raise ValueError(f'cannot convert {source_dtype} to float64')
         return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
-
-
-def _parse_numeric_interval_value(dialect: DBDialect, value):
-    if value is None:
-        return value
-
-    # expects a NUMRANGE db type
-    if dialect == DBDialect.POSTGRES:
-        if value.lower_inc and value.upper_inc:
-            closed = 'both'
-        elif value.lower_inc:
-            closed = 'left'
-        else:
-            closed = 'right'
-        return pandas.Interval(float(value.lower), float(value.upper), closed=closed)
-
-    # expects a dict with interval information
-    elif dialect == DBDialect.BIGQUERY:
-        expected_keys = ['lower', 'upper', 'bounds']
-        if not isinstance(value, dict) or not all(k in value for k in expected_keys):
-            raise ValueError(f'{value} has not the expected structure.')
-
-        if value['bounds'] == '[]':
-            closed = 'both'
-        elif value['bounds'] == '[)':
-            closed = 'left'
-        else:
-            closed = 'right'
-        return pandas.Interval(float(value['lower']), float(value['upper']), closed=closed)
-
-    else:
-        raise DatabaseNotSupportedException(dialect)
-
-
-class SeriesNumericInterval(SeriesAbstractNumeric):
-    dtype = 'numeric_interval'
-    dtype_aliases = (pandas.Interval, 'numrange')
-    supported_db_dtype = {
-        DBDialect.POSTGRES: 'numrange',
-        DBDialect.BIGQUERY: 'STRUCT<lower FLOAT64, upper FLOAT64, bounds STRING(2)>'
-    }
-    to_pandas_info = {
-        DBDialect.POSTGRES: ToPandasInfo(
-            dtype='object', function=lambda value: _parse_numeric_interval_value(DBDialect.POSTGRES, value),
-        ),
-        DBDialect.BIGQUERY: ToPandasInfo(
-            dtype='object', function=lambda value: _parse_numeric_interval_value(DBDialect.BIGQUERY, value),
-        ),
-    }
-
-    supported_value_types = (pandas.Interval, dict)
-
-    @classmethod
-    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        raise NotImplementedError
-
-    @classmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: Union[float, numpy.float64]) -> Expression:
-        raise NotImplementedError
-
-    @classmethod
-    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
-        raise NotImplementedError
-
-    @property
-    def lower(self) -> SeriesFloat64:
-        return self._get_interval_attr('lower')
-
-    @property
-    def get_upper_bound(self) -> SeriesFloat64:
-        return self._get_interval_attr('upper')
-
-    def _get_interval_attr(self, attr: str) -> SeriesFloat64:
-        if is_postgres(self.engine):
-            return self.copy_override(
-                expression=Expression.construct(f'{attr}({{}})', self),
-            ).copy_override_type(SeriesFloat64)
-
-        if is_bigquery(self.engine):
-            return self.copy_override(
-                expression=Expression.construct(f'{{}}.`{attr}`', self)
-            ).copy_override_type(SeriesFloat64)
-
-        raise DatabaseNotSupportedException(self.engine)

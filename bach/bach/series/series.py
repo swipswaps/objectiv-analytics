@@ -25,7 +25,7 @@ from sql_models.constants import NotSet, not_set, DBDialect
 from sql_models.util import is_bigquery
 
 if TYPE_CHECKING:
-    from bach.partitioning import GroupBy, Window
+    from bach.partitioning import GroupBy, Window, WindowFunction
     from bach.series import SeriesBoolean
 
 T = TypeVar('T', bound='Series')
@@ -122,15 +122,18 @@ class Series(ABC):
     to_pandas().
     """
 
-    def __init__(self,
-                 engine: Engine,
-                 base_node: BachSqlModel,
-                 index: Dict[str, 'Series'],
-                 name: str,
-                 expression: Expression,
-                 group_by: Optional['GroupBy'],
-                 sorted_ascending: Optional[bool],
-                 index_sorting: List[bool]):
+    def __init__(
+        self,
+        engine: Engine,
+        base_node: BachSqlModel,
+        index: Dict[str, 'Series'],
+        name: str,
+        expression: Expression,
+        group_by: Optional['GroupBy'],
+        sorted_ascending: Optional[bool],
+        index_sorting: List[bool],
+        **kwargs,
+    ) -> None:
         """
         Initialize a new Series object.
         If a Series is associated with a DataFrame. The engine, base_node and index
@@ -311,24 +314,28 @@ class Series(ABC):
 
     @classmethod
     def get_class_instance(
-            cls,
-            base: DataFrameOrSeries,
-            name: str,
-            expression: Expression,
-            group_by: Optional['GroupBy'],
-            sorted_ascending: Optional[bool] = None,
-            index_sorting: List[bool] = None
+        cls,
+        engine: Engine,
+        base_node: BachSqlModel,
+        index: Dict[str, 'Series'],
+        name: str,
+        expression: Expression,
+        group_by: Optional['GroupBy'],
+        sorted_ascending: Optional[bool] = None,
+        index_sorting: List[bool] = None,
+        **kwargs,
     ):
         """ INTERNAL: Create an instance of this class. """
         return cls(
-            engine=base.engine,
-            base_node=base.base_node,
-            index=base.index,
+            engine=engine,
+            base_node=base_node,
+            index=index,
             name=name,
             expression=expression,
             group_by=group_by,
             sorted_ascending=sorted_ascending,
-            index_sorting=[] if index_sorting is None else index_sorting
+            index_sorting=[] if index_sorting is None else index_sorting,
+            **kwargs,
         )
 
     @classmethod
@@ -375,7 +382,9 @@ class Series(ABC):
         """
         expression = ConstValueExpression(cls.value_to_expression(dialect=base.engine.dialect, value=value))
         result = cls.get_class_instance(
-            base=base,
+            engine=base.engine,
+            base_node=base.base_node,
+            index=base.index,
             name=name,
             expression=expression,
             group_by=None,
@@ -407,7 +416,8 @@ class Series(ABC):
         expression: Optional['Expression'] = None,
         group_by: Optional[Union['GroupBy', NotSet]] = not_set,
         sorted_ascending: Optional[Union[bool, NotSet]] = not_set,
-        index_sorting: Optional[List[bool]] = None
+        index_sorting: Optional[List[bool]] = None,
+        **kwargs,
     ) -> T:
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
@@ -426,7 +436,8 @@ class Series(ABC):
             expression=self._expression if expression is None else expression,
             group_by=self._group_by if group_by is not_set else group_by,
             sorted_ascending=self._sorted_ascending if sorted_ascending is not_set else sorted_ascending,
-            index_sorting=self._index_sorting if index_sorting is None else index_sorting
+            index_sorting=self._index_sorting if index_sorting is None else index_sorting,
+            **kwargs,
         )
 
     def copy_override_dtype(self, dtype: Optional[str]) -> 'Series':
@@ -437,7 +448,7 @@ class Series(ABC):
         klass: Type['Series'] = get_series_type_from_dtype(self.dtype if dtype is None else dtype)
         return self.copy_override_type(klass)
 
-    def copy_override_type(self, series_type: Type[T]) -> T:
+    def copy_override_type(self, series_type: Type[T], **kwargs) -> T:
         """
         INTERNAL: create an instance of the given Series subtype, copy all values from self.
         """
@@ -449,7 +460,8 @@ class Series(ABC):
             expression=self._expression,
             group_by=self._group_by,
             sorted_ascending=self._sorted_ascending,
-            index_sorting=self._index_sorting
+            index_sorting=self._index_sorting,
+            **kwargs,
         )
 
     def unstack(
@@ -726,6 +738,11 @@ class Series(ABC):
             This will maintain Expression.is_single_value status
         """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
+        if series.expression.has_multi_level_expressions:
+            raise NotImplementedError(
+                'Series with multiple level expressions cannot be used as independent subquery.'
+            )
+
         if series.expression.is_independent_subquery:
             expr = series.expression
         else:
@@ -1055,6 +1072,9 @@ class Series(ABC):
         .. warning::
             You should probably not use this method directly.
         """
+        if self.expression.has_multi_level_expressions:
+            raise NotImplementedError('cannot apply functions to a series with multiple levels.')
+
         if isinstance(func, str) or callable(func):
             func = [func]
         if not isinstance(func, list):
@@ -1206,6 +1226,9 @@ class Series(ABC):
                              f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
 
+        if self.expression.has_multi_level_expressions:
+            raise ValueError('Cannot call an aggregation function on a series containing multiple levels.')
+
         if isinstance(expression, str):
             expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
 
@@ -1312,6 +1335,10 @@ class Series(ABC):
         :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
         :returns: a new Series with the aggregation applied
 
+        ..warning::
+            The result of this function might be non-deterministic if there are multiple values with
+            the same frequency.
+
         ..note::
             BigQuery has no support for aggregation function ``MODE``, therefore ``APPROX_TOP_COUNT``
             approximate aggregate function is used instead. Which means that an approximate result will
@@ -1369,18 +1396,27 @@ class Series(ABC):
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
     # TODO make group_by optional, but for that we need to use current series sorting
-    def _check_window(self, window: WrappedWindow = None) -> 'Window':
+    def _check_window(
+        self, agg_function: 'WindowFunction', window: Optional[WrappedWindow],
+    ) -> 'Window':
         """
         Validate that the given partition or the stored group_by is a true Window or raise an exception
         """
         from bach.partitioning import Window
-        return cast(Window, self._check_unwrap_groupby(window, isin=Window))
+        checked_window = cast(Window, self._check_unwrap_groupby(window, isin=Window))
+
+        if not agg_function.supports_window_frame_clause(dialect=self.engine.dialect):
+            # remove boundaries if the functions does not support window frame clause
+            return checked_window.set_frame_clause(start_boundary=None, end_boundary=None)
+
+        return checked_window
 
     def window_row_number(self, window: WrappedWindow = None):
         """
         Returns the number of the current row within its window, counting from 1.
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.ROW_NUMBER, window)
         return self._derived_agg_func(window, Expression.construct('row_number()'), 'int64')
 
     def window_rank(self, window: WrappedWindow = None):
@@ -1388,7 +1424,8 @@ class Series(ABC):
         Returns the rank of the current row, with gaps; that is, the row_number of the first row
         in its peer group.
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.RANK, window)
         return self._derived_agg_func(window, Expression.construct('rank()'), 'int64')
 
     def window_dense_rank(self, window: WrappedWindow = None):
@@ -1396,7 +1433,8 @@ class Series(ABC):
         Returns the rank of the current row, without gaps; this function effectively counts peer
         groups.
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.DENSE_RANK, window)
         return self._derived_agg_func(window, Expression.construct('dense_rank()'), 'int64')
 
     def window_percent_rank(self, window: WrappedWindow = None):
@@ -1405,7 +1443,8 @@ class Series(ABC):
         (rank - 1) / (total partition rows - 1).
         The value thus ranges from 0 to 1 inclusive.
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.PERCENT_RANK, window)
         return self._derived_agg_func(window, Expression.construct('percent_rank()'), "double precision")
 
     def window_cume_dist(self, window: WrappedWindow = None):
@@ -1414,7 +1453,8 @@ class Series(ABC):
         (number of partition rows preceding or peers with current row) / (total partition rows).
         The value thus ranges from 1/N to 1.
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.CUME_DIST, window)
         return self._derived_agg_func(window, Expression.construct('cume_dist()'), "double precision")
 
     def window_ntile(self, num_buckets: int = 1, window: WrappedWindow = None):
@@ -1422,7 +1462,8 @@ class Series(ABC):
         Returns an integer ranging from 1 to the argument value,
         dividing the partition as equally as possible.
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.NTILE, window)
         return self._derived_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
 
     def window_lag(self, offset: int = 1, default: Any = None, window: WrappedWindow = None):
@@ -1435,8 +1476,9 @@ class Series(ABC):
         :param default: The value to return if no value is available, can be a constant value or Series.
         Defaults to None
         """
+        from bach.partitioning import WindowFunction
         # TODO Lag, lead etc. could check whether the window is setup correctly to include that value
-        window = self._check_window(window)
+        window = self._check_window(WindowFunction.LAG, window)
         default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default)
         return self._derived_agg_func(
             window,
@@ -1454,7 +1496,8 @@ class Series(ABC):
         :param default: The value to return if no value is available, can be a constant value or Series.
         Defaults to None
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.LEAD, window)
         default_expr = self.value_to_expression(dialect=self.engine.dialect, value=default)
         return self._derived_agg_func(
             window,
@@ -1466,7 +1509,8 @@ class Series(ABC):
         """
         Returns value evaluated at the row that is the first row of the window frame.
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.FIRST_VALUE, window)
         return self._derived_agg_func(
             window,
             Expression.construct('first_value({})', self),
@@ -1477,7 +1521,8 @@ class Series(ABC):
         """
         Returns value evaluated at the row that is the last row of the window frame.
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.LAST_VALUE, window)
         return self._derived_agg_func(window, Expression.construct('last_value({})', self), self.dtype)
 
     def window_nth_value(self, n: int, window: WrappedWindow = None):
@@ -1485,7 +1530,8 @@ class Series(ABC):
         Returns value evaluated at the row that is the n'th row of the window frame.
         (counting from 1); returns NULL if there is no such row.
         """
-        window = self._check_window(window)
+        from bach.partitioning import WindowFunction
+        window = self._check_window(WindowFunction.NTH_VALUE, window)
         return self._derived_agg_func(
             window,
             Expression.construct(f'nth_value({{}}, {n})', self),
@@ -1673,7 +1719,9 @@ def variable_series(
         literal=variable_placeholder
     )
     result = series_type.get_class_instance(
-        base=base,
+        engine=base.engine,
+        base_node=base.base_node,
+        index=base.index,
         name='__variable__',
         expression=ConstValueExpression(variable_expression),
         group_by=None,
