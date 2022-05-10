@@ -17,7 +17,7 @@ from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, AllSupportedLiteralTypes
 from bach.utils import escape_parameter_characters
-from sql_models.constants import NotSet, not_set, DBDialect
+from sql_models.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
@@ -1908,13 +1908,11 @@ class DataFrame:
         .. note::
             This function queries the database.
         """
-        db_dialect = DBDialect.from_engine(self.engine)
-
         sql = self.view_sql(limit=limit)
 
         series_name_to_dtype = {}
         for series in self.all_series.values():
-            pandas_info = series.to_pandas_info.get(db_dialect)
+            pandas_info = series.to_pandas_info()
             if pandas_info is not None:
                 series_name_to_dtype[series.name] = pandas_info.dtype
 
@@ -1926,7 +1924,7 @@ class DataFrame:
         # Post-process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
         # the strings that the query gives us into UUID objects
         for name, series in self.all_series.items():
-            to_pandas_info = series.to_pandas_info.get(db_dialect)
+            to_pandas_info = series.to_pandas_info()
             if to_pandas_info is not None and to_pandas_info.function is not None:
                 pandas_df[name] = pandas_df[name].apply(to_pandas_info.function)
 
@@ -2130,7 +2128,9 @@ class DataFrame:
 
         :param right: DataFrame or Series to join on self
         :param how: supported values: {‘left’, ‘right’, ‘outer’, ‘inner’, ‘cross’}
-        :param on: optional, column(s) to join left and right on.
+        :param on: optional, column(s) or condition(s) to join left and right on.
+            If *on* is based on a condition (``SeriesBoolean``), the condition MUST make reference to both
+            nodes involved in the merge.
         :param left_on: optional, column(s) from the left df to join on
         :param right_on: optional, column(s) from the right df/series to join on
         :param left_index: If true uses the index of the left df as columns to join on
