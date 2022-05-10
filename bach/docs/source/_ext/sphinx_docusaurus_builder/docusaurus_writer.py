@@ -1,3 +1,4 @@
+from glob import escape
 from .depth import Depth
 from .doctree2md import Translator, Writer
 from docutils import nodes
@@ -21,6 +22,7 @@ class DocusaurusTranslator(Translator):
     title = None # document title
     visited_title = False # whether title was parsed yet
     current_desc_type = None # the current class or method or property being parsed (if any)
+    parsed_desc_name = False  # whether already parsed a desc name (e.g. to not insert newlines for params)
     autosummary_shown = [] # holds for which class/method an autosummary has already been shown (if any)
     in_signature = False # whether currently processing a signature (e.g. to not insert newlines)
     in_table = False # whether currently processing a table (e.g. to not insert newlines)
@@ -120,8 +122,6 @@ class DocusaurusTranslator(Translator):
         """The root of the tree.
         https://docutils.sourceforge.io/docs/ref/doctree.html#document"""
         self.title = getattr(self.builder, 'current_docname')
-        if 'ModelHub.aggregate' in self.title:
-            print("DOCUMENT:", node)
 
 
     def depart_document(self, node):
@@ -268,8 +268,8 @@ class DocusaurusTranslator(Translator):
         # Docusaurus doesn't support MDXv2 yet: https://github.com/facebook/docusaurus/issues/4029
         # so we cannot add an MD-formatted link in a <span> element, as it won't get parsed.
         # therefore, for now, we add these on a newline.
-        if(self.in_signature):
-            self.add('\n\n ')
+        # if(self.in_signature):
+        #     self.add('\n\n ')
 
         # do the same for 'any view source' links
         if('viewcode-link' in node.attributes['classes']):
@@ -284,8 +284,8 @@ class DocusaurusTranslator(Translator):
             child.walkabout(self)
         self.add(']({})'.format(url))
 
-        if(self.in_signature):
-            self.add('\n\n')
+        # if(self.in_signature):
+        #     self.add('\n\n')
 
         if('viewcode-link' in node.attributes['classes']):
             self.add("</span>\n")
@@ -440,9 +440,9 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_field_body(self, node):
-      """Container for the body of a field: 
-      https://docutils.sourceforge.io/docs/ref/doctree.html#field-body"""
-      pass
+        """Container for the body of a field: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#field-body"""
+        pass
 
 
     def visit_field_name(self, node):
@@ -619,6 +619,7 @@ class DocusaurusTranslator(Translator):
 
     ################################################################################
     # Classes/methods/properties and autosummaries
+    # https://www.sphinx-doc.org/en/master/extdev/nodes.html
 
     def visit_desc(self, node):
         """Container for class and method and property descriptions."""
@@ -629,6 +630,7 @@ class DocusaurusTranslator(Translator):
             self.add('<div className="' + desctype + '">\n')
         else:
             self.add('<div>\n')
+        self.parsed_desc_name = False # whether the name has already been parsed
 
 
     def depart_desc(self, node):
@@ -640,12 +642,9 @@ class DocusaurusTranslator(Translator):
     def visit_desc_signature(self, node):
         """The main signature (i.e. its name + parameters) of a class/method/property."""
         self.in_signature = True
-        # TODO: increase heading levels if description is nested in another one (e.g. in modelhub.ModelHub.aggregate)
+        # TBD: increase heading levels if description is nested in another one (e.g. in modelhub.ModelHub.aggregate)
         desc_depth = self.depth.get('desc')
-        if self.current_desc_type in ['class', 'method', 'property']:
-            self.add('\n<h2 className="signature-' + self.current_desc_type + '">')
-        else:
-            self.add("\n<h2>")
+        self.add("\n## ")
 
 
     def depart_desc_signature(self, node):
@@ -654,26 +653,26 @@ class DocusaurusTranslator(Translator):
         # only close the signature if it's not a property (which has no params)
         if (self.current_desc_type != 'property'):
             self.add(')')
-        self.add('</h2>\n\n')
+        self.add('\n\n')
 
 
     def visit_desc_annotation(self, node):
         """Type annotation of the description, e.g 'method', 'class'."""
         self.add('<span className="type-annotation">')
         self.add('<em>')
+        if self.parsed_desc_name:
+            # already parsed desc name; add newlines so references within the annotation render properly in MD
+            self.add('\n\n')
 
 
     def depart_desc_annotation(self, node):
         """Type annotation of the description, e.g 'method', 'class'."""
-        # if this is a property and it has params, properly close it
-        # otherwise, remove the last element (=")" in case of a class/method)
-        if (self.current_desc_type == 'property' 
-                and node.children[0].astext() != 'property' 
-                and len(node.children) > 0):
-            self.add('\n\n')
-        else:
+        # if this is not a property (i.e. a class/method), remove the last element (=")"
+        if not self.current_desc_type == 'property':
             self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
-        
+        if self.parsed_desc_name:
+            # already parsed desc name; add newlines so references within the annotation render properly in MD
+            self.add('\n\n')
         self.add('</em>')
         self.add('</span> ')
 
@@ -698,15 +697,16 @@ class DocusaurusTranslator(Translator):
 
     def depart_desc_name(self, node):
         """Name of the class/method/property."""
-        # only open the signature if it's not a property (which has no params)
-        if (self.current_desc_type != 'property'):
-            self.add('(')
-        self.add('</span>')
+        self.add('</span>\n\n')
+        # set that we've processed the desc name, so annotations can start using newlines
+        self.parsed_desc_name = True
 
 
     def visit_desc_parameterlist(self, node):
         """Method/class parameter list."""
         self.add('<small className="parameter-list">')
+        if (self.current_desc_type != 'property'):
+            self.add('(')
 
 
     def depart_desc_parameterlist(self, node):
