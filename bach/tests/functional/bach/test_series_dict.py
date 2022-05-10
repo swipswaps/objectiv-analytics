@@ -7,7 +7,6 @@ from tests.functional.bach.test_data_and_utils import get_df_with_test_data, ass
 
 
 pytestmark = [pytest.mark.skip_postgres]  # SeriesDict is not supported on Postgres at all.
-# TODO: a unit-test that postgres users get a proper error
 
 
 def test_basic_value_to_expression(engine):

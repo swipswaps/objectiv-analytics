@@ -133,7 +133,8 @@ class SeriesDict(Series):
         if not is_bigquery(dialect):
             raise DatabaseNotSupportedException(
                 dialect,
-                message_override=f'SeriesDict is not supported for {dialect.name}, try SeriesJson.')
+                message_override=f'SeriesDict is not supported for {dialect.name}, '
+                                 f'try SeriesJson for similar functionality.')
 
     @property
     def elements(self) -> 'DictAccessor':
