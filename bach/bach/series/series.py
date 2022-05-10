@@ -19,10 +19,10 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
 
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype, DtypeOrAlias, AllSupportedLiteralTypes
+from bach.types import DtypeOrAlias, AllSupportedLiteralTypes, value_to_series_type
 from bach.utils import is_valid_column_name
 from sql_models.constants import NotSet, not_set, DBDialect
-from sql_models.util import is_bigquery
+from sql_models.util import is_bigquery, DatabaseNotSupportedException
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window, WindowFunction
@@ -108,29 +108,18 @@ class Series(ABC):
     by :meth:`supported_value_to_literal()`.
     """
 
-    to_pandas_info: Mapping[DBDialect, Optional[ToPandasInfo]] = {}
-    """
-    INTERNAL: Optional information on how to map query-results to pandas types.
-
-    ToPandasInfo defines both the pandas-dtype of the data, and an optional function to apply to query
-    results.
-
-    If defined for a given DBDialect, we use this information in :meth:`DataFrame.to_pandas()`, be setting
-    the dtype and applying the function to columns of the resulting pandas DataFrame.
-
-    Example usage: UUIDs in BigQuery are represented as strings, we convert these strings to UUID objects in
-    to_pandas().
-    """
-
-    def __init__(self,
-                 engine: Engine,
-                 base_node: BachSqlModel,
-                 index: Dict[str, 'Series'],
-                 name: str,
-                 expression: Expression,
-                 group_by: Optional['GroupBy'],
-                 sorted_ascending: Optional[bool],
-                 index_sorting: List[bool]):
+    def __init__(
+        self,
+        engine: Engine,
+        base_node: BachSqlModel,
+        index: Dict[str, 'Series'],
+        name: str,
+        expression: Expression,
+        group_by: Optional['GroupBy'],
+        sorted_ascending: Optional[bool],
+        index_sorting: List[bool],
+        **kwargs,
+    ) -> None:
         """
         Initialize a new Series object.
         If a Series is associated with a DataFrame. The engine, base_node and index
@@ -145,7 +134,7 @@ class Series(ABC):
         set-up (e.g. matching base_node, index and group_by)
 
         To create a new Series object from scratch there are class helper methods
-        from_const(), get_class_instance().
+        from_value(), get_class_instance().
         It is very common to clone a Series with little changes. Use copy_override() for that.
 
         :param engine: db connection
@@ -165,7 +154,7 @@ class Series(ABC):
         #   properties:
         #   * subclasses MUST override one class property: 'dtype',
         #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype',
-        #       'supported_value_types', and 'to_pandas_info'
+        #       'supported_value_types'
         # Unfortunately defining these properties as an "abstract-classmethod-property" makes it hard
         # to understand for mypy, sphinx, and python. Therefore, we check here that we are instantiating a
         # proper subclass, instead of just relying on @abstractmethod.
@@ -302,7 +291,7 @@ class Series(ABC):
         """
         Get this Series' index sorting. An empty list indicates no sorting by index.
         """
-        return self._index_sorting
+        return copy(self._index_sorting)
 
     @property
     def expression(self) -> Expression:
@@ -311,30 +300,41 @@ class Series(ABC):
 
     @classmethod
     def get_class_instance(
-            cls,
-            base: DataFrameOrSeries,
-            name: str,
-            expression: Expression,
-            group_by: Optional['GroupBy'],
-            sorted_ascending: Optional[bool] = None,
-            index_sorting: List[bool] = None
+        cls,
+        engine: Engine,
+        base_node: BachSqlModel,
+        index: Dict[str, 'Series'],
+        name: str,
+        expression: Expression,
+        group_by: Optional['GroupBy'],
+        sorted_ascending: Optional[bool],
+        index_sorting: List[bool],
+        **kwargs,
     ):
         """ INTERNAL: Create an instance of this class. """
         return cls(
-            engine=base.engine,
-            base_node=base.base_node,
-            index=base.index,
+            engine=engine,
+            base_node=base_node,
+            index=index,
             name=name,
             expression=expression,
             group_by=group_by,
             sorted_ascending=sorted_ascending,
-            index_sorting=[] if index_sorting is None else index_sorting
+            index_sorting=[] if index_sorting is None else index_sorting,
+            **kwargs,
         )
 
     @classmethod
     def get_db_dtype(cls, dialect: Dialect) -> str:
-        """ Given the db_dtype of this Series, for the given database dialect. """
+        """
+        Give the static db_dtype of this Series, for the given database dialect.
+        :raises DatabaseNotSupportedException:  If the db_dtype is not defined for the given dialect.
+        """
         db_dialect = DBDialect.from_dialect(dialect)
+        if db_dialect not in cls.supported_db_dtype:
+            raise DatabaseNotSupportedException(
+                dialect,
+                message_override=f'Cannot get db type of {cls.__name__} for {dialect.name}')
         return cls.supported_db_dtype[db_dialect]
 
     @classmethod
@@ -361,7 +361,7 @@ class Series(ABC):
         return cls.supported_literal_to_expression(dialect=dialect, literal=literal)
 
     @classmethod
-    def from_const(cls,
+    def from_value(cls,
                    base: DataFrameOrSeries,
                    value: Any,
                    name: str) -> 'Series':
@@ -375,10 +375,14 @@ class Series(ABC):
         """
         expression = ConstValueExpression(cls.value_to_expression(dialect=base.engine.dialect, value=value))
         result = cls.get_class_instance(
-            base=base,
+            engine=base.engine,
+            base_node=base.base_node,
+            index=base.index,
             name=name,
             expression=expression,
             group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
         )
         return result
 
@@ -407,7 +411,8 @@ class Series(ABC):
         expression: Optional['Expression'] = None,
         group_by: Optional[Union['GroupBy', NotSet]] = not_set,
         sorted_ascending: Optional[Union[bool, NotSet]] = not_set,
-        index_sorting: Optional[List[bool]] = None
+        index_sorting: Optional[List[bool]] = None,
+        **kwargs,
     ) -> T:
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
@@ -426,7 +431,8 @@ class Series(ABC):
             expression=self._expression if expression is None else expression,
             group_by=self._group_by if group_by is not_set else group_by,
             sorted_ascending=self._sorted_ascending if sorted_ascending is not_set else sorted_ascending,
-            index_sorting=self._index_sorting if index_sorting is None else index_sorting
+            index_sorting=self._index_sorting if index_sorting is None else index_sorting,
+            **kwargs,
         )
 
     def copy_override_dtype(self, dtype: Optional[str]) -> 'Series':
@@ -437,7 +443,7 @@ class Series(ABC):
         klass: Type['Series'] = get_series_type_from_dtype(self.dtype if dtype is None else dtype)
         return self.copy_override_type(klass)
 
-    def copy_override_type(self, series_type: Type[T]) -> T:
+    def copy_override_type(self, series_type: Type[T], **kwargs) -> T:
         """
         INTERNAL: create an instance of the given Series subtype, copy all values from self.
         """
@@ -449,8 +455,23 @@ class Series(ABC):
             expression=self._expression,
             group_by=self._group_by,
             sorted_ascending=self._sorted_ascending,
-            index_sorting=self._index_sorting
+            index_sorting=self._index_sorting,
+            **kwargs,
         )
+
+    def to_pandas_info(self) -> Optional['ToPandasInfo']:
+        """
+        INTERNAL: Optional information on how to map query-results to pandas types.
+        Subclasses can override this function as needed. By default, this returns None.
+
+        ToPandasInfo defines both the pandas-dtype of the data, and an optional function to apply to query
+        results. If defined for a given DBDialect, we use this information in :meth:`DataFrame.to_pandas()`,
+        by setting the dtype and applying the function to columns of the resulting pandas DataFrame.
+
+        Example usage: UUIDs in BigQuery are represented as strings, we convert these strings to UUID
+        objects in to_pandas().
+        """
+        return None
 
     def unstack(
         self,
@@ -726,6 +747,11 @@ class Series(ABC):
             This will maintain Expression.is_single_value status
         """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
+        if series.expression.has_multi_level_expressions:
+            raise NotImplementedError(
+                'Series with multiple level expressions cannot be used as independent subquery.'
+            )
+
         if series.expression.is_independent_subquery:
             expr = series.expression
         else:
@@ -932,7 +958,7 @@ class Series(ABC):
             raise NotImplementedError(f'binary operation {operation} not supported '
                                       f'for {self.__class__} and {other.__class__}')
 
-        other = const_to_series(base=self, value=other)
+        other = value_to_series(base=self, value=other)
         self_modified, other = self._get_supported(operation, other_dtypes, other)
         expression = NonAtomicExpression.construct(fmt_str, self_modified, other)
 
@@ -1055,6 +1081,9 @@ class Series(ABC):
         .. warning::
             You should probably not use this method directly.
         """
+        if self.expression.has_multi_level_expressions:
+            raise NotImplementedError('cannot apply functions to a series with multiple levels.')
+
         if isinstance(func, str) or callable(func):
             func = [func]
         if not isinstance(func, list):
@@ -1205,6 +1234,9 @@ class Series(ABC):
             raise ValueError(f'Cannot call an aggregation function on already aggregated column '
                              f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
+
+        if self.expression.has_multi_level_expressions:
+            raise ValueError('Cannot call an aggregation function on a series containing multiple levels.')
 
         if isinstance(expression, str):
             expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
@@ -1648,7 +1680,7 @@ class Series(ABC):
         return result
 
 
-def const_to_series(base: Union[Series, DataFrame],
+def value_to_series(base: DataFrameOrSeries,
                     value: Union[AllSupportedLiteralTypes, Series],
                     name: str = None) -> Series:
     """
@@ -1656,7 +1688,7 @@ def const_to_series(base: Union[Series, DataFrame],
 
     If value is already a Series it is returned unchanged unless it has no base_node set, in case
     it's a subquery. We create a copy and hook it to our base node in that case, so we can work with it.
-    If value is a constant then the right BuhTuh subclass is found for that type and instantiated
+    If value is a constant then the right Series subclass is found for that type and instantiated
     with the constant value.
     :param base: Base series or DataFrame. In case a new Series object is created and returned, it will
         share its engine, index, and base_node with this one. Only applies if value is not a Series
@@ -1667,13 +1699,12 @@ def const_to_series(base: Union[Series, DataFrame],
     if isinstance(value, Series):
         return value
     name = '__const__' if name is None else name
-    dtype = value_to_dtype(value)
-    series_type = get_series_type_from_dtype(dtype)
-    return series_type.from_const(base=base, value=value, name=name)
+    series_type = value_to_series_type(value)
+    return series_type.from_value(base=base, value=value, name=name)
 
 
 def variable_series(
-    base: Union[Series, DataFrame],
+    base: DataFrameOrSeries,
     value: Union[AllSupportedLiteralTypes, Series],
     name: str
 ) -> Series:
@@ -1688,17 +1719,20 @@ def variable_series(
     """
     if isinstance(value, Series):
         return value
-    dtype = value_to_dtype(value)
-    series_type = get_series_type_from_dtype(dtype)
-    variable_placeholder = Expression.variable(dtype=dtype, name=name)
+    series_type = value_to_series_type(value)
+    variable_placeholder = Expression.variable(dtype=series_type.dtype, name=name)
     variable_expression = series_type.supported_literal_to_expression(
         dialect=base.engine.dialect,
         literal=variable_placeholder
     )
     result = series_type.get_class_instance(
-        base=base,
+        engine=base.engine,
+        base_node=base.base_node,
+        index=base.index,
         name='__variable__',
         expression=ConstValueExpression(variable_expression),
         group_by=None,
+        sorted_ascending=None,
+        index_sorting=[],
     )
     return result
