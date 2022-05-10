@@ -27,7 +27,7 @@ def test_get_dtype_from_db_dtype(dialect):
     if is_bigquery(dialect):
         assert get_dtype_from_db_dtype(db_dialect=db_dialect, db_dtype='FLOAT64') == 'float64'
         assert get_dtype_from_db_dtype(db_dialect=db_dialect, db_dtype='INT64') == 'int64'
-        assert get_dtype_from_db_dtype(db_dialect=db_dialect, db_dtype='ARRAY[INT64]') == ['int64']
+        assert get_dtype_from_db_dtype(db_dialect=db_dialect, db_dtype='ARRAY<INT64>') == ['int64']
 
 
 @pytest.mark.db_independent
