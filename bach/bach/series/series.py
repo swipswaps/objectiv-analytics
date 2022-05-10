@@ -334,7 +334,7 @@ class Series(ABC):
         if db_dialect not in cls.supported_db_dtype:
             raise DatabaseNotSupportedException(
                 dialect,
-                message_override=f'Cannot get db type of {cls.name} for {dialect}')
+                message_override=f'Cannot get db type of {cls.__name__} for {dialect.name}')
         return cls.supported_db_dtype[db_dialect]
 
     @classmethod
