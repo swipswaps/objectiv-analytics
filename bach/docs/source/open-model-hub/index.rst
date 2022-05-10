@@ -38,4 +38,5 @@ Head over to the :ref:`Bach <bach>` section to learn all about it.
     :maxdepth: 7
     :hidden:
     
+    version-check
     API reference <api-reference/index>
