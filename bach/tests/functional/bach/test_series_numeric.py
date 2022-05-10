@@ -223,15 +223,24 @@ def test_series_cut(engine) -> None:
             np.testing.assert_almost_equal(exp.right, float(res.right), decimal=2)
 
 
-def test_series_qcut() -> None:
+def test_series_qcut(engine) -> None:
     bounds = '(]'
-    inhabitants = get_bt_with_test_data(full_data_set=True)['inhabitants']
+    inhabitants = get_df_with_test_data(engine, full_data_set=True)['inhabitants']
 
     result = inhabitants.qcut(q=4).sort_index()
-    bin1 = NumericRange(Decimal('699.999'),  Decimal('2007.5'), bounds=bounds)
-    bin2 = NumericRange(Decimal('2007.5'),  Decimal('10120'), bounds=bounds)
-    bin3 = NumericRange(Decimal('10120'),  Decimal('13750'), bounds=bounds)
-    bin4 = NumericRange(Decimal('13750'), Decimal('93485'), bounds=bounds)
+    if is_postgres(engine):
+        bin1 = NumericRange(Decimal('699.999'),  Decimal('2007.5'), bounds=bounds)
+        bin2 = NumericRange(Decimal('2007.5'),  Decimal('10120'), bounds=bounds)
+        bin3 = NumericRange(Decimal('10120'),  Decimal('13750'), bounds=bounds)
+        bin4 = NumericRange(Decimal('13750'), Decimal('93485'), bounds=bounds)
+    elif is_bigquery(engine):
+        bin1 = {'lower': 699.999, 'upper': 2007.5, 'bounds': bounds}
+        bin2 = {'lower': 2007.5, 'upper': 10120, 'bounds': bounds}
+        bin3 = {'lower': 10120, 'upper': 13750, 'bounds': bounds}
+        bin4 = {'lower': 13750, 'upper': 93485, 'bounds': bounds}
+    else:
+        raise Exception()
+
     assert_equals_data(
         result,
         expected_columns=['inhabitants', 'q_range'],
@@ -251,7 +260,14 @@ def test_series_qcut() -> None:
     )
 
     result2 = inhabitants.qcut(q=[0.25, 0.5]).sort_index()
-    bin2 = NumericRange(Decimal('2007.499'),  Decimal('10120'), bounds=bounds)
+
+    if is_postgres(engine):
+        bin2 = NumericRange(Decimal('2007.499'),  Decimal('10120'), bounds=bounds)
+    elif is_bigquery(engine):
+        bin2 = {'lower': 2007.499, 'upper': 10120, 'bounds': bounds}
+    else:
+        raise Exception()
+
     assert_equals_data(
         result2,
         expected_columns=['inhabitants', 'q_range'],

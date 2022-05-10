@@ -64,6 +64,11 @@ def value_to_dtype(value: Any) -> str:
     return _registry.value_to_dtype(value)
 
 
+def value_to_series_type(value: Any) -> Type['Series']:
+    """ Return the Series subclass that can represent value as literal. """
+    return get_series_type_from_dtype(dtype=value_to_dtype(value))
+
+
 T = TypeVar('T', bound='Series')
 
 

@@ -107,7 +107,7 @@ class CutOperation:
 
         df = df.set_index(keys=final_index_keys)
 
-        range_series = SeriesNumericInterval.from_const(
+        range_series = SeriesNumericInterval.from_value(
             base=df,
             value={
                 'lower': df['lower_bound'],
@@ -293,7 +293,7 @@ class QCutOperation:
         self.series = series
         self.quantiles = q if isinstance(q, list) else numpy.linspace(0, 1, q + 1).tolist()
 
-    def __call__(self, *args, **kwargs) -> SeriesFloat64:
+    def __call__(self, *args, **kwargs) -> 'SeriesNumericInterval':
         """
         Gets the quantile range per bucket and assigns the correct range to each value. If the value
         is not contained in any range, then it will be null.
@@ -302,26 +302,34 @@ class QCutOperation:
 
         if len(self.quantiles) == 1:
             # need at least 2 quantiles for a range
-            df[self.RANGE_SERIES_NAME] = None
-        else:
-            quantile_ranges = self._get_quantile_ranges()
-            # <@ (contains operator for ranges) is currently not supported
-            # therefore we need to create a raw expression for this
-            fake_merge = df.merge(quantile_ranges, how='cross')
-            mask = fake_merge[self.series.name].copy_override(
-                expression=Expression.construct(
-                    f'cast({{}} as numeric) <@ {{}}',
-                    fake_merge[self.series.name],
-                    fake_merge[self.RANGE_SERIES_NAME],
-                ),
+            df[self.RANGE_SERIES_NAME] = SeriesNumericInterval.from_value(
+                base=df, value=None, name=self.RANGE_SERIES_NAME,
             )
-            mask = mask.copy_override_type(SeriesBoolean)
-            df = df.merge(quantile_ranges, how='left', on=mask)
+            df = df.set_index(self.series.name)
+            return cast(SeriesNumericInterval, df[self.RANGE_SERIES_NAME])
 
-        new_index = {self.series.name: df[self.series.name]}
-        return cast(SeriesFloat64, df[self.RANGE_SERIES_NAME].copy_override(index=new_index))
+        quantile_ranges = self._get_quantile_ranges()
+        fake_merge = df.merge(quantile_ranges, how='cross')
+        mask = (
+            (fake_merge[self.series.name] > fake_merge['lower_bound'])
+            & (fake_merge[self.series.name] <= fake_merge['upper_bound'])
+        )
+        mask = mask.copy_override_type(SeriesBoolean)
+        df = df.merge(quantile_ranges, how='left', on=mask)
+        df[self.RANGE_SERIES_NAME] = SeriesNumericInterval.from_value(
+            base=df,
+            value={
+                'lower': df['lower_bound'],
+                'upper': df['upper_bound'],
+                'bounds': df['bounds'],
+            },
+            name=self.RANGE_SERIES_NAME,
+        )
 
-    def _get_quantile_ranges(self) -> 'Series':
+        df = df.set_index(self.series.name)
+        return cast(SeriesNumericInterval, df[self.RANGE_SERIES_NAME])
+
+    def _get_quantile_ranges(self) -> 'DataFrame':
         """
         Calculates the corresponding ranges per each quantile bucket.
 
@@ -331,10 +339,8 @@ class QCutOperation:
             included in the dataset.
         * upper_bound: is the lower bound from the next range that follows the current one.
             If current lower bound is the result of the largest quantile, the upper bound will be null.
-        * range: interval containing the calculated upper and lower bounds per bucket.
-            If the upper bound is null, the range will be null.
 
-        Returns a series containing the range of each bucket
+        Returns a dataframe
 
         .. note::
             The adjustment performed on the lowest bound is done only to resemble Panda's implementation.
@@ -372,24 +378,6 @@ class QCutOperation:
             ),
             name='upper_bound'
         )
-
-        # must not include lower bound, since a calculated quantile might also be in the dataset
-        # so the value can generate duplicates
-        bound = "'(]'"
-        range_stmt = (
-            f'case when {{}} is not null\n'
-            f'then numrange(cast({{}} as numeric), cast({{}} as numeric), {bound}) end'
-        )
-        lower_bound = quantile_ranges_df['lower_bound']
-        upper_bound = quantile_ranges_df['upper_bound']
-
-        quantile_ranges_df[self.RANGE_SERIES_NAME] = lower_bound.copy_override(
-            expression=Expression.construct(range_stmt, upper_bound, lower_bound, upper_bound),
-        )
-
-        # The expressions of lower_bound and upper_bound are complex and long. Below they are used three
-        # times in the expression for the range column. By materializing the dataframe first, we prevent the
-        # generated sql from containing duplicated code. Additionally, the generated sql becomes more
-        # readable too.
+        quantile_ranges_df['bounds'] = '(]'
         quantile_ranges_df = quantile_ranges_df.materialize()
-        return quantile_ranges_df[self.RANGE_SERIES_NAME]
+        return quantile_ranges_df[['lower_bound', 'upper_bound', 'bounds']]

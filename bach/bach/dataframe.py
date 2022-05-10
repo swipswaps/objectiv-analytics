@@ -1186,8 +1186,7 @@ class DataFrame:
         """
         For usage see general introduction DataFrame class.
         """
-        # TODO: all types from types.TypeRegistry are supported.
-        from bach.series import Series, const_to_series, SeriesAbstractMultiLevel
+        from bach.series import Series, value_to_series, SeriesAbstractMultiLevel
         if isinstance(key, str):
             if key in self.index:
                 # Cannot set an index column, and cannot have a column name both in self.index and self.data
@@ -1209,7 +1208,7 @@ class DataFrame:
                                            convert_objects=True)
                 value = bt[key]
             if not isinstance(value, Series):
-                series = const_to_series(base=self, value=value, name=key)
+                series = value_to_series(base=self, value=value, name=key)
                 self._data[key] = series
             else:
                 if value.base_node == self.base_node and self._group_by == value.group_by:
@@ -2035,7 +2034,7 @@ class DataFrame:
         group_by_clause = None
 
         column_exprs = []
-        column_names = []
+        column_names: List[str] = []
 
         non_group_by_series = self.all_series
         if self.group_by:
@@ -2057,9 +2056,9 @@ class DataFrame:
 
             if group_by_column_expr:
                 group_by_clause = Expression.construct('group by {}', group_by_column_expr)
-                column_exprs = self.group_by.get_index_column_expressions(construct_multi_levels)
-                column_names = list(self.group_by.index.keys())
-
+                expr_mapping = self.group_by.get_index_column_expressions(construct_multi_levels)
+                column_exprs = list(expr_mapping.values())
+                column_names = list(expr_mapping.keys())
                 non_group_by_series = self.data
 
         for s in non_group_by_series.values():
@@ -3368,7 +3367,7 @@ class DataFrame:
             }
 
         categorical_series = []
-        from bach.series.series import const_to_series
+        from bach.series.series import value_to_series
         df_cp = self.copy()
 
         # prepare each series, add prefix to each value (variable identifiers)
@@ -3378,7 +3377,7 @@ class DataFrame:
 
             text_series = df_cp[col]
             prefix_val = f'{prefix_per_col.get(col, col)}{prefix_sep}'
-            prefix_series = const_to_series(text_series, value=prefix_val, name=col)
+            prefix_series = value_to_series(text_series, value=prefix_val, name=col)
             text_series = prefix_series + text_series
 
             categorical_series.append(text_series)

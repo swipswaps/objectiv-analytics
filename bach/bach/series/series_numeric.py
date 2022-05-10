@@ -63,7 +63,7 @@ class SeriesAbstractNumeric(Series, ABC):
         from bach.operations.cut import CutOperation
         return CutOperation(series=self, bins=bins, right=right)()
 
-    def qcut(self, q: Union[int, List[float]]) -> 'SeriesAbstractNumeric':
+    def qcut(self, q: Union[int, List[float]]) -> 'SeriesNumericInterval':
         """
         Segments values into equal-sized buckets based on rank or sample quantiles.
 

@@ -230,8 +230,7 @@ def test_cut_calculate_bucket_ranges(engine) -> None:
     )
 
 
-def test_qcut_operation(pg_engine) -> None:
-    engine = pg_engine  # TODO: BigQuery
+def test_qcut_operation(engine) -> None:
     p_series = pd.Series(range(100), name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
 
@@ -244,8 +243,7 @@ def test_qcut_operation(pg_engine) -> None:
     compare_boundaries(expected_q_num, result_q_num)
 
 
-def test_qcut_operation_one_quantile(pg_engine) -> None:
-    engine = pg_engine  # TODO: BigQuery
+def test_qcut_operation_one_quantile(engine) -> None:
     p_series = pd.Series(range(10), name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
     expected = pd.qcut(p_series, q=0)
@@ -257,18 +255,26 @@ def test_qcut_operation_one_quantile(pg_engine) -> None:
     compare_boundaries(expected2, result2)
 
 
-def test_get_quantile_ranges(pg_engine) -> None:
-    engine = pg_engine  # TODO: BigQuery
+def test_get_quantile_ranges(engine) -> None:
     p_series = pd.Series(data=[1, 1, 2, 3, 4, 5, 6, 7, 8], name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
 
     qcut_operation = QCutOperation(series=series, q=[0.25, 0.5])
     result = qcut_operation._get_quantile_ranges()
-    compare_boundaries(pd.Series([pd.Interval(2, 4), None]), result.sort_values())
+    assert_equals_data(
+        result,
+        order_by=['lower_bound'],
+        expected_columns=['lower_bound', 'upper_bound', 'bounds'],
+        expected_data=[
+            [1.999, 4., '(]'],
+            [4., None, '(]'],
+        ],
+        round_decimals=True,
+        decimal=3,
+    )
 
 
-def test_qcut_w_duplicated_quantiles(pg_engine) -> None:
-    engine = pg_engine  # TODO: BigQuery
+def test_qcut_w_duplicated_quantiles(engine) -> None:
     p_series = pd.Series(data=[0, 1, 2, 2, 2, 2, 2], name='a')
     series = DataFrame.from_pandas(engine=engine, df=p_series.to_frame(), convert_objects=True).a
 
