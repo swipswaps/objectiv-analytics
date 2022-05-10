@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 from modelhub.modelhub import ModelHub
 from modelhub.aggregate import Aggregate
@@ -51,7 +51,7 @@ if os.environ.get('OBJECTIV_VERSION_CHECK_DISABLE', 'false') == 'false':
                                         warnings.warn(category=Warning, message=message)
             except Exception as e:
                 # if this fails, we don't want to know
-                print(e)
+                pass
         try:
             loop = asyncio.get_running_loop()
             loop.create_task(check_package_version())
