@@ -40,10 +40,8 @@ if os.environ.get('OBJECTIV_VERSION_CHECK_DISABLE', 'false') == 'false':
                         for line in lines.split('\n'):
                             items = line.split(':')
                             if len(items) == 3:
-                                # this is a line containing package:updated:version
-                                if items[1] == 'True':
-                                    package = items[0]
-                                    version = items[2]
+                                package, updated, version = items
+                                if updated == 'True':
                                     message = f'Update available for {package} to {version}'
                                     warnings.warn(category=Warning, message=message)
         except Exception as e:
