@@ -74,7 +74,7 @@ def calculate_quantiles(
         df['q'] = df['q'].copy_override(
             expression=Expression.construct(
                 f"replace({{}}, '_', '.')",
-                df['q'].copy_override_type(SeriesString).str[2:],
+                df['q'].copy_override_type(SeriesString).str[4:],
             ),
         )
 
