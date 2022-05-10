@@ -15,13 +15,16 @@ import time
 
 from objectiv_backend.schema.schema import make_event_from_dict, AbstractEvent
 
-
+# url to objectiv tracker
 TRACKER_URL = os.environ.get('TRACKER_URL', 'http://localhost:8081')
+
+# base url to PYPI index, use localhost for local proxy cache
+PYPI_URL = os.environ.get('PYPI_HOST', 'http://localhost')
 
 
 def get_current_version(package: str) -> str:
 
-    url = f'http://localhost/pypi/{package}/json'
+    url = f'{PYPI_URL}/pypi/{package}/json'
     headers = {
         'Content-Type': 'application/json'
     }
@@ -38,6 +41,7 @@ def get_current_version(package: str) -> str:
 
 def parse_payload(request: Request) -> Generator:
     payload = request.data.decode('utf-8')
+    print(request.data)
     for line in payload.split('\n'):
 
         terms = line.split(':')
@@ -61,18 +65,29 @@ def check_version() -> Response:
                 continue
             current_version = get_current_version(package=package['name'])
 
-            update_available = semver.compare(current_version, package['version']) > 0
-            packages[package['name']] = {
-                    'update': update_available,
-                    'current_version': current_version,
-                    'local_version': package['version']}
+            try:
+                update_available = semver.compare(current_version, package['version']) > 0
+                packages[package['name']] = {
+                        'update': update_available,
+                        'current_version': current_version,
+                        'local_version': package['version']}
+            except ValueError:
+                # this happens if the provided version is invalid
+                pass
 
     response = []
     if packages:
         # only try to track if this request contains a valid payload
-        event = make_event(request=request, packages=packages)
+        event = make_event()
         try:
-            track_event(event)
+            user_agent = str(request.user_agent)
+
+            for package in packages:
+                if package == 'objectiv-modelhub':
+                    version = packages[package]['local_version']
+                    user_agent += f' {package}/{version}'
+            track_event(event, user_agent)
+
         except requests.exceptions.RequestException as re:
             # this shouldn't happen, but we continue, as we can still return version info
             print(f'Could not send event: {re}')
@@ -87,25 +102,11 @@ def check_version() -> Response:
     return Response(mimetype='application/text', status=200, response='\n'.join(response))
 
 
-def make_event(request: Request, packages: Dict[str, str]) -> AbstractEvent:
-    user_agent = str(request.user_agent)
-
-    for package in packages:
-        if package == 'objectiv-modelhub':
-            version = packages[package]['local_version']
-            user_agent += f' {package}/{version}'
-
+def make_event() -> AbstractEvent:
     event_data = {
         '_type': 'ApplicationLoadedEvent',
         'id': str(uuid.uuid4()),
         'global_contexts': [
-            {
-                '_type': 'HttpContext',
-                'id': 'http_context',
-                'referrer': '',
-                'user_agent': user_agent,
-                'remote_address': request.remote_addr
-            },
             {
                 '_type': 'ApplicationContext',
                 'id': 'BachVersionChecker'
@@ -117,10 +118,11 @@ def make_event(request: Request, packages: Dict[str, str]) -> AbstractEvent:
     return make_event_from_dict(event_data)
 
 
-def track_event(event: AbstractEvent):
+def track_event(event: AbstractEvent, user_agent: str):
 
     headers = {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'User-agent': user_agent
     }
     data = {
         'events': [event],
