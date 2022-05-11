@@ -12,11 +12,11 @@ The Objectiv Modelhub package comes with a built-in version checker. During impo
 
 **Why?**
 
-We are adding new models and taxonomy operation in a rapid pace, so the goal of this version check is to notify you if when models & operations are available to use.
+We are adding new models and taxonomy operations in a rapid pace, so the goal of this version check is to notify you if when models & taxonomy operations are available to use.
 
 **How?**
 
-An asynchronous http request to http://versioncheck.objectiv.io on package import.
+An asynchronous http request to https://version-check.objectiv.io on package import.
 
 **What data is being sent?**
 
@@ -28,4 +28,4 @@ Disable the check by setting the environment variable *OBJECTIV_VERSION_CHECK_DI
 
 **Source code**
 
-For more detailed information, check the source code in `__init__.py <https://github.com/objectiv/objectiv-analytics/edit/add-version-checking/modelhub/modelhub/__init__.py?>`_
+For more detailed information, check the source code in `__init__.py <https://github.com/objectiv/objectiv-analytics/blob/main/modelhub/modelhub/__init__.py>`_
