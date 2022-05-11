@@ -151,9 +151,11 @@ class DictAccessor:
             raise Exception('Found type: {self._series.instance_dtype}')
         self._instance_dtype: Dict[str, Any] = self._series.instance_dtype
 
-    def __getitem__(self, key: str):
-        # TODO: do we also want to support Series as key?
-        engine = self._series.engine
+    def __getitem__(self, key: str) -> 'Series':
+        """
+        Get an item from the dictionary.
+        :param key: name of the field to get.
+        """
         instance_dtype = self._instance_dtype
         if key not in instance_dtype:
             raise ValueError(f'Invalid key: {key}. '

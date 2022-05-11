@@ -54,7 +54,6 @@ def _tokenize(bq_db_dtype: str):
         if len(t):
             if ' ' in t:
                 # This is the format '<identifier> <type>'
-                # TODO: what if identifier_str is something that is quoted? is that possible?
                 identifier_str, type_str, *too_many = t.split(' ')
                 if too_many:
                     raise ValueError('Cannot tokenize string: "{t}", expected only one space.')

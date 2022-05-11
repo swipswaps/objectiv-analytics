@@ -173,8 +173,11 @@ class ListAccessor:
     def __init__(self, series: SeriesList):
         self._series = series
 
-    def __getitem__(self, key: Union[int, slice]):
-        # TODO: do we also want to support Series as key?
+    def __getitem__(self, key: Union[int, slice]) -> 'Series':
+        """
+        Get an item from the list.
+        :param key: integer indicating position in the list, 0-based. Slice is not yet supported
+        """
         engine = self._series.engine
         if isinstance(key, int):
             if is_bigquery(engine):
@@ -205,8 +208,7 @@ class ListAccessor:
                 raise Exception(f'Unexpected type of sub_dtype. sub_dtype: {sub_dtype}')
 
         elif isinstance(key, slice):
-            # TODO: should be easy on Postgres
-            # TODO: could be a lot of work on BigQuery for a nice solution.
+            # TODO: should be easy on Postgres. Could be a lot of work on BigQuery for a nice solution.
             #   or we can just concat a lot of __getitem__s
             return self._series
         else:
