@@ -128,174 +128,6 @@ class SeriesJsonb(Series):
     supported_value_types = (dict, list)
     return_dtype = dtype
 
-    class Json:
-        """
-        class with accessor methods to json(b) type data columns.
-        """
-        def __init__(self, series_object: 'SeriesJsonb'):
-            self._series_object = series_object
-
-        def __getitem__(self, key: Union[str, int, slice]):
-            """
-            Slice this jsonb database object in pythonic ways:
-
-            :param key: A very mixed key to slice on, please see below.
-
-            .. testsetup:: jsonb__getitem__
-                :skipif: engine is None
-
-                data = [
-                    '["a","b","c"]', '["d","e","f","g"]', '[{"h":"i","j":"k"},{"l":["m","n","o"]},{"p":"q"}]',
-                ]
-                pdf = pd.DataFrame(data=data, columns=['jsonb_column'])
-                df = DataFrame.from_pandas(engine, pdf, convert_objects=True)
-                df['jsonb_column'] = df.jsonb_column.astype('jsonb')
-
-            .. doctest:: jsonb__getitem__
-                :skipif: engine is None
-
-                >>> # slice and show with .head()
-                >>> df.jsonb_column.json[:2].head()
-                _index_0
-                0                                            [a, b]
-                1                                            [d, e]
-                2    [{'h': 'i', 'j': 'k'}, {'l': ['m', 'n', 'o']}]
-                Name: jsonb_column, dtype: object
-
-            .. doctest:: jsonb__getitem__
-                :skipif: engine is None
-
-                >>> # selecting one position returns the single entry:
-                >>> df.jsonb_column.json[1].head()
-                _index_0
-                0                         b
-                1                         e
-                2    {'l': ['m', 'n', 'o']}
-                Name: jsonb_column, dtype: object
-
-            .. doctest:: jsonb__getitem__
-                :skipif: engine is None
-
-                >>> # selecting from objects is done by entering a key:
-                >>> df.jsonb_column.json[1].json['l'].head()
-                _index_0
-                0         None
-                1         None
-                2    [m, n, o]
-                Name: jsonb_column, dtype: object
-
-            Or select based on the objects *in* an array.
-            With this method, a dict is passed in the `.json[]` selector. The value of the first match with
-            the dict to the objects in a json array is returned for the `.json[]` selector. A match is when
-            all key/value pairs of the dict are found in an object. This can be used for selecting a subset
-            of a json array with objects.
-
-            .. doctest:: jsonb__getitem__
-                :skipif: engine is None
-
-                >>> # selecting from arrays by searching objects in the array.
-                >>> df.jsonb_column.json[:{"j":"k"}].head()
-                _index_0
-                0                      None
-                1                      None
-                2    [{'h': 'i', 'j': 'k'}]
-                Name: jsonb_column, dtype: object
-
-            .. doctest:: jsonb__getitem__
-                :skipif: engine is None
-
-                >>> # or:
-                >>> df.jsonb_column.json[{"l":["m","n","o"]}:].head()
-                _index_0
-                0                                    None
-                1                                    None
-                2    [{'l': ['m', 'n', 'o']}, {'p': 'q'}]
-                Name: jsonb_column, dtype: object
-            """
-            if isinstance(key, int):
-                return self._series_object\
-                    .copy_override_dtype(dtype=self._series_object.return_dtype)\
-                    .copy_override(expression=Expression.construct(f'{{}}->{key}', self._series_object))
-            elif isinstance(key, str):
-                return self.get_value(key)
-            elif isinstance(key, slice):
-                expression_references = 0
-                if key.step:
-                    raise NotImplementedError('slice steps not supported')
-                if key.stop is not None:
-                    negative_stop = ''
-                    if isinstance(key.stop, int):
-                        if key.stop < 0:
-                            negative_stop = f'jsonb_array_length({{}})'
-                            expression_references += 1
-                        stop = f'{negative_stop} {key.stop} - 1'
-                    elif isinstance(key.stop, (dict, str)):
-                        stop = self._find_in_json_list(key.stop)
-                        expression_references += 1
-                    else:
-                        raise TypeError('cant')
-                if key.start is not None:
-                    if isinstance(key.start, int):
-                        negative_start = ''
-                        if key.start < 0:
-                            negative_start = f'jsonb_array_length({{}})'
-                            expression_references += 1
-                        start = f'{negative_start} {key.start}'
-                    elif isinstance(key.start, (dict, str)):
-                        start = self._find_in_json_list(key.start)
-                        expression_references += 1
-                    else:
-                        raise TypeError('cant')
-                    if key.stop is not None:
-                        where = f'between {start} and {stop}'
-                    else:
-                        where = f'>= {start}'
-                else:
-                    where = f'<= {stop}'
-                combined_expression = f"""(select jsonb_agg(x.value)
-                from jsonb_array_elements({{}}) with ordinality x
-                where ordinality - 1 {where})"""
-                expression_references += 1
-                return self._series_object\
-                    .copy_override_dtype(dtype=self._series_object.return_dtype)\
-                    .copy_override(
-                        expression=Expression.construct(
-                            combined_expression,
-                            *([self._series_object] * expression_references)
-                        )
-                    )
-            raise TypeError(f'key should be int or slice, actual type: {type(key)}')
-
-        def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
-            if isinstance(key, (dict, str)):
-                key = json.dumps(key)
-                quoted_key = quote_string(self._series_object.engine, key)
-                expression_str = f"""(select min(case when ({quoted_key}::jsonb) <@ value
-                then ordinality end) -1 from jsonb_array_elements({{}}) with ordinality)"""
-                return expression_str
-            else:
-                raise TypeError(f'key should be int or slice, actual type: {type(key)}')
-
-        def get_value(self, key: str, as_str: bool = False):
-            '''
-            Select values from objects by key. Same as using `.json[key]` on the json column.
-
-            :param key: the key to return the values for.
-            :param as_str: if True, it returns a string Series, jsonb otherwise.
-            :returns: series with the selected object value.
-            '''
-            return_as_string_operator = ''
-            return_dtype = self._series_object.return_dtype
-            if as_str:
-                return_as_string_operator = '>'
-                return_dtype = 'string'
-            expression = Expression.construct(f"{{}}->{return_as_string_operator}{{}}",
-                                              self._series_object,
-                                              Expression.string_value(key))
-            return self._series_object\
-                .copy_override_dtype(dtype=return_dtype)\
-                .copy_override(expression=expression)
-
     @property
     def json(self):
         """
@@ -309,11 +141,11 @@ class SeriesJsonb(Series):
             :special-members: __getitem__
 
         """
-        return self.Json(self)
+        return Json(self)
 
     @property
     def elements(self):
-        return self.Json(self)
+        return Json(self)
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
@@ -397,3 +229,172 @@ class SeriesJson(SeriesJsonb):
                          sorted_ascending=sorted_ascending,
                          index_sorting=index_sorting,
                          instance_dtype=instance_dtype)
+
+
+class Json:
+    """
+    class with accessor methods to json(b) type data columns.
+    """
+    def __init__(self, series_object: 'SeriesJsonb'):
+        self._series_object = series_object
+
+    def __getitem__(self, key: Union[str, int, slice]):
+        """
+        Slice this jsonb database object in pythonic ways:
+
+        :param key: A very mixed key to slice on, please see below.
+
+        .. testsetup:: jsonb__getitem__
+            :skipif: engine is None
+
+            data = [
+                '["a","b","c"]', '["d","e","f","g"]', '[{"h":"i","j":"k"},{"l":["m","n","o"]},{"p":"q"}]',
+            ]
+            pdf = pd.DataFrame(data=data, columns=['jsonb_column'])
+            df = DataFrame.from_pandas(engine, pdf, convert_objects=True)
+            df['jsonb_column'] = df.jsonb_column.astype('jsonb')
+
+        .. doctest:: jsonb__getitem__
+            :skipif: engine is None
+
+            >>> # slice and show with .head()
+            >>> df.jsonb_column.json[:2].head()
+            _index_0
+            0                                            [a, b]
+            1                                            [d, e]
+            2    [{'h': 'i', 'j': 'k'}, {'l': ['m', 'n', 'o']}]
+            Name: jsonb_column, dtype: object
+
+        .. doctest:: jsonb__getitem__
+            :skipif: engine is None
+
+            >>> # selecting one position returns the single entry:
+            >>> df.jsonb_column.json[1].head()
+            _index_0
+            0                         b
+            1                         e
+            2    {'l': ['m', 'n', 'o']}
+            Name: jsonb_column, dtype: object
+
+        .. doctest:: jsonb__getitem__
+            :skipif: engine is None
+
+            >>> # selecting from objects is done by entering a key:
+            >>> df.jsonb_column.json[1].json['l'].head()
+            _index_0
+            0         None
+            1         None
+            2    [m, n, o]
+            Name: jsonb_column, dtype: object
+
+        Or select based on the objects *in* an array.
+        With this method, a dict is passed in the `.json[]` selector. The value of the first match with
+        the dict to the objects in a json array is returned for the `.json[]` selector. A match is when
+        all key/value pairs of the dict are found in an object. This can be used for selecting a subset
+        of a json array with objects.
+
+        .. doctest:: jsonb__getitem__
+            :skipif: engine is None
+
+            >>> # selecting from arrays by searching objects in the array.
+            >>> df.jsonb_column.json[:{"j":"k"}].head()
+            _index_0
+            0                      None
+            1                      None
+            2    [{'h': 'i', 'j': 'k'}]
+            Name: jsonb_column, dtype: object
+
+        .. doctest:: jsonb__getitem__
+            :skipif: engine is None
+
+            >>> # or:
+            >>> df.jsonb_column.json[{"l":["m","n","o"]}:].head()
+            _index_0
+            0                                    None
+            1                                    None
+            2    [{'l': ['m', 'n', 'o']}, {'p': 'q'}]
+            Name: jsonb_column, dtype: object
+        """
+        if isinstance(key, int):
+            return self._series_object\
+                .copy_override_dtype(dtype=self._series_object.return_dtype)\
+                .copy_override(expression=Expression.construct(f'{{}}->{key}', self._series_object))
+        elif isinstance(key, str):
+            return self.get_value(key)
+        elif isinstance(key, slice):
+            expression_references = 0
+            if key.step:
+                raise NotImplementedError('slice steps not supported')
+            if key.stop is not None:
+                negative_stop = ''
+                if isinstance(key.stop, int):
+                    if key.stop < 0:
+                        negative_stop = f'jsonb_array_length({{}})'
+                        expression_references += 1
+                    stop = f'{negative_stop} {key.stop} - 1'
+                elif isinstance(key.stop, (dict, str)):
+                    stop = self._find_in_json_list(key.stop)
+                    expression_references += 1
+                else:
+                    raise TypeError('cant')
+            if key.start is not None:
+                if isinstance(key.start, int):
+                    negative_start = ''
+                    if key.start < 0:
+                        negative_start = f'jsonb_array_length({{}})'
+                        expression_references += 1
+                    start = f'{negative_start} {key.start}'
+                elif isinstance(key.start, (dict, str)):
+                    start = self._find_in_json_list(key.start)
+                    expression_references += 1
+                else:
+                    raise TypeError('cant')
+                if key.stop is not None:
+                    where = f'between {start} and {stop}'
+                else:
+                    where = f'>= {start}'
+            else:
+                where = f'<= {stop}'
+            combined_expression = f"""(select jsonb_agg(x.value)
+            from jsonb_array_elements({{}}) with ordinality x
+            where ordinality - 1 {where})"""
+            expression_references += 1
+            return self._series_object\
+                .copy_override_dtype(dtype=self._series_object.return_dtype)\
+                .copy_override(
+                    expression=Expression.construct(
+                        combined_expression,
+                        *([self._series_object] * expression_references)
+                    )
+                )
+        raise TypeError(f'key should be int or slice, actual type: {type(key)}')
+
+    def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
+        if isinstance(key, (dict, str)):
+            key = json.dumps(key)
+            quoted_key = quote_string(self._series_object.engine, key)
+            expression_str = f"""(select min(case when ({quoted_key}::jsonb) <@ value
+            then ordinality end) -1 from jsonb_array_elements({{}}) with ordinality)"""
+            return expression_str
+        else:
+            raise TypeError(f'key should be int or slice, actual type: {type(key)}')
+
+    def get_value(self, key: str, as_str: bool = False):
+        '''
+        Select values from objects by key. Same as using `.json[key]` on the json column.
+
+        :param key: the key to return the values for.
+        :param as_str: if True, it returns a string Series, jsonb otherwise.
+        :returns: series with the selected object value.
+        '''
+        return_as_string_operator = ''
+        return_dtype = self._series_object.return_dtype
+        if as_str:
+            return_as_string_operator = '>'
+            return_dtype = 'string'
+        expression = Expression.construct(f"{{}}->{return_as_string_operator}{{}}",
+                                          self._series_object,
+                                          Expression.string_value(key))
+        return self._series_object\
+            .copy_override_dtype(dtype=return_dtype)\
+            .copy_override(expression=expression)
