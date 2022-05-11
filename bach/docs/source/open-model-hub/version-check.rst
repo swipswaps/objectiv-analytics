@@ -21,7 +21,7 @@ An asynchronous http request to https://version-check.objectiv.io is sent on pac
 
 **What data is being sent?**
 
-Your current version of the objectiv-modelhub and objectiv-bach. No cookies, IPs or any other PII is being sent.
+Your current version of objectiv-modelhub and objectiv-bach. No cookies, IPs or any other PII is being sent.
 
 **Disable the version check**
 
