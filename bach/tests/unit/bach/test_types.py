@@ -6,7 +6,7 @@ import pytest
 from typing import Any
 from bach.types import get_dtype_from_db_dtype, get_series_type_from_dtype, validate_dtype_value, \
     validate_is_dtype
-from bach.series import SeriesArray, SeriesBoolean, SeriesString
+from bach.series import SeriesList, SeriesBoolean, SeriesString
 from sql_models.constants import DBDialect
 from sql_models.util import is_postgres, is_bigquery
 
@@ -15,7 +15,7 @@ from sql_models.util import is_postgres, is_bigquery
 def test_get_series_type_from_dtype():
     assert get_series_type_from_dtype('bool') is SeriesBoolean
     assert get_series_type_from_dtype('string') is SeriesString
-    assert get_series_type_from_dtype(['int64']) is SeriesArray
+    assert get_series_type_from_dtype(['int64']) is SeriesList
 
 
 def test_get_dtype_from_db_dtype(dialect):

@@ -93,13 +93,13 @@ def validate_instance_dtype(static_dtype: Dtype, instance_dtype: StructuredDtype
 
     Example: `['int64', 'float64']` is not a well formed instance-dtype. a list should have only one item.
     Example: `['int64']` is not well formed instance-dtype, and a correct instance_dtype
-                if static_dtype='array', but not when static_dtype='bool'
+                if static_dtype='list', but not when static_dtype='bool'
 
     :raises ValueError: if any check fails
     """
     # hardcoded for now, make more elegant in the future when we have a lot of DBs to support
     structural_type_mapping: Dict[Dtype, Type] = {
-        'array': list,
+        'list': list,
         'dict': dict
     }
     expected_type = structural_type_mapping.get(static_dtype)
@@ -193,12 +193,12 @@ class TypeRegistry:
         from bach.series import \
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,\
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,\
-            SeriesUuid, SeriesJsonb, SeriesJson, SeriesNumericInterval, SeriesArray, SeriesDict
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesNumericInterval, SeriesList, SeriesDict
 
         standard_types: List[Type[Series]] = [
             SeriesBoolean, SeriesInt64, SeriesFloat64, SeriesString,
             SeriesTimestamp, SeriesDate, SeriesTime, SeriesTimedelta,
-            SeriesUuid, SeriesJsonb, SeriesJson, SeriesNumericInterval, SeriesArray, SeriesDict
+            SeriesUuid, SeriesJsonb, SeriesJson, SeriesNumericInterval, SeriesList, SeriesDict
         ]
 
         for klass in standard_types:
@@ -280,7 +280,7 @@ class TypeRegistry:
         # TODO: make this nicer, e.g. make sure that no class can register this as an alias
         #  maybe switch to all strings, e.g. `'list[int64]'` instead of `list['int64']` ?
         if isinstance(dtype, list):
-            dtype = 'array'
+            dtype = 'list'
         elif isinstance(dtype, dict):
             dtype = 'dict'
 
@@ -313,8 +313,8 @@ class TypeRegistry:
         """
         Given a python value, return the dtype string of the Series that's registered as the default
         for the type of value.
-        For non-scalar types this will give the base Dtype, not the StructuredDtype. E.g. for an array of
-            integers this will return 'array' and not ['int64']
+        For non-scalar types this will give the base Dtype, not the StructuredDtype. E.g. for an list of
+            integers this will return 'list' and not ['int64']
         """
         self._real_init()
         # exception for values that are Series. Check: do we need this exception?

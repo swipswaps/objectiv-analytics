@@ -3,18 +3,18 @@ Copyright 2022 Objectiv B.V.
 """
 import pytest
 
-from bach.series import SeriesArray
+from bach.series import SeriesList
 from tests.functional.bach.test_data_and_utils import get_df_with_test_data, assert_equals_data
 
 
-pytestmark = [pytest.mark.skip_postgres]  # SeriesArray is not (yet) supported on Postgres.
+pytestmark = [pytest.mark.skip_postgres]  # SeriesList is not (yet) supported on Postgres.
 
 
 def test_basic_value_to_expression(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
-    df['int_array'] = SeriesArray.from_value(base=df, value=[1, 2, 3], name='int_array', dtype=['int64'])
-    df['str_array'] = SeriesArray.from_value(base=df, value=['a', 'b', 'c'], name='str_array', dtype=['string'])
+    df['int_array'] = SeriesList.from_value(base=df, value=[1, 2, 3], name='int_array', dtype=['int64'])
+    df['str_array'] = SeriesList.from_value(base=df, value=['a', 'b', 'c'], name='str_array', dtype=['string'])
     print(df.dtypes)
     assert_equals_data(
         df,
@@ -25,7 +25,7 @@ def test_basic_value_to_expression(engine):
 
 def test_series_to_array(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
-    df['int_array'] = SeriesArray.from_value(
+    df['int_array'] = SeriesList.from_value(
         base=df,
         value=[
             df.skating_order,
@@ -34,7 +34,7 @@ def test_series_to_array(engine):
         name='int_array',
         dtype=['int64']
     )
-    df['str_array'] = SeriesArray.from_value(
+    df['str_array'] = SeriesList.from_value(
         base=df,
         value=['a', 'b', 'c'],
         name='str_array',
@@ -55,8 +55,8 @@ def test_series_to_array(engine):
 def test_getitem(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
-    df['int_array'] = SeriesArray.from_value(base=df, value=[1, 2, 3], name='int_array', dtype=['int64'])
-    df['str_array'] = SeriesArray.from_value(base=df, value=['a', 'b', 'c'], name='str_array', dtype=['string'])
+    df['int_array'] = SeriesList.from_value(base=df, value=[1, 2, 3], name='int_array', dtype=['int64'])
+    df['str_array'] = SeriesList.from_value(base=df, value=['a', 'b', 'c'], name='str_array', dtype=['string'])
     df = df.materialize()   # TODO: make tests pass without this materialize() call
     df['a'] = df['int_array'].elements[0]
     df['b'] = df['int_array'].elements[1]
@@ -78,9 +78,9 @@ def test_getitem(engine):
 def test_len(engine):
     df = get_df_with_test_data(engine)[['skating_order']]
     df = df.sort_index()[:1].materialize()
-    df['empty_array'] = SeriesArray.from_value(base=df, value=[], name='empty_array', dtype=['int64'])
-    df['int_array'] = SeriesArray.from_value(base=df, value=[1, 2, 3, 4, 5, 6], name='int_array', dtype=['int64'])
-    df['str_array'] = SeriesArray.from_value(base=df, value=['a', 'b', 'c'], name='str_array', dtype=['string'])
+    df['empty_array'] = SeriesList.from_value(base=df, value=[], name='empty_array', dtype=['int64'])
+    df['int_array'] = SeriesList.from_value(base=df, value=[1, 2, 3, 4, 5, 6], name='int_array', dtype=['int64'])
+    df['str_array'] = SeriesList.from_value(base=df, value=['a', 'b', 'c'], name='str_array', dtype=['string'])
     df = df.materialize()   # TODO: make tests pass without this materialize() call
     df['a'] = df['empty_array'].elements.len()
     df['b'] = df['int_array'].elements.len()

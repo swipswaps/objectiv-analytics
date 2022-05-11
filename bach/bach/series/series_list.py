@@ -16,16 +16,16 @@ if TYPE_CHECKING:
     from bach import SeriesInt64, DataFrameOrSeries
 
 
-class SeriesArray(Series):
+class SeriesList(Series):
     """
     A Series that represents a list/array-like type and its specific operations.
     On BigQuery this is backed by the ARRAY data type. On other databases this type is not yet supported.
 
     .. note::
-        SeriesArray is only supported on BigQuery.
+        SeriesList is only supported on BigQuery.
         On Postgres use SeriesJson for similar functionality.
     """
-    dtype = 'array'
+    dtype = 'list'
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
     # no static types registered through supported_db_dtype, as exact db_type depends on what kind of data
     # the array holds (e.g. 'ARRAY<INT64>'
@@ -70,7 +70,7 @@ class SeriesArray(Series):
         value: List[Any],
         name: str,
         dtype: Optional[StructuredDtype] = None
-    ) -> 'Series':
+    ) -> 'SeriesList':
         """
         Create an instance of this class, that represents a column with the given list as value.
         The given base Series/DataFrame will be used to set the engine, base_node, and index.
@@ -81,7 +81,7 @@ class SeriesArray(Series):
         :param dtype:   instance dtype, mandatory. Should be a list with one item in it, the item being the
                         instance dtype of what is contained in the list
         """
-        # We override the parent class here to allow using Series as sub-values in an array
+        # We override the parent class here to allow using Series as sub-values in a list
 
         cls._validate_is_bigquery(base.engine.dialect)
         # validate early, and help mypy
@@ -97,7 +97,7 @@ class SeriesArray(Series):
         for i, item in enumerate(value):
             if isinstance(item, Series):
                 if item.base_node != base.base_node:
-                    raise ValueError(f'When constructing an array from existing Series. '
+                    raise ValueError(f'When constructing a SeriesList from existing Series. '
                                      f'The Series.base_node must match the base.base_node. '
                                      f'Index with incorrect base-node: {i}')
                 series = item
@@ -142,7 +142,7 @@ class SeriesArray(Series):
                 sub_db_dtype = series_type.get_db_dtype(dialect)
             except DatabaseNotSupportedException:
                 # We expect this if the sub-types are structured types themselves
-                raise ValueError("Empty arrays of structured types are not supported.")
+                raise ValueError("Empty lists of structured types are not supported.")
 
             return Expression.construct(f'ARRAY<{sub_db_dtype}>[]', )
 
@@ -153,24 +153,24 @@ class SeriesArray(Series):
 
     @classmethod
     def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
-        # Even when casting from an array to an array, things will be troublesome if instance_dtype doesn't
+        # Even when casting from a list to a list, things will be troublesome if instance_dtype doesn't
         # match. So just raise an error.
-        raise Exception('Cannot cast a value to an array.')
+        raise Exception('Cannot cast a value to a list.')
 
     @property
-    def elements(self) -> 'ArrayAccessor':
-        return ArrayAccessor(self)
+    def elements(self) -> 'ListAccessor':
+        return ListAccessor(self)
 
     @staticmethod
     def _validate_is_bigquery(dialect):
         if not is_bigquery(dialect):
-            message_override = f'SeriesArray is not supported for {dialect.name}, ' \
+            message_override = f'SeriesList is not supported for {dialect.name}, ' \
                                f'try SeriesJson for similar functionality.'
             raise DatabaseNotSupportedException(dialect, message_override=message_override)
 
 
-class ArrayAccessor:
-    def __init__(self, series: SeriesArray):
+class ListAccessor:
+    def __init__(self, series: SeriesList):
         self._series = series
 
     def __getitem__(self, key: Union[int, slice]):

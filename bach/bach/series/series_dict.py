@@ -170,9 +170,9 @@ class DictAccessor:
                 .copy_override_type(SeriesDict, instance_dtype=sub_dtype) \
                 .copy_override(expression=expression)
         elif isinstance(sub_dtype, list):
-            from bach import SeriesArray
+            from bach import SeriesList
             return self._series \
-                .copy_override_type(SeriesArray, instance_dtype=sub_dtype) \
+                .copy_override_type(SeriesList, instance_dtype=sub_dtype) \
                 .copy_override(expression=expression)
         else:
             raise Exception(f'Unsupported structural type: {sub_dtype}')
