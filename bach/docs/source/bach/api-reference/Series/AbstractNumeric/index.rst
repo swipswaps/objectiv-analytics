@@ -7,6 +7,7 @@ AbstractNumeric
 ===============
 
 .. autoclass:: SeriesAbstractNumeric
+    :noindex:
 
 
 Methods

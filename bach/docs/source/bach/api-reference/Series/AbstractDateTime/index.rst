@@ -7,6 +7,7 @@ AbstractDateTime
 ================
 
 .. autoclass:: SeriesAbstractDateTime
+    :noindex:
 
 
 Attributes

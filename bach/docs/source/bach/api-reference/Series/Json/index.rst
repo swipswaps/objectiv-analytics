@@ -7,6 +7,7 @@ Json
 ====
 
 .. autoclass:: SeriesJson
+    :noindex:
 
 
 .. autosummary::

@@ -7,6 +7,7 @@ String
 ======
 
 .. autoclass:: SeriesString
+    :noindex:
 
 
 Methods

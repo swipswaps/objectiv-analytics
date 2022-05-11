@@ -13,15 +13,15 @@ This is the complete API reference of Bach.
 
 .. autosummary::
     :template: autosummary/class_short.rst
+    :toctree: DataFrame
 
     DataFrame
+
+.. autosummary::
+    :template: autosummary/class_short.rst
+    :toctree: Series
+
     Series
-    SeriesAbstractNumeric
-    SeriesAbstractDateTime
-    SeriesBoolean
-    SeriesJson
-    SeriesJsonb
-    SeriesString
 
 
 .. toctree::

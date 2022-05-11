@@ -7,7 +7,7 @@ Series
 ======
 
 .. autoclass:: Series
-
+    :noindex:
 
 Reference by function
 ---------------------
@@ -17,7 +17,6 @@ Creation / re-framing
 .. autosummary::
     :toctree:
 
-    Series.from_const
     Series.to_frame
     Series.copy
 

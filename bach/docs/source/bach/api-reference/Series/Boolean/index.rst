@@ -7,6 +7,7 @@ Boolean
 =======
 
 .. autoclass:: SeriesBoolean
+    :noindex:
 
 
 Methods

@@ -7,7 +7,7 @@ DataFrame
 =========
 
 .. autoclass:: DataFrame
-
+    :noindex:
 
 Reference by function
 ---------------------
