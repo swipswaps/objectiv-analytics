@@ -27,9 +27,13 @@ class SeriesList(Series):
     """
     dtype = 'list'
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
-    # no static types registered through supported_db_dtype, as exact db_type depends on what kind of data
-    # the array holds (e.g. 'ARRAY<INT64>'
-    supported_db_dtype: Mapping[DBDialect, str] = {}
+    supported_db_dtype = {
+        # We support BigQuery ARRAY type, but the exact db_dtype depends on what kind of data the array holds
+        # (e.g. 'ARRAY<INT64>'). So we don't define a static db_dtype that we support
+        DBDialect.BIGQUERY: None
+        # Postgres is not supported, thus not listed here
+    }
+
     supported_value_types = (list, )
 
     @classmethod
@@ -43,7 +47,7 @@ class SeriesList(Series):
         value: List[Any],
         dtype: StructuredDtype
     ) -> Expression:
-        cls._validate_is_bigquery(dialect)
+        cls.assert_engine_dialect_supported(dialect)
 
         # validate early, and help mypy
         if not isinstance(dtype, list):
@@ -83,7 +87,7 @@ class SeriesList(Series):
         """
         # We override the parent class here to allow using Series as sub-values in a list
 
-        cls._validate_is_bigquery(base.engine.dialect)
+        cls.assert_engine_dialect_supported(base.engine)
         # validate early, and help mypy
         if not isinstance(dtype, list):
             raise ValueError(f'Dtype should be type list. Type(dtype): {type(dtype)}')
@@ -138,12 +142,10 @@ class SeriesList(Series):
         series_type = get_series_type_from_dtype(sub_dtype)
         if not sub_expressions:
             # Special case: empty array, we need to tell the database the type of the array
-            try:
-                sub_db_dtype = series_type.get_db_dtype(dialect)
-            except DatabaseNotSupportedException:
+            sub_db_dtype = series_type.get_db_dtype(dialect)
+            if sub_db_dtype is None:
                 # We expect this if the sub-types are structured types themselves
                 raise ValueError("Empty lists of structured types are not supported.")
-
             return Expression.construct(f'ARRAY<{sub_db_dtype}>[]', )
 
         return Expression.construct(
@@ -160,13 +162,6 @@ class SeriesList(Series):
     @property
     def elements(self) -> 'ListAccessor':
         return ListAccessor(self)
-
-    @staticmethod
-    def _validate_is_bigquery(dialect):
-        if not is_bigquery(dialect):
-            message_override = f'SeriesList is not supported for {dialect.name}, ' \
-                               f'try SeriesJson for similar functionality.'
-            raise DatabaseNotSupportedException(dialect, message_override=message_override)
 
 
 class ListAccessor:

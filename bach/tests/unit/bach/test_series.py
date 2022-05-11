@@ -3,6 +3,8 @@ Copyright 2021 Objectiv B.V.
 """
 from typing import List
 
+import pytest
+
 from bach import get_series_type_from_dtype
 from bach.expression import Expression
 from bach.partitioning import GroupBy
@@ -41,7 +43,6 @@ def test_equals(dialect):
 
     int_type = get_series_type_from_dtype('int64')
     float_type = get_series_type_from_dtype('float64')
-    dict_type = get_series_type_from_dtype('dict')
 
     expr_test = Expression.construct('test')
     expr_other = Expression.construct('test::text')
@@ -108,8 +109,19 @@ def test_equals(dialect):
     sright = sright.copy_override(index_sorting=[True])
     assert not sleft.equals(sright)
 
-    # different instance_dtype
-    sleft = dict_type(engine=engine, base_node=None, index={'a': index_series}, name='test',
+
+@pytest.mark.skip_postgres
+def test_equals_instance_dtype(dialect):
+    def get_df(index_names: List[str], data_names: List[str]):
+        return get_fake_df(dialect=dialect, index_names=index_names, data_names=data_names)
+
+    left = get_df(['a'], ['b', 'c'])
+    engine = left.engine
+    expr_test = Expression.construct('test')
+    dict_type = get_series_type_from_dtype('dict')
+
+    # Currently we only have bigquery types that actual use the instance_dtype. So skip postgres here.
+    sleft = dict_type(engine=engine, base_node=None, index={}, name='test',
                       expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[],
                       instance_dtype={'a': 'int64', 'b': ['bool']})
     sright = sleft.copy_override()

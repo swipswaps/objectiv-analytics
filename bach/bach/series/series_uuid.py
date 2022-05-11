@@ -29,9 +29,10 @@ class SeriesUuid(Series):
     dtype_aliases = ()
     supported_db_dtype = {
         DBDialect.POSTGRES: 'uuid',
-        # No entry here for BIGQUERY, because BigQuery doesn't have a uuid type.
-        # We do support the UUID Series, but they store data as STRING data-type, which by default is handled
-        # by SeriesString
+        # None here for BIGQUERY, because BigQuery doesn't have a uuid type.
+        # We do support the UUID Series, but on BQ we store data as STRING data-type, which by default is
+        # handled by SeriesString
+        DBDialect.BIGQUERY: None
     }
 
     supported_value_types = (UUID, str)

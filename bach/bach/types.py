@@ -241,12 +241,15 @@ class TypeRegistry:
             self.dtype_to_series[dtype_alias] = klass
 
     def _register_db_dtype_klass(self, klass: Type['Series'], override=False):
+        for db_dialect in klass.supported_db_dtype.keys():
+            if db_dialect not in self.db_dtype_to_series:
+                self.db_dtype_to_series[db_dialect] = {}
         for db_dialect, db_dtype in klass.supported_db_dtype.items():
+            if db_dtype is None:
+                continue
             if db_dtype in self.db_dtype_to_series.get(db_dialect, {}) and not override:
                 raise Exception(f'Type {klass} claims db_dtype {db_dtype} for {db_dialect.value}, which is '
                                 f'already assigned to dtype {self.db_dtype_to_series[db_dialect][db_dtype]}')
-            if db_dialect not in self.db_dtype_to_series:
-                self.db_dtype_to_series[db_dialect] = {}
             self.db_dtype_to_series[db_dialect][db_dtype] = klass
 
     def _register_value_klass(self, value_type: Type, klass: Type['Series'], override=False):

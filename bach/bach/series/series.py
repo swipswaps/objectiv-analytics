@@ -90,14 +90,19 @@ class Series(ABC):
     Subclasses can override this value to indicate what strings they consider aliases for their dtype.
     """
 
-    supported_db_dtype: Mapping[DBDialect, str] = {}
+    supported_db_dtype: Mapping[DBDialect, Optional[str]] = {}
     """
     INTERNAL: Per supported database, the database's data type that can be expressed using this Series type.
     Example: {DBDialect.POSTGRES: 'double precision'} for a float in Postgres
 
-    Subclasses should override this value if they intend to be the default class to handle such types.
-    When creating a DataFrame from existing data in a database, this field will be used to
-    determine what Series to instantiate for a column.
+    Subclasses must override this with a mapping containing all databases that they support.
+    If subclasses intend to be the default class to handle a certain database type, then they must express
+    that in the returned mapping.
+
+    Main use of this field is two fold:
+    1. Determining what databases are supported by a Series
+    2. When creating a DataFrame from existing data in a database, this field will be used to determine what
+        Series to instantiate for a column.
     """
 
     supported_value_types: Tuple[Type, ...] = tuple()
@@ -157,9 +162,8 @@ class Series(ABC):
         """
         # Series is an abstract class, besides the abstractmethods subclasses must/may override some
         #   properties:
-        #   * subclasses MUST override one class property: 'dtype',
-        #   * subclasses MAY override the class properties 'dtype_aliases', 'supported_db_dtype',
-        #       'supported_value_types'
+        #   * non-abstract subclasses MUST override some class properties: 'dtype', and 'supported_db_dtype'
+        #   * subclasses MAY also override class properties: 'dtype_aliases', and 'supported_value_types'
         # Unfortunately defining these properties as an "abstract-classmethod-property" makes it hard
         # to understand for mypy, sphinx, and python. Therefore, we check here that we are instantiating a
         # proper subclass, instead of just relying on @abstractmethod.
@@ -169,9 +173,13 @@ class Series(ABC):
         if self.__class__ == Series:
             raise TypeError("Cannot instantiate Series directly. Instantiate a subclass.")
         if self.dtype == '':
-            raise NotImplementedError("Series subclasses must override `dtype` class property")
+            raise NotImplementedError("Non-abstract Series subclasses must override `dtype` class property")
+        if self.supported_db_dtype == {}:
+            raise NotImplementedError(
+                "Non-abstract Series subclasses must override `supported_db_dtype` class property")
         # End of Abstract-class check
 
+        self.assert_engine_dialect_supported(engine)
         if index == {} and group_by and group_by.index != {}:
             # not a completely watertight check, because a group_by on {} is valid.
             raise ValueError(f'Index Series should be free of pending aggregation.')
@@ -346,18 +354,19 @@ class Series(ABC):
         )
 
     @classmethod
-    def get_db_dtype(cls, dialect: Dialect) -> str:
+    def get_db_dtype(cls, dialect: Dialect) -> Optional[str]:
         """
         Give the static db_dtype of this Series, for the given database dialect.
-        :raises DatabaseNotSupportedException:  If the db_dtype is not defined for the given dialect. This
-            will also happen if the db_dtype is not static (e.g. an array has 'dynamic' type that depends
-            on the data, like 'ARRAY<INT64>')
+        :raises DatabaseNotSupportedException: If the Series subclass doesn't support the database dialect.
+        :return: database type as string, or None if this Series has no database type for which it is the
+            standard Series for that database, or if that type is a structural type whose exact type depends
+            on the data of the subtypes (e.g. SeriesList will return None on BigQuery, as it can handle all
+                ARRAY<*> subtypes)
         """
         db_dialect = DBDialect.from_dialect(dialect)
         if db_dialect not in cls.supported_db_dtype:
-            raise DatabaseNotSupportedException(
-                dialect,
-                message_override=f'Cannot get db type of {cls.__name__} for {dialect.name}')
+            message_override = f'{cls.__name__} is not supported for database dialect {dialect.name}'
+            raise DatabaseNotSupportedException(dialect, message_override=message_override)
         return cls.supported_db_dtype[db_dialect]
 
     @classmethod
@@ -446,6 +455,16 @@ class Series(ABC):
             instance_dtype=dtype
         )
         return result
+
+    @classmethod
+    def assert_engine_dialect_supported(cls, dialect_engine: Union[Dialect, Engine]):
+        if isinstance(dialect_engine, Engine):
+            db_dialect = DBDialect.from_engine(dialect_engine)
+        else:
+            db_dialect = DBDialect.from_dialect(dialect_engine)
+        if db_dialect not in cls.supported_db_dtype:
+            message_override = f'{cls.__name__} is not supported for database dialect {dialect_engine.name}'
+            raise DatabaseNotSupportedException(dialect_engine, message_override=message_override)
 
     def copy(self):
         """

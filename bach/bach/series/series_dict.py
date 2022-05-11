@@ -27,9 +27,12 @@ class SeriesDict(Series):
     """
     dtype = 'dict'
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
-    # no static types registered through supported_db_dtype, as exact db_type depends on what kind of data
-    # the dict/struct holds (e.g. 'STRUCT< xINT64>'
-    supported_db_dtype: Mapping[DBDialect, str] = {}
+    supported_db_dtype = {
+        # We support BigQuery STRUCT type, but the exact db_dtype depends on what kind of data the struct
+        # holds (e.g. 'STRUCT<x INT64>'). So we don't define a static db_dtype that we support
+        DBDialect.BIGQUERY: None
+        # Postgres is not supported, thus not listed here
+    }
     supported_value_types = (dict, )
 
     @classmethod
@@ -44,7 +47,7 @@ class SeriesDict(Series):
             dtype: StructuredDtype
     ) -> Expression:
         # validate early, and help mypy
-        cls._validate_is_bigquery(dialect)
+        cls.assert_engine_dialect_supported(dialect)
         if not isinstance(dtype, dict):
             raise ValueError(f'Dtype should be type dict. Type(dtype): {type(dtype)}')
         validate_dtype_value(static_dtype=cls.dtype, instance_dtype=dtype, value=value)
@@ -80,9 +83,9 @@ class SeriesDict(Series):
         :param dtype:   instance dtype, mandatory. Should be a dict, describing the structure of value.
         """
         # We override the parent class here to allow using Series as sub-values in a dict
-        cls._validate_is_bigquery(base.engine.dialect)
 
         # validate early, and help mypy
+        cls.assert_engine_dialect_supported(base.engine)
         if not isinstance(dtype, dict):
             raise ValueError(f'Dtype should be type dict. Type(dtype): {type(dtype)}')
         if value is None:
@@ -127,14 +130,6 @@ class SeriesDict(Series):
         # Even when casting from a dict to a dict, things will be troublesome if instance_dtype doesn't
         # match. So just raise an error.
         raise Exception('Cannot cast a value to a dictionary.')
-
-    @classmethod
-    def _validate_is_bigquery(cls, dialect):
-        if not is_bigquery(dialect):
-            raise DatabaseNotSupportedException(
-                dialect,
-                message_override=f'SeriesDict is not supported for {dialect.name}, '
-                                 f'try SeriesJson for similar functionality.')
 
     @property
     def elements(self) -> 'DictAccessor':
