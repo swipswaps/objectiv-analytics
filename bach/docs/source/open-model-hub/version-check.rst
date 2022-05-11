@@ -12,7 +12,7 @@ The Objectiv Modelhub package comes with a built-in version checker. During impo
 
 **Why?**
 
-We are adding new models and taxonomy operations at a high pace, so the goal of this version check is to notify you when models & taxonomy operations are available to use. 
+We are adding new models and taxonomy operations at a high pace, so the goal of this version check is to notify you when new models & taxonomy operations are available to use. 
 
 **How?**
 
