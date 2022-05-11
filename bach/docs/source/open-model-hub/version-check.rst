@@ -12,15 +12,15 @@ The Objectiv Modelhub package comes with a built-in version checker. During impo
 
 **Why?**
 
-We are adding new models and taxonomy operations at a high pace, so the goal of this version check is to notify you if when models & taxonomy operations are available to use.
+We are adding new models and taxonomy operations at a high pace, so the goal of this version check is to notify you if when models & taxonomy operations are available to use. 
 
 **How?**
 
-An asynchronous http request to https://version-check.objectiv.io on package import.
+An asynchronous http request to https://version-check.objectiv.io on package import. Gives a Pythong warning in case a new version is available. 
 
 **What data is being sent?**
 
-Your current version of the model hub and from which python package the request is made. No cookies, IPs or any other PII is being sent.
+Your current version of the objectiv-modelhub, objectiv-bach and from which python package the request is made. No cookies, IPs or any other PII is being sent.
 
 **Disable the version check**
 
