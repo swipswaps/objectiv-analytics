@@ -46,7 +46,7 @@ def test_from_table_structural_big_query(engine):
 
     df = DataFrame.from_table(engine=engine, table_name=table_name, index=['a'])
     assert df.index_dtypes == {'a': 'int64'}
-    assert df.dtypes == {'b': 'dict', 'c': 'array'}
+    assert df.dtypes == {'b': 'dict', 'c': 'list'}
     assert df.is_materialized
     assert df.base_node.columns == ('a', 'b', 'c')
     assert df['b'].instance_dtype == {'f1': 'int64', 'f2': 'float64', 'f3': {'f31': ['int64'], 'f32': 'bool'}}

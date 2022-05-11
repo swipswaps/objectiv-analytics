@@ -69,7 +69,7 @@ class SeriesDict(Series):
         value: Dict[str, Any],
         name: str,
         dtype: Optional[StructuredDtype] = None
-    ) -> 'Series':
+    ) -> 'SeriesDict':
         """
         Create an instance of this class, that represents a column with the given dict as value.
         The given base Series/DataFrame will be used to set the engine, base_node, and index.
@@ -176,7 +176,3 @@ class DictAccessor:
                 .copy_override(expression=expression)
         else:
             raise Exception(f'Unsupported structural type: {sub_dtype}')
-
-    # def len(self) -> 'SeriesInt64':
-    #     engine = self._series.engine
-    #     # TODO

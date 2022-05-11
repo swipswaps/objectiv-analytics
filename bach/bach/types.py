@@ -29,6 +29,7 @@ AllSupportedLiteralTypes = Union[
     str,
     datetime.date, datetime.time, datetime.datetime, numpy.datetime64, datetime.timedelta, numpy.timedelta64,
     UUID,
+    pandas.Interval,
     dict,
     list
 ]
@@ -80,8 +81,8 @@ def get_all_db_dtype_to_series() -> Mapping[DBDialect, Mapping[Dtype, Type['Seri
 def validate_is_dtype(dtype: StructuredDtype):
     """
     Validate that the given dtype is a valid dtype. Raises a ValueError otherwise.
+    Note that here we don't consider dtype-aliasses to be valid.
     """
-    # TODO: Do we want to support dtype-aliasses in these functions? probably not
     return _registry.validate_is_dtype(dtype)
 
 
@@ -347,7 +348,6 @@ def _validate_dtype_of_value(dtype: StructuredDtype, value: Union['Series', AllS
     Recursively validate that value has the given dtype.
     Assumes dtype is a well-formed dtype.
     """
-    # TODO: add information on where in the dtype/value the error occurred
     from bach.series import Series
 
     if isinstance(value, Series):

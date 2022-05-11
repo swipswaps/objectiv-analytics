@@ -101,7 +101,7 @@ def _tokens_to_dtype(
                     current[name] = sub_dtype
                 else:
                     # format: `TYPE`
-                    raise ValueError('Dont support this for now TODO')
+                    raise ValueError('We do not support STRUCTS with unnamed fields.')
         assert_token(tokens, pos, '>')
         return pos, current
     if t == 'ARRAY':
