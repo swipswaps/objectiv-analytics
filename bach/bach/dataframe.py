@@ -17,7 +17,7 @@ from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, AllSupportedLiteralTypes
 from bach.utils import escape_parameter_characters
-from sql_models.constants import NotSet, not_set, DBDialect
+from sql_models.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
@@ -1186,8 +1186,7 @@ class DataFrame:
         """
         For usage see general introduction DataFrame class.
         """
-        # TODO: all types from types.TypeRegistry are supported.
-        from bach.series import Series, const_to_series, SeriesAbstractMultiLevel
+        from bach.series import Series, value_to_series, SeriesAbstractMultiLevel
         if isinstance(key, str):
             if key in self.index:
                 # Cannot set an index column, and cannot have a column name both in self.index and self.data
@@ -1209,7 +1208,7 @@ class DataFrame:
                                            convert_objects=True)
                 value = bt[key]
             if not isinstance(value, Series):
-                series = const_to_series(base=self, value=value, name=key)
+                series = value_to_series(base=self, value=value, name=key)
                 self._data[key] = series
             else:
                 if value.base_node == self.base_node and self._group_by == value.group_by:
@@ -1909,13 +1908,11 @@ class DataFrame:
         .. note::
             This function queries the database.
         """
-        db_dialect = DBDialect.from_engine(self.engine)
-
         sql = self.view_sql(limit=limit)
 
         series_name_to_dtype = {}
         for series in self.all_series.values():
-            pandas_info = series.to_pandas_info.get(db_dialect)
+            pandas_info = series.to_pandas_info()
             if pandas_info is not None:
                 series_name_to_dtype[series.name] = pandas_info.dtype
 
@@ -1927,7 +1924,7 @@ class DataFrame:
         # Post-process any columns if needed. e.g. in BigQuery we represent UUIDs as text, so we convert
         # the strings that the query gives us into UUID objects
         for name, series in self.all_series.items():
-            to_pandas_info = series.to_pandas_info.get(db_dialect)
+            to_pandas_info = series.to_pandas_info()
             if to_pandas_info is not None and to_pandas_info.function is not None:
                 pandas_df[name] = pandas_df[name].apply(to_pandas_info.function)
 
@@ -3368,7 +3365,7 @@ class DataFrame:
             }
 
         categorical_series = []
-        from bach.series.series import const_to_series
+        from bach.series.series import value_to_series
         df_cp = self.copy()
 
         # prepare each series, add prefix to each value (variable identifiers)
@@ -3378,7 +3375,7 @@ class DataFrame:
 
             text_series = df_cp[col]
             prefix_val = f'{prefix_per_col.get(col, col)}{prefix_sep}'
-            prefix_series = const_to_series(text_series, value=prefix_val, name=col)
+            prefix_series = value_to_series(text_series, value=prefix_val, name=col)
             text_series = prefix_series + text_series
 
             categorical_series.append(text_series)

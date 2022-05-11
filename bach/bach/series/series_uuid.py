@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy.engine import Dialect
 
 from bach import DataFrameOrSeries
-from bach.series import Series, const_to_series
+from bach.series import Series, value_to_series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition, ToPandasInfo
 from sql_models.constants import DBDialect
@@ -34,11 +34,6 @@ class SeriesUuid(Series):
     }
 
     supported_value_types = (UUID, str)
-
-    to_pandas_info = {
-        DBDialect.POSTGRES: None,
-        DBDialect.BIGQUERY: ToPandasInfo('object', UUID)
-    }
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
@@ -107,12 +102,19 @@ class SeriesUuid(Series):
             index=base.engine,
             name='__tmp',
             expression=Expression.construct(expr_str),
-            group_by=None
+            group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
         )
+
+    def to_pandas_info(self) -> Optional[ToPandasInfo]:
+        if is_bigquery(self.engine):
+            return ToPandasInfo('object', UUID)
+        return None
 
     def _comparator_operation(self, other, comparator, other_dtypes=('uuid', 'string')):
         from bach import SeriesBoolean
-        other = const_to_series(base=self, value=other)
+        other = value_to_series(base=self, value=other)
         self_modified, other = self._get_supported(f"comparator '{comparator}'", other_dtypes, other)
         if other.dtype == 'string' and is_postgres(self.engine):
             expression = Expression.construct(
