@@ -16,7 +16,8 @@ We are adding new models and taxonomy operations at a high pace, so the goal of 
 
 **How?**
 
-An asynchronous http request to https://version-check.objectiv.io on package import. Gives a Pythong warning in case a new version is available. 
+An asynchronous http request to https://version-check.objectiv.io is sent on package import. A Python warning message is issued in case a new version is available. 
+
 
 **What data is being sent?**
 
