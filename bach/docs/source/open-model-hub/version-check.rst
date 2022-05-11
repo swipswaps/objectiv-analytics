@@ -9,7 +9,7 @@ Version check
 =============
 
 The Objectiv :ref:`ModelHub <modelhub_reference_modelhub>` package comes with a built-in version checker. 
-During import, it automatically checks to see if the loaded version is the most recent version.
+During import, it automatically checks if the loaded version is the most recent version.
 
 **Why?**
 
