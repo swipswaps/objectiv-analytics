@@ -52,8 +52,9 @@ if os.environ.get('OBJECTIV_VERSION_CHECK_DISABLE', 'false') == 'false':
                             for line in lines.split('\n'):
 
                                 items = line.split(':')
-                                # we expect at least 4 items, but the message may contain colons, so there may be more
-                                # items in the list. We combine the remaining ones into one str: message
+                                # we expect at least 4 items, but the message may contain colons, so there
+                                # may be more items in the list. We combine the remaining ones into
+                                # one str: message
                                 if len(items) > 3:
                                     package, updated, version = items[:3]
                                     message = ':'.join(items[3:])
