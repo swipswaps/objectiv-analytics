@@ -1,5 +1,7 @@
 .. _example_product_analytics:
 
+.. frontmatterposition:: 2
+
 .. currentmodule:: bach_open_taxonomy
 
 =======================

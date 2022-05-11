@@ -1,5 +1,7 @@
 .. _example_modelhub_basics:
 
+.. frontmatterposition:: 5
+
 .. currentmodule:: bach
 
 =====================
