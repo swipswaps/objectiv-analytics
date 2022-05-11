@@ -9,7 +9,7 @@ Basic product analytics
 This example shows how the open model hub can be used for basic product analysis.
 
 This example is also available in a `notebook
-<https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/basic-product-analytics.ipynb>`_
+<https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/basic-analysis.ipynb>`_
 to run on your own data or use our
 `quickstart
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.

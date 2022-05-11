@@ -43,7 +43,7 @@ The next examples demonstrate how to use the model hub by showcasing a selection
 
 A simple aggregation model
 --------------------------
-Calculating the unique users is one of the basic models in the model hub. As it is an aggregation model, it is called with `model_hub.aggregate.unique_users()`. It uses the *time_aggregation* that is set when the model hub was instantiated. With `.head()` we immediately query the data to show the results. `.to_pandas()` can be used to use all results as a pandas object in python.
+Calculating the unique users is one of the basicÒ models in the model hub. As it is an aggregation model, it is called with `model_hub.aggregate.unique_users()`. It uses the *time_aggregation* that is set when the model hub was instantiated. With `.head()` we immediately query the data to show the results. `.to_pandas()` can be used to use all results as a pandas object in python.
 
 .. code-block:: python
 
