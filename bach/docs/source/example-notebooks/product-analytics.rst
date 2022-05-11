@@ -6,10 +6,10 @@
 Basic product analytics
 =======================
 
-This example shows how the open model hub can be used for basic product analysis.
+This example shows how the open model hub can be used for basic product analytics.
 
 This example is also available in a `notebook
-<https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/basic-analysis.ipynb>`_
+<https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/basic-product-analytics.ipynb>`_
 to run on your own data or use our
 `quickstart
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
@@ -44,7 +44,8 @@ extract the data.
     df['utm_content'] = df.global_contexts.gc.get_from_context_with_type_series(type='MarketingContext', key='content')
     df['utm_term'] = df.global_contexts.gc.get_from_context_with_type_series(type='MarketingContext', key='term')
 
-Now we will go though a bunch of basic analytics metrics. We can use models from the :ref:`models <models>` 
+Now we will go though a selection of basic analytics metrics. We can use models from the :ref:`models
+<models>`
 for this purpose or use :ref:`Bach <bach>` to do data analysis directly on the data stored in the SQL database using 
 pandas-like syntax.
 
@@ -53,9 +54,9 @@ the results in your notebook.
 
 Unique users
 ------------
-The `daily_users` uses the `time_aggregation` as set when the `of` object was instantiated. In this case the
-formatting was set to days, so the aggregation is daily. For `monthly_users`, the default time_aggregation is
-overridden by using a different `groupby`.
+The `daily_users` uses the `time_aggregation` as set when the model hub was instantiated. In this case
+`time_aggregation` was set to 'YYYY-MM-DD', so the aggregation is daily. For `monthly_users`, the
+default time_aggregation is overridden by using a different `groupby`.
 
 .. code-block:: python
 
@@ -98,7 +99,7 @@ Most used product areas
 -----------------------
 
 First we use the model hub to get the unique users per application, root location, feature, and event type.
-From this prepared dataset, we get show the users for the home page first.
+From this prepared dataset, we show the users for the home page first.
 
 .. code-block:: python
 
@@ -195,7 +196,7 @@ We can calculate what users did _before_ converting by combining several models 
                                                                   'event_type'])
 
 At last we want to know how much time users that converted spent on our site before they converted. For this
-we recylcle the object we created above.
+we reuse the object we created above.
 
 .. code-block:: python
 
