@@ -1,4 +1,3 @@
-from glob import escape
 from .depth import Depth
 from .doctree2md import Translator, Writer
 from docutils import nodes
@@ -8,7 +7,7 @@ import os
 import yaml
 from sphinx.util.docutils import SphinxDirective, directives
 
-frontmatter = {} # holds any frontmatter forthe current doc
+frontmatter = {} # holds any frontmatter for the current doc
 
 class DocusaurusTranslator(Translator):
     """Class to translate to Docusaurus-compatible MDX documentation from Sphinx.
@@ -48,7 +47,7 @@ class DocusaurusTranslator(Translator):
 
     @property
     def rows(self):
-        """Stores rows in a table in the document."""
+        """Returns rows in a table in the document."""
         rows = []
         if not len(self.tables):
             return rows
@@ -56,9 +55,9 @@ class DocusaurusTranslator(Translator):
             if isinstance(node, nodes.row):
                 rows.append(node)
             else:
-                for node in node.children:
-                    if isinstance(node, nodes.row):
-                        rows.append(node)
+                for subnode in node.children:
+                    if isinstance(subnode, nodes.row):
+                        rows.append(subnode)
         return rows
 
 
@@ -91,6 +90,7 @@ class DocusaurusTranslator(Translator):
                     slug = docname[0:index_last_part] + last_part_formatted
 
         # add base path and trailing slash
+        # TODO: make configurable instead of hardcoded
         slug = '/modeling/' + slug + '/'
         if docname == 'index' or docname[-6:] == "/index":
             # this is an index page, so should just end in '/'
@@ -272,7 +272,7 @@ class DocusaurusTranslator(Translator):
         #     self.add('\n\n ')
 
         # do the same for 'any view source' links
-        if('viewcode-link' in node.attributes['classes']):
+        if 'viewcode-link' in node.attributes['classes']:
             self.add('\n&#8203;<span className="view-source">')
 
         self.in_reference = True

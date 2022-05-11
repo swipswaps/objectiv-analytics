@@ -1,5 +1,5 @@
 """
-Copyright 2021 Objectiv B.V.
+Copyright 2022 Objectiv B.V.
 """
 from os import path
 from codecs import open
@@ -12,7 +12,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-# install the required libraries
+# required libraries (https://packaging.python.org/en/latest/discussions/install-requires-vs-requirements/)
 install_requires = list()
 with open(path.join(here, 'requirements.txt'), 'r', encoding='utf-8') as f:
     for line in f.readlines():

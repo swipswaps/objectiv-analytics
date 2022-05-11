@@ -11,7 +11,7 @@ class Depth:
     def get(self, name=None):
         if name:
             return self.sub_depth[name] if name in self.sub_depth else 0
-        return depth
+        return self.depth
 
     def descend(self, name=None):
         self.depth = self.depth + 1

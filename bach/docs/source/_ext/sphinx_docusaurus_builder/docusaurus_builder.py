@@ -33,6 +33,7 @@ class DocusaurusBuilder(Builder):
     # second level specifies how far back the path should show:
     #   * ``title_tree_levels``: e.g. 'models.abc.xyz' with title_tree_levels 2 becomes 'abc.xyz' in the title
     #   * ``slug_tree_levels``: e.g. 'models.abc' with slug_tree_levels 1 becomes 'abc' in the slug
+    # TODO: make configurable instead of hardcoded
     api_frontmatter = {
         'open-model-hub/models': {
             'title_tree_levels': 1,
