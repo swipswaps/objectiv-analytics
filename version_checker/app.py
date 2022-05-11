@@ -30,7 +30,7 @@ def get_current_version(package: str) -> str:
     """
 
     url = f'{PYPI_BASE_URL}/pypi/{package}/json'
-    headers = {oh ja
+    headers = {
         'Content-Type': 'application/json'
     }
     response = requests.get(url=url, headers=headers)
