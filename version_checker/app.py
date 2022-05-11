@@ -16,10 +16,10 @@ import time
 from objectiv_backend.schema.schema import make_event_from_dict, AbstractEvent
 
 # url to objectiv tracker
-TRACKER_URL = os.environ.get('TRACKER_URL', 'http://localhost:8081')
+TRACKER_URL = os.environ.get('OBJECTIV_TRACKER_URL', 'http://localhost:8081')
 
 # base url to PYPI index, use localhost for local proxy cache
-PYPI_URL = os.environ.get('PYPI_HOST', 'http://localhost')
+PYPI_BASE_URL = os.environ.get('OBJECTIV_PYPI_BASE_URL', 'http://localhost')
 
 
 def get_current_version(package: str) -> str:
@@ -29,8 +29,8 @@ def get_current_version(package: str) -> str:
     :return: str - version if available
     """
 
-    url = f'{PYPI_URL}/pypi/{package}/json'
-    headers = {
+    url = f'{PYPI_BASE_URL}/pypi/{package}/json'
+    headers = {oh ja
         'Content-Type': 'application/json'
     }
     response = requests.get(url=url, headers=headers)
@@ -110,11 +110,14 @@ def check_version() -> Response:
         print('error:Could not process request')
 
     response = []
+    docs_url = 'https://objectiv.io/docs/modeling/open-model-hub/version-check/'
     for package in packages:
         # format response, containing package, update status, version, and message
         update = packages[package]['update']
         current_version = packages[package]['current_version']
-        message = f'Update available for {package} to {current_version}'
+
+        message = f'New version {current_version} of {package} available. Upgrade to get the latest pre-built ' \
+                  f'models & Bach operations: `pip install --upgrade {package}`. See more at {docs_url}'
 
         response.append(f'{package}:{update}:{current_version}:{message}')
 
