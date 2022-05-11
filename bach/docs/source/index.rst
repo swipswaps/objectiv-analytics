@@ -6,7 +6,7 @@
 Introduction
 ============
 
-Objectiv's modeling toolkit enables you to build advanced data models fast and run in-depth analyses with 
+Objectiv's modeling toolkit enables you to quickly build advanced data models and run in-depth analyses with 
 very little grunt work. This is the combined result of three components:
 
 1. The open analytics taxonomy.
@@ -23,15 +23,15 @@ model on without any cleaning or transformation.
 ### The open model hub
 
 The open model hub consists of pre-built models and operations that you can combine to build advanced 
-compound models with little effort. The open model hub is accessible through Bach, our python-based modeling 
-library.
+compound models with little effort. The open model hub is powered by Bach, our python-based modeling library.
 
 :ref:`Learn more about the open model hub <open_model_hub>`
 
 ### The Bach modeling library
 
 Bach is a python-based modeling library that enables you to use Pandas-like operations that run on your full 
-dataset. Any model built with Bach can be converted to an SQL statement with a single command.
+dataset in the SQL database. Any data set or model built with Bach can be converted to an SQL statement with 
+a single command.
 
 :ref:`Learn more about the Objectiv Bach modeling libary <bach>`
 
