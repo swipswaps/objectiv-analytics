@@ -219,6 +219,7 @@ class SeriesJson(Series):
         # here we set None
         DBDialect.BIGQUERY: None
     }
+    supported_value_types = (dict, list)
 
     @property
     def json(self):
@@ -246,8 +247,11 @@ class SeriesJson(Series):
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        cls.assert_engine_dialect_supported(dialect)
-        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
+        if is_postgres(dialect):
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
+        if is_bigquery(dialect):
+            return literal
+        raise DatabaseNotSupportedException(dialect)
 
     @classmethod
     def supported_value_to_literal(
@@ -262,7 +266,6 @@ class SeriesJson(Series):
 
     @classmethod
     def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
-        cls.assert_engine_dialect_supported(dialect)
         if is_postgres(dialect):
             if source_dtype == 'json':
                 return expression
@@ -279,12 +282,7 @@ class SeriesJson(Series):
         if is_postgres(self.engine):
             return ToPandasInfo('object', None)
         if is_bigquery(self.engine):
-            def convert(x):
-                if x is None:
-                    return None
-                print(f'\n\n\n{x}\n\n\n')
-                return json.loads(x)
-            return ToPandasInfo('object', convert) # lambda x: json.loads(x) if x is not None else None)
+            return ToPandasInfo('object', lambda x: json.loads(x) if x is not None else None)
         return None
 
     def _comparator_operation(
@@ -312,12 +310,14 @@ class SeriesJson(Series):
     def __le__(self, other: Union['Series', AllSupportedLiteralTypes]) -> 'SeriesBoolean':
         if is_postgres(self.engine):
             return self._comparator_operation(other, "<@")
-        return self._comparator_operation(other, "<=")
+        message_override = f'Operator <= is not supported for type json on database {self.engine.name}'
+        raise DatabaseNotSupportedException(self.engine, message_override=message_override)
 
     def __ge__(self, other: Union['Series', AllSupportedLiteralTypes]) -> 'SeriesBoolean':
         if is_postgres(self.engine):
             return self._comparator_operation(other, "@>")
-        return self._comparator_operation(other, ">=")
+        message_override = f'Operator >= is not supported for type json on database {self.engine.name}'
+        raise DatabaseNotSupportedException(self.engine, message_override=message_override)
 
     def min(self, partition: WrappedPartition = None, skipna: bool = True):
         """ INTERNAL: Only here to not trigger errors from describe """
@@ -341,11 +341,23 @@ class JsonBigQueryAccessor:
         """
         # TODO: leverage instance_dtype information here, if we have that
         if isinstance(key, int):
-            expression = Expression.construct(f'''JSON_QUERY({{}}, '$[{key}]')''', self._series_object)
-            #expression = Expression.construct('COALESCE(JSON_VALUE({}), {})', expression, expression)
+            if key >= 0:
+                expression = Expression.construct(f'''JSON_QUERY({{}}, '$[{key}]')''', self._series_object)
+                return self._series_object.copy_override(expression=expression)
+            # case key <= 0
+            # BigQuery doesn't (yet) natively support this, so we emulate this.
+            expr_len = Expression.construct('ARRAY_LENGTH(JSON_EXTRACT_ARRAY({}))', self._series_object)
+            expr_offset = Expression.construct(f'OFFSET({{}} {key})', expr_len)
+            expression = Expression.construct('JSON_EXTRACT_ARRAY({})[{}]', self._series_object, expr_offset)
             return self._series_object.copy_override(expression=expression)
+
         elif isinstance(key, str):
             return self.get_value(key)
+
+        elif isinstance(key, slice):
+            raise NotImplementedError()  # TODO
+
+        raise TypeError('Key should either be a string, integer, or slice.')
 
     def get_value(self, key: str, as_str: bool = False) -> Union['SeriesString', 'SeriesJson']:
         """
@@ -362,20 +374,7 @@ class JsonBigQueryAccessor:
         # [1] https://cloud.google.com/bigquery/docs/reference/standard-sql/json_functions#json_value
         assert '"' not in key
 
-        # Super lame hack:
-        # On postgres if the result of 'data->{key}' is a string, then we get back a string.
-        # On BigQuery if the result of 'JSON_QUERY(data, '$.{key}') is a string, then we get back a json
-        #  string. That is, the returned value has quotes. We want the same behaviour here.
-        # What we do: get the json value, then try to extract the scalar value, if it is not a scalar value
-        # it will return NULL. So based on that we can know whether it is a string or a complex value
-
-        # TODO: evaluate what we want as behaviour, is the old behaviour best? The tests now pass, but this
-        # actually doesn't make a lot of sense!?
-
-        # expression = Expression.construct(f'''JSON_VALUE({{}}, '$."{key}"')''', self._series_object)
-
         expression = Expression.construct(f'''JSON_QUERY({{}}, '$."{key}"')''', self._series_object)
-        #expression = Expression.construct('COALESCE(JSON_VALUE({}), {})', expression, expression)
 
         if not as_str:
             return self._series_object.copy_override(expression=expression)

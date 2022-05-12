@@ -31,6 +31,7 @@ def test_json_get_value(engine, dtype):
     bts = bt.mixed_column.json.get_value('a')
     assert_equals_data(
         bts,
+        use_to_pandas=True,
         expected_columns=['_index_row', 'mixed_column'],
         expected_data=[
             [0, "b"],
@@ -41,16 +42,19 @@ def test_json_get_value(engine, dtype):
     )
 
 
-def test_json_get_single_value(pg_engine, dtype):
-    bt = get_df_with_json_data(engine=pg_engine, dtype=dtype)
+def test_json_get_single_value(engine, dtype):
+    bt = get_df_with_json_data(engine=engine, dtype=dtype)
     a = bt.mixed_column[2]
-    # TODO: BigQuery
     assert a == {'a': 'b', 'c': {'a': 'c'}}
 
 
-def test_json_compare(pg_engine, dtype):
-    bt = get_df_with_json_data(engine=pg_engine, dtype=dtype)
-    # TODO: BigQuery
+
+@pytest.mark.skip_bigquery
+def test_json_compare(engine, dtype):
+    # These less-than-or-equals compares check that the left hand is contained in the right hand, on
+    # Postgres. On BigQuery we cannot support this, so we skip this function for BQ on purpose.
+    # TODO: maybe get rid of the Postgres support too?
+    bt = get_df_with_json_data(engine=engine, dtype=dtype)
     bts = {"a": "b"} <= bt.mixed_column
     assert_equals_data(
         bts,
@@ -93,6 +97,7 @@ def test_json_getitem(engine, dtype):
     bts = bt.mixed_column.json[-2]
     assert_equals_data(
         bts,
+        use_to_pandas=True,
         expected_columns=['_index_row', 'mixed_column'],
         expected_data=[
             [0, None],
@@ -104,6 +109,7 @@ def test_json_getitem(engine, dtype):
     bts = bt.mixed_column.json["a"]
     assert_equals_data(
         bts,
+        use_to_pandas=True,
         expected_columns=['_index_row', 'mixed_column'],
         expected_data=[
             [0, "b"],
