@@ -17,7 +17,7 @@ to run on your own data or use our
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
 At first we have to install the open model hub and instantiate the Objectiv DataFrame object. See
-:ref:`get_started_with_objectiv` for more info on this. The data used in this example is
+:ref:`getting_started_with_objectiv` for more info on this. The data used in this example is
 based on the data set that comes with our quickstart docker demo.
 
 Besides the open model hub, we have to import the following packages for this example:

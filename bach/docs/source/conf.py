@@ -51,6 +51,7 @@ extensions = [
     'numpydoc',  # use numpy style docs
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
+    'sphinx.ext.autosectionlabel',
     'sphinx_docusaurus_builder',
     'linkcode',  # generate [source] links to GH
 ]
@@ -77,6 +78,9 @@ autodoc_typehints_description_target = 'documented'
 autoclass_content = 'class'
 
 # TOTALLY breaks toctree generation autodoc_class_signature = 'separated'
+
+# automatically create explicit targets for sections
+autosectionlabel_prefix_document = True
 
 # numpydoc
 numpydoc_attributes_as_param_list = False

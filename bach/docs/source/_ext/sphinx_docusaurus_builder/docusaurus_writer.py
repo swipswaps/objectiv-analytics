@@ -147,8 +147,6 @@ class DocusaurusTranslator(Translator):
         """The root of the tree.
         https://docutils.sourceforge.io/docs/ref/doctree.html#document"""
         self.title = getattr(self.builder, 'current_docname')
-        if self.title == 'example-notebooks/machine-learning':
-            print("DOCUMENT:", node)
 
 
     def depart_document(self, node):
@@ -225,6 +223,17 @@ class DocusaurusTranslator(Translator):
         """Main unit of hierarchy: https://docutils.sourceforge.io/docs/ref/doctree.html#section"""
         self.section_depth -= 1
 
+    
+    def visit_target(self, node):
+        if self.visited_title:
+            if node.get('refid'):
+                target_id = str(node.get('refid'))
+                self.add('<div id="' + target_id + '" className="hidden-anchor"></div>\n\n')
+
+
+    def depart_target(self, node):
+        pass
+
 
     def visit_rubric(self, node):
         """An informal heading that doesn't correspond to the document's structure.
@@ -292,8 +301,6 @@ class DocusaurusTranslator(Translator):
         # Docusaurus doesn't support MDXv2 yet: https://github.com/facebook/docusaurus/issues/4029
         # so we cannot add an MD-formatted link in a <span> element, as it won't get parsed.
         # therefore, for now, we add these on a newline.
-        # if(self.in_signature):
-        #     self.add('\n\n ')
 
         # do the same for 'any view source' links
         if 'viewcode-link' in node.attributes['classes']:
@@ -303,13 +310,11 @@ class DocusaurusTranslator(Translator):
         url = self._refuri2http(node)
         if url is None:
             return
+
         self.add('[')
         for child in node.children:
             child.walkabout(self)
         self.add(']({})'.format(url))
-
-        # if(self.in_signature):
-        #     self.add('\n\n')
 
         if('viewcode-link' in node.attributes['classes']):
             self.add("</span>\n")

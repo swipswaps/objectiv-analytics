@@ -443,12 +443,15 @@ class Translator(nodes.NodeVisitor):
         # None for no possible address
         this_doc = self.builder.current_docname
         url = node.get('refuri')
+        optional_anchor = ""
+
         if not node.get('internal'):
             return url
 
         if url not in (None, ''):
             # strip off the end starting with '/#', e.g. 'ModelHub/modelhub.ModelHub/#modelhub.ModelHub'
             hash_index = url.rfind('/#')
+            optional_anchor = url[hash_index+2:]
             url = url[0:hash_index]
             # strip off the first '../'
             url = url[3:]
@@ -471,6 +474,17 @@ class Translator(nodes.NodeVisitor):
         url = '{}/{}'.format(self.markdown_http_base, url)
         if 'refid' in node:
             url += '#' + node['refid']
+        elif not 'optional_anchor' == "":
+            # Sphinx references (by :ref: or :autosummary:) all generate anchors ('#myanchor') in the refuri.
+            # No distinction is made between a useful anchor that points to a section and a redundant one.
+            # One pattern exists: if the anchor is already part of the URL, it's nearly certainly redundant.
+            # example: 'bach-api-reference' for URL '/modeling/bach/api-reference/index.mdx'
+            # example: 'modelhub.Aggregate.frequency' for URL '/modeling/open-model-hub/models/Aggregate/modelhub.Aggregate.frequency.mdx'
+            # So here we only add the anchor if it seems useful (not yet part of the URL).
+            anchor_is_redundant = optional_anchor.replace("-", "/") in url
+            if not anchor_is_redundant:
+                url += '#' + optional_anchor
+
         return url
 
 
