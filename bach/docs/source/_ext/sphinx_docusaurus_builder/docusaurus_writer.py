@@ -98,6 +98,31 @@ class DocusaurusTranslator(Translator):
         return slug
 
 
+    def get_title(self, docname, doc_frontmatter):
+        """Parse the title used in frontmatter, based on the config.
+
+        :param docname: the current document name/path.
+        :param doc_frontmatter: contents set via the frontmatter directive
+        
+        :returns: a formatted title.
+
+        """
+        
+        # any title set via the frontmatter directive takes preference
+        if doc_frontmatter and 'title' in doc_frontmatter:
+            return doc_frontmatter['title']
+
+        title = self.title
+        for api_pattern, config in self.builder.api_frontmatter.items():
+            if self.builder.current_docname.startswith(api_pattern):
+                if 'title_tree_levels' in config:
+                    levels = config['title_tree_levels']
+                    parts = self.title.split('.')
+                    title = '.'.join(parts[-levels:])
+        
+        return title
+
+
     ################################################################################
     # Parse the doctree: https://docutils.sourceforge.io/docs/ref/doctree.html
     #
@@ -122,7 +147,7 @@ class DocusaurusTranslator(Translator):
         """The root of the tree.
         https://docutils.sourceforge.io/docs/ref/doctree.html#document"""
         self.title = getattr(self.builder, 'current_docname')
-        if self.title == 'example-notebooks/index':
+        if self.title == 'example-notebooks/machine-learning':
             print("DOCUMENT:", node)
 
 
@@ -146,7 +171,7 @@ class DocusaurusTranslator(Translator):
         doc_frontmatter = self.frontmatter[current_doc] if current_doc in self.frontmatter else None
         variables = munchify({
             'id': _.snake_case(current_doc).replace('_', '-'),
-            'title': title,
+            'title': self.get_title(current_doc, doc_frontmatter),
             'slug': self.get_slug(current_doc, doc_frontmatter),
         })
         if doc_frontmatter and 'position' in doc_frontmatter:
@@ -950,6 +975,24 @@ class FrontMatterPositionDirective(SphinxDirective):
         return [empty_node]
 
 
+class FrontMatterSidebarTitleDirective(SphinxDirective):
+    """Directive to set a specific title in the sidebar for the document in its frontmatter"""
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+    option_spec = {}
+    has_content = False
+
+
+    def run(self):
+        docname = self.env.docname
+        title = directives.uri(self.arguments[0])
+        frontmatter.setdefault(docname, dict())
+        frontmatter[docname]['title'] = title
+        empty_node = nodes.raw()
+        return [empty_node]
+
+
 class FrontMatterSlugDirective(SphinxDirective):
     """Directive to set a specific slug for the document in its frontmatter"""
     required_arguments = 1
@@ -975,5 +1018,6 @@ class DocusaurusWriter(Writer):
 
     """
     directives.register_directive('frontmatterposition', FrontMatterPositionDirective)
+    directives.register_directive('frontmattersidebartitle', FrontMatterSidebarTitleDirective)
     directives.register_directive('frontmatterslug', FrontMatterSlugDirective)
     translator_class = DocusaurusTranslator
