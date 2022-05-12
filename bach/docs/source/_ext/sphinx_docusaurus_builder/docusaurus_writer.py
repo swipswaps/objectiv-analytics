@@ -122,6 +122,8 @@ class DocusaurusTranslator(Translator):
         """The root of the tree.
         https://docutils.sourceforge.io/docs/ref/doctree.html#document"""
         self.title = getattr(self.builder, 'current_docname')
+        if self.title == 'example-notebooks/index':
+            print("DOCUMENT:", node)
 
 
     def depart_document(self, node):
@@ -249,16 +251,14 @@ class DocusaurusTranslator(Translator):
             self.add('\n')
 
 
-    def visit_compact_paragraph(self, node):
-        """A paragraph that could be formatted more compactly; further formatting ignored here.
-        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
-        pass
+    # A paragraph that could be formatted more compactly; further formatting ignored here.
+    # https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph
+    visit_compact_paragraph = visit_paragraph
 
 
-    def depart_compact_paragraph(self, node):
-        """A paragraph that could be formatted more compactly; further formatting ignored here.
-        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
-        pass
+    # A paragraph that could be formatted more compactly; further formatting ignored here.
+    # https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph
+    depart_compact_paragraph = depart_paragraph
 
 
     def visit_reference(self, node):
@@ -433,9 +433,9 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_field_body(self, node):
-      """Container for the body of a field: 
-      https://docutils.sourceforge.io/docs/ref/doctree.html#field-body"""
-      pass
+        """Container for the body of a field: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#field-body"""
+        pass
 
 
     def depart_field_body(self, node):
