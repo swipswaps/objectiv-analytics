@@ -1,7 +1,7 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import Any, Tuple, List, Union, TYPE_CHECKING, Optional, Mapping
+from typing import Any, Tuple, List, Union, TYPE_CHECKING, Optional, Mapping, Sequence
 
 from sqlalchemy.engine import Dialect
 
@@ -146,7 +146,7 @@ class SeriesList(Series):
     def _sub_expressions_to_expression(
         dialect: Dialect,
         sub_dtype: StructuredDtype,
-        sub_expressions: List[Expression]
+        sub_expressions: Sequence[Expression]
     ) -> Expression:
         """ Internal function: create an array expression from a list of expressions """
         series_type = get_series_type_from_dtype(sub_dtype)
