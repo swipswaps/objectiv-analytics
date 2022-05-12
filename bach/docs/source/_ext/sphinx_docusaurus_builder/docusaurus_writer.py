@@ -143,7 +143,6 @@ class DocusaurusTranslator(Translator):
         ctx = self.builder.ctx
         doc_frontmatter = self.frontmatter[current_doc] if current_doc in self.frontmatter else None
         variables = munchify({
-            'date': ctx.date,
             'id': _.snake_case(current_doc).replace('_', '-'),
             'title': title,
             'slug': self.get_slug(current_doc, doc_frontmatter),
