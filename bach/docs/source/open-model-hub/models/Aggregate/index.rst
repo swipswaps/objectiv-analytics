@@ -1,9 +1,9 @@
 .. _models_reference_aggregation:
 
 
-===========
-Aggregation
-===========
+=========
+Aggregate
+=========
 
 .. currentmodule:: modelhub
 

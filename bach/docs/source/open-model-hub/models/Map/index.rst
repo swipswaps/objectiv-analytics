@@ -1,9 +1,9 @@
 .. _models_reference_mapping:
 
 
-=======
-Mapping
-=======
+===
+Map
+===
 
 .. currentmodule:: modelhub
 
