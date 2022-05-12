@@ -1273,7 +1273,9 @@ class DataFrame:
         for i, index_name in enumerate(self.index_columns):
             value_index_name = list(value.index.keys())[i]
             if self.index[index_name].dtype != value.index[value_index_name].dtype:
-                raise ValueError('dtypes of indexes at a position should be the same')
+                raise ValueError(f'Non matching dtypes of index series at position'
+                                 f' {i}: {self.index[index_name].dtype} '
+                                 f'!= {value.index[value_index_name].dtype}')
 
             # align index names, this way we have all matched indexes in a single series after merge
             # TODO: replace with value.rename(index={value_index_name: index_name})
