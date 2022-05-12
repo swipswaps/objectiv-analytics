@@ -50,7 +50,7 @@ The root_location context in the location_stack uniquely represents the top-leve
 
 Exploring session duration
 --------------------------
-The average `session_duration` model from the `open model hub </docs/modeling/>`_ is another good pointer to explore first for user intent.
+The average `session_duration` model from the `open model hub </docs/modeling/open-model-hub/>`_ is another good pointer to explore first for user intent.
 
 .. code-block:: python
 
