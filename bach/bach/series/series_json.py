@@ -376,7 +376,8 @@ class SeriesJson(SeriesJsonb):
                  expression: Expression,
                  group_by: 'GroupBy',
                  sorted_ascending: Optional[bool],
-                 index_sorting: List[bool]):
+                 index_sorting: List[bool],
+                 **kwargs):
 
         super().__init__(engine=engine,
                          base_node=base_node,
@@ -385,4 +386,5 @@ class SeriesJson(SeriesJsonb):
                          expression=Expression.construct(f'cast({{}} as jsonb)', expression),
                          group_by=group_by,
                          sorted_ascending=sorted_ascending,
-                         index_sorting=index_sorting)
+                         index_sorting=index_sorting,
+                         **kwargs)
