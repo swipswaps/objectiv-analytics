@@ -6,7 +6,7 @@ from typing import cast
 
 from sqlalchemy.engine import Dialect
 
-from bach.series import Series, const_to_series
+from bach.series import Series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from sql_models.constants import DBDialect
@@ -36,7 +36,7 @@ class SeriesBoolean(Series, ABC):
     dtype_aliases = ('boolean', '?', bool)
     supported_db_dtype = {
         DBDialect.POSTGRES: 'boolean',
-        DBDialect.BIGQUERY: 'boolean',
+        DBDialect.BIGQUERY: 'BOOL',
     }
     supported_value_types = (bool, )
 
