@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 from datetime import date, datetime, time
 
-from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_json_data,\
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_json_data, \
     CITIES_INDEX_AND_COLUMNS, get_df_with_test_data
 
 
@@ -162,8 +162,9 @@ def test_astype_to_time(engine):
     )
 
 
-def test_astype_to_json():
-    bt = get_bt_with_json_data(as_json=False)
+def test_astype_to_json(pg_engine):
+    bt = get_df_with_json_data(engine=pg_engine, dtype='string')
+    assert bt.dict_column.dtype == 'string'
     bt_json_dict = bt.dict_column.astype('jsonb')
     bt_json_list = bt.list_column.astype('jsonb')
     bt_json_mixed = bt.mixed_column.astype('jsonb')
