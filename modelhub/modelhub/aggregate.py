@@ -1,18 +1,15 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import List, Union
-
 import bach
 from bach.series import Series
 from sql_models.constants import NotSet, not_set
 from typing import List, Union, TYPE_CHECKING
 import numpy as np
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LogisticRegression as LogisticRegression_sklearn
-from sklearn.model_selection import StratifiedKFold
+from sklearn.linear_model import LogisticRegression as LogisticRegression_sk  # type: ignore
 import pandas as pd
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc  # type: ignore
+from modelhub.metrics import Metrics
 
 if TYPE_CHECKING:
     from modelhub import ModelHub
@@ -21,28 +18,20 @@ if TYPE_CHECKING:
 GroupByType = Union[List[Union[str, Series]], str, Series, NotSet]
 
 
-class LogisticRegression(LogisticRegression):
-
-    def decision_function(self, X, return_bach=False):
-        X_p = X.to_pandas()
-        values = super().decision_function(X_p)
-
-        if return_bach:
-            return self._return_series(X, values, name='confidence_score')
-
-        return values
+class LogisticRegression(LogisticRegression_sk):
+    def decision_function(self, X):
+        if len(X.data_columns) != len(self.coef_[0]):
+            raise ValueError("incorrect number of columns in X")
+        X_copy = X.copy()
+        X_copy['confidence_score'] = self.intercept_[0]
+        for column, coef in zip(X.data_columns, self.coef_[0]):
+            X_copy['confidence_score'] = X_copy['confidence_score'] + X_copy[column] * coef
+        return X_copy['confidence_score']
 
     def fit(self, X, y, *args, **kwargs):
         X_p = X.to_pandas()
         y_p = y.to_pandas()
-
         return super().fit(X_p, y_p, *args, **kwargs)
-
-    def score(self, X, y):
-        X_p = X.to_pandas()
-        y_p = y.to_pandas()
-
-        return super().score(X, y_p)
 
     def _return_series(self, X, values, name, classes=False):
         X_p = X.to_pandas()
@@ -62,41 +51,161 @@ class LogisticRegression(LogisticRegression):
 
             return values.copy_override(name=name)
 
+    # def predict_log_proba(self, X):
+    #     values = self.predict_proba(X, return_bach=False)
+    #     values = np.log(values)
+    #     return self._return_series(X, values, name='log_probability', classes=True)
+
     def predict(self, X):
-        values = super().predict(X)
-        return self._return_series(X, values, name='labels')
+        series = self.predict_proba(X) > .5
+        return series.copy_override(name='labels')
 
-    def predict_log_proba(self, X):
-        values = self.predict_proba(X, return_bach=False)
-        values = np.log(values)
-        return self._return_series(X, values, name='log_probability', classes=True)
+    def predict_proba(self, X):
+        confidence_score = self.decision_function(X)
+        probability = confidence_score.exp() / (confidence_score.exp() + 1.)
+        return probability.copy_override(name='probability')
 
-    def predict_proba(self, X, return_bach=True):
-        values = super().predict_proba(X)
-
-        if return_bach:
-            return self._return_series(X, values, name='probability', classes=True)
-        return values
-
-    def score(self, X, y, sample_weight=None):
-        from sklearn.metrics import accuracy_score
-
-        y_hat = self.predict(X).to_pandas()
-        y_p = y.to_pandas()
-
-        return accuracy_score(y_p, y_hat, sample_weight=sample_weight)
+    def score(self, X, y):
+        y_pred = self.predict(X)
+        return Metrics.accuracy_score(y, y_pred)
 
 
 class FeatureImportance:
     def __init__(self, **kwargs):
-        self._model = LogisticRegression(**kwargs)
+        self._result_dict = {}
 
-    @property
-    def underlyingmodel(self):
-        return self._model
+    def get_full_results(self):
+        return self._result_dict
 
-    def get_results(self):
-        return self._model.coef_
+    def _set_seed(self, data: bach.DataFrame, seed: float):
+        if not -1 <= seed <= 1:
+            raise ValueError("seed should be between -1 and 1")
+
+        from sql_models.model import SqlModelBuilder
+
+        class SetSeed(SqlModelBuilder):
+            @property
+            def sql(self):
+                _SQL = \
+                    f'''
+                    with old_base_node{{{{id}}}} as (SELECT * FROM {{{{base_node}}}})
+
+                    SELECT *
+                    FROM old_base_node{{{{id}}}}, (select setseed({seed})) as _seed
+                    '''
+                return _SQL
+
+        seed_model = SetSeed()
+        new_base_node_model = seed_model.build(base_node=data.base_node)
+
+        new_base_node = bach.sql_model.BachSqlModel.from_sql_model(
+            sql_model=new_base_node_model,
+            column_expressions=data.base_node.column_expressions,
+        )
+
+        df_with_seed = data.copy_override_base_node(base_node=new_base_node)
+        return df_with_seed
+
+    def _split_data_set_stratified(self, X, y, folds, seed):
+
+        data_set = X.copy()
+        # todo test y.name not in data X (should not be anyway)
+        data_set[y.name] = y
+
+        data_set = data_set.sort_index().materialize()
+        data_set = self._set_seed(data_set, seed)
+        data_set['_ordering'] = 0.1
+        data_set['_ordering'] = data_set['_ordering'].get_random_number()
+
+        from bach.partitioning import WindowFrameBoundary, WindowFrameMode
+        window = data_set.sort_values('_ordering').groupby(y.name).window(
+            mode=WindowFrameMode.ROWS,
+            start_boundary=WindowFrameBoundary.PRECEDING,
+            start_value=None,
+            end_boundary=WindowFrameBoundary.FOLLOWING,
+            end_value=None)
+        data_set['_part'] = window[X.data_columns[0]].window_ntile(folds)
+        data_set = data_set.materialize()
+
+        return data_set
+
+    def _get_stratified_folds(self, X, y, folds, seed):
+        data = self._split_data_set_stratified(X=X, y=y, folds=folds, seed=seed)
+        for fold in range(folds):
+            train = data[data['_part'] != fold + 1]
+            test = data[data['_part'] == fold + 1]
+            X_train = train[X.data_columns]
+            X_test = test[X.data_columns]
+            y_train = train[y.name]
+            y_test = test[y.name]
+
+            yield X_train, X_test, y_train, y_test
+
+    def fit(self, X, y, folds=3, seed=None, print_report=False):
+        if seed is None:
+            seed = np.random.random()
+        self._results_dict = {}
+
+        coef = pd.DataFrame(columns=X.data_columns)
+        i = 1
+
+        for X_train, X_test, y_train, y_test in self._get_stratified_folds(X, y, folds=folds,
+                                                                           seed=seed):
+            report = f"fold {i}\n"
+            report += "==============================\n"
+
+            lr = LogisticRegression()
+            lr.fit(X_train, y_train)
+
+            report += f"score: {lr.score(X_test, y_test)}\n"
+
+            cr = Metrics.get_classification_report(y_test,
+                                                   lr.predict(X_test),
+                                                   output_dict=True)
+
+            x_results = X_test.copy()
+            x_results['is_converted'] = y_test
+            x_results['yhat'] = lr.predict(X_test)
+
+            proba = lr.predict_proba(X_test).to_pandas()
+            fpr, tpr, thresholds = roc_curve(y_test.to_pandas(), proba)
+
+            report += f"\npredicted converted correct:" \
+                      f"{x_results[(x_results['yhat']) & (x_results['is_converted'])].yhat.count().value}\n"""
+            report += f"recall: {cr['True']['recall']}\n"
+            report += f"precision: {cr['True']['precision']}\n"
+            report += f"roc auc: {auc(fpr, tpr)}\n"
+
+            coef_fold = pd.DataFrame(lr.coef_, columns=X.data_columns)
+
+            coef = pd.concat([coef, coef_fold])
+
+            self._result_dict[f'fold {i}'] = {'classification_report': cr,
+                                              'auc': auc(fpr, tpr),
+                                              'coef': coef_fold,
+                                              'fitted_model': lr}
+
+            i += 1
+            report += "==============================\n\n"
+            if print_report:
+                print(report)
+        self._result_dict['coef'] = coef
+
+        feature = pd.DataFrame([coef.mean(), coef.std()], index=['mean', 'std']).T.sort_values(
+            'mean')
+
+        self._results_dict['seed'] = seed
+        self._result_dict['feature_importance'] = feature
+        self._result_dict['auc_mean'] = np.mean([y['auc'] for x, y in self._result_dict.items() if x[:4] ==
+                                                 'fold'])
+
+    def auc(self):
+        return self._result_dict['auc_mean']
+
+    def results(self, full=False):
+        if full:
+            return self._result_dict['coef']
+        return self._result_dict['feature_importance']
 
 
 class Aggregate:
@@ -247,15 +356,16 @@ class Aggregate:
                                       data: bach.DataFrame,
                                       name: str,
                                       feature_column: str,
-                                      partition: str ='user_id'):
+                                      partition: str = 'user_id'):
 
         features = data.groupby(partition)[feature_column].value_counts()
         features_unstacked = features.unstack(fill_value=0)
 
         # y
         df_copy = data.copy()
-        df_copy['is_converted'] = self._mh.map.conversions_counter(data=df_copy, name=name,
-                                                                  partition=partition) > 0
+        df_copy['is_converted'] = self._mh.map.conversions_counter(data=df_copy,
+                                                                   name=name,
+                                                                   partition=partition) > 0
 
         user_conversion = df_copy[['is_converted', partition]].drop_duplicates().set_index('user_id')
 
@@ -277,105 +387,5 @@ class Aggregate:
             name=name,
             feature_column=feature_column)
         model = FeatureImportance(**kwargs)
-        model.underlyingmodel.fit(X, y)
 
         return X, y, model
-
-    def feature_importance_new(self, data, name, feature_column, **kwargs):
-        X, y = self._mh.agg.create_feature_usage_data_set(
-            data=data,
-            name=name,
-            feature_column=feature_column)
-
-        model = self.feature_importance_proto(X, y)
-
-        return X, y, model
-
-    @staticmethod
-    def Kfold_get(X, y, folds, stratified=True):
-        # todo not random, should be random but with optional seed
-        data_set = X.copy()
-        # todo test y.name not in data X (should not be anyway)
-        data_set[y.name] = y
-        from bach.partitioning import WindowFrameBoundary, WindowFrameMode
-        window = data_set.groupby(y.name).window(
-            mode=WindowFrameMode.ROWS,
-            start_boundary=WindowFrameBoundary.PRECEDING,
-            start_value=None,
-            end_boundary=WindowFrameBoundary.FOLLOWING,
-            end_value=None)
-        data_set['part'] = window.user_id.window_ntile(folds)
-        data_set = data_set.materialize()
-
-        for i in range(folds):
-            train = data_set[data_set.part != i + 1]
-            test = data_set[data_set.part == i + 1]
-            X_train = train[X.data_columns]
-            X_test = test[X.data_columns]
-            y_train = train[y.name]
-            y_test = test[y.name]
-
-            yield X_train, X_test, y_train, y_test
-
-
-
-    def feature_importance_proto(self, X,y, print_report=False):
-
-
-        # todo now just a method that returns a dict, but could be improved returning a class with the
-        #  models and metrics etc
-
-        result_dict = {}
-
-        coef = pd.DataFrame(columns=X.data_columns)
-        i = 1
-        # todo split based on bach: maybe save a last test set of complete unseen data in the database (the
-        #  biggest set)
-        for X_train, X_test, y_train, y_test in self.Kfold_get(X, y, folds=5):
-            report = f"fold {i}\n"
-            report += "==============================\n"
-
-            lr = LogisticRegression()
-            lr.fit(X_train, y_train)
-
-            report += f"score: {lr.score(X_test, y_test)}\n"
-
-            cr = self._mh.metrics.get_classification_report(y_test.to_pandas(), lr.predict(X_test).to_pandas(),
-                                                            output_dict=True)
-
-            x_results = X_test.copy()
-            x_results['is_converted'] = y_test
-            x_results['yhat'] = lr.predict(X_test)
-
-            proba = lr.predict_proba(X_test,return_bach=False)[:, 1]
-            fpr, tpr, thresholds = roc_curve(y_test.to_pandas(), proba)
-
-            report += f"\npredicted converted correct: " \
-                      f"{x_results[(x_results['yhat'] == True) & (x_results['is_converted'] == True)].yhat.count().value}\n"
-            report += f"recall: {cr[True]['recall']}\n"
-            report += f"precision: {cr[True]['precision']}\n"
-            report += f"roc auc: {auc(fpr, tpr)}\n"
-
-            coef_fold = pd.DataFrame(lr.coef_, columns=X.data_columns)
-
-            coef = pd.concat([coef, coef_fold])
-
-            result_dict[f'fold {i}'] = {'classification_report': cr,
-                                        'auc': auc(fpr, tpr),
-                                        'coef': coef_fold}
-
-            i += 1
-            report += "==============================\n\n"
-            if print_report:
-                print(report)
-        result_dict['coef'] = coef
-
-        feature = pd.DataFrame([coef.mean(), coef.std()], index=['mean', 'std']).T.sort_values(
-            'mean')
-
-        result_dict['feature'] = feature
-
-        result_dict['auc_mean'] = np.mean([y['auc'] for x, y in result_dict.items() if x[:4] == 'fold'])
-
-        return result_dict
-

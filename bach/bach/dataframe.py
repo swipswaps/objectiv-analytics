@@ -1205,7 +1205,7 @@ class DataFrame:
         :param value: Series that is set.
         """
 
-        if not (len(value.index) == len(self.index) and len(self.index)>0):
+        if not (len(value.index) == len(self.index) and len(self.index) > 0):
             raise ValueError(
                 'setting with different base nodes only supported for same length index'
             )

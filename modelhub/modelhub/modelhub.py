@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING
 import bach
 from modelhub.aggregate import Aggregate
 from modelhub.map import Map
-from modelhub.metrics import Metrics
 from modelhub.series.series_objectiv import MetaBase
 from sql_models.constants import NotSet, DBDialect
 from modelhub.stack.util import sessionized_data_model
@@ -70,7 +69,7 @@ class ModelHub():
         """
         return self._conversion_events
 
-    def _check_data_is_objectiv_data(self, data):
+    def _check_data_is_objectiv_data(self, data: bach.DataFrame):
         if data.index_dtypes != {'event_id': 'uuid'}:
             raise ValueError(f"not right index {data.index_dtypes}")
 
@@ -276,17 +275,3 @@ class ModelHub():
 
         """
         return Aggregate(self)
-
-
-    @property
-    def metrics(self):
-        """
-        Access aggregation methods from the model hub. Same as :py:attr:`agg`.
-
-        .. autoclass:: Aggregate
-            :members:
-            :noindex:
-
-        """
-        return Metrics()
-
