@@ -481,7 +481,7 @@ class Translator(nodes.NodeVisitor):
             # example: 'bach-api-reference' for URL '/modeling/bach/api-reference/index.mdx'
             # example: 'modelhub.Aggregate.frequency' for URL '/modeling/open-model-hub/models/Aggregate/modelhub.Aggregate.frequency.mdx'
             # So here we only add the anchor if it seems useful (not yet part of the URL).
-            anchor_is_redundant = optional_anchor.replace("-", "/") in url
+            anchor_is_redundant = optional_anchor.replace("-", "/") in url or optional_anchor.startswith('./')
             if not anchor_is_redundant:
                 url += '#' + optional_anchor
 

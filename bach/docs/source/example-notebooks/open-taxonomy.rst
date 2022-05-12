@@ -181,5 +181,5 @@ We’ve demonstrated a handful of the operations that Bach supports and hope you
 
 The full Objectiv Bach API reference is available :ref:`here <bach_api_reference>`.
 
-There is another example that focuses on using the :ref:`open model hub <example_modelhub_basics>`, 
+There is another example that focuses on using the :doc:`open model hub <modelhub-basics>`, 
 demonstrating how you can use the model hub and Bach to quickly answer common product analytics questions.
