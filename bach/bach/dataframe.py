@@ -855,9 +855,11 @@ class DataFrame:
             for key, value in index_dtypes.items():
                 index_type = get_series_type_from_dtype(value)
                 new_index[key] = index_type(
-                    engine=args['engine'], base_node=args['base_node'],
+                    engine=args['engine'],
+                    base_node=args['base_node'],
                     index={},  # Empty index for index series
-                    name=key, expression=expression_class.column_reference(key),
+                    name=key,
+                    expression=expression_class.column_reference(key),
                     group_by=args['group_by'],
                     sorted_ascending=None,
                     index_sorting=[]
@@ -869,7 +871,7 @@ class DataFrame:
             new_series: Dict[str, Series] = {}
             for key, value in series_dtypes.items():
                 series_type = get_series_type_from_dtype(value)
-                extra_params = copy(args)
+                extra_params = {}
 
                 if issubclass(series_type, SeriesAbstractMultiLevel):
                     if key not in self._data:
@@ -887,13 +889,17 @@ class DataFrame:
                     )
 
                 new_series[key] = series_type.get_class_instance(
+                    engine=args['engine'],
+                    base_node=args['base_node'],
+                    index=args['index'],  # Empty index for index series
                     name=key,
                     expression=expression_class.column_reference(key),
+                    group_by=args['group_by'],
                     sorted_ascending=None,
                     index_sorting=[],
                     **extra_params
                 )
-                args['series'] = new_series
+            args['series'] = new_series
 
         return self.__class__(**args, **kwargs)
 
