@@ -4,3 +4,4 @@ objectiv-bach
 # metabase
 requests
 
+sklearn
