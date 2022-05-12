@@ -202,8 +202,7 @@ class ListAccessor:
                     .copy_override(expression=expression)
             elif isinstance(sub_dtype, list):
                 return self._series \
-                    .copy_override(instance_dtype=sub_dtype) \
-                    .copy_override(expression=expression)
+                    .copy_override(instance_dtype=sub_dtype, expression=expression)
             elif isinstance(sub_dtype, dict):
                 from bach import SeriesDict
                 return self._series \

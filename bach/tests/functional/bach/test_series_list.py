@@ -39,7 +39,6 @@ def test_series_to_list(engine):
         name='str_list',
         dtype=['string']
     )
-    print(df.dtypes)
     assert_equals_data(
         df,
         expected_columns=['_index_skating_order', 'skating_order', 'int_list', 'str_list'],

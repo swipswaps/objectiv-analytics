@@ -408,7 +408,7 @@ class Series(ABC):
             dialect: Dialect,
             value: Optional[Any],
             dtype: StructuredDtype
-    ) -> Expression:
+    ) -> ConstValueExpression:
         """
         INTERNAL: Give the expression for the given value.
 
