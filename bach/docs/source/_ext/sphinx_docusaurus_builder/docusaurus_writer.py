@@ -478,7 +478,7 @@ class DocusaurusTranslator(Translator):
         """Analogous to a database field's name, e.g 'returns', 'parameters':
         https://docutils.sourceforge.io/docs/ref/doctree.html#field-name
         """
-        self.add('### ')
+        self.add('#### ')
 
 
     def depart_field_name(self, node):
@@ -673,7 +673,10 @@ class DocusaurusTranslator(Translator):
         self.in_signature = True
         # TBD: increase heading levels if description is nested in another one (e.g. in modelhub.ModelHub.aggregate)
         desc_depth = self.depth.get('desc')
-        self.add("\n## ")
+        if self.current_desc_type in ['method', 'property']:
+            self.add("\n### ")
+        else:
+            self.add("\n## ")
 
 
     def depart_desc_signature(self, node):
@@ -708,12 +711,20 @@ class DocusaurusTranslator(Translator):
 
     def visit_desc_addname(self, node):
         """Module preroll for class/method/property, e.g. 'classdomain' in 'classdomain.classname'."""
-        self.add('<span className="additional-name">')
+        if self.current_desc_type in ['method', 'property']:
+            # no need to repeat the classdomain
+            raise nodes.SkipNode
+        else:
+            self.add('<span className="additional-name">')
 
 
     def depart_desc_addname(self, node):
         """Module preroll for class/method/property, e.g. 'classdomain' in 'classdomain.classname'."""
-        self.add('</span>')
+        if self.current_desc_type in ['method', 'property']:
+            # no need to repeat the classdomain
+            raise nodes.SkipNode
+        else:
+            self.add('</span>')
 
 
     def visit_desc_name(self, node):
