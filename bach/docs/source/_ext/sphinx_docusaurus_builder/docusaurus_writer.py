@@ -20,7 +20,7 @@ class DocusaurusTranslator(Translator):
     section_depth = 0
     title = None # document title
     visited_title = False # whether title was parsed yet
-    current_desc_type = None # the current class or method or property being parsed (if any)
+    current_desc_type = None # the current class/method/property/attribute being parsed (if any)
     parsed_desc_name = False  # whether already parsed a desc name (e.g. to not insert newlines for params)
     autosummary_shown = [] # holds for which class/method an autosummary has already been shown (if any)
     in_signature = False # whether currently processing a signature (e.g. to not insert newlines)
@@ -647,7 +647,7 @@ class DocusaurusTranslator(Translator):
 
 
     ################################################################################
-    # Classes/methods/properties and autosummaries
+    # Classes/methods/properties/attributes and autosummaries
     # https://www.sphinx-doc.org/en/master/extdev/nodes.html
 
     def visit_desc(self, node):
@@ -655,7 +655,7 @@ class DocusaurusTranslator(Translator):
         self.depth.ascend('desc')
         desctype = node.attributes["desctype"] if "desctype" in node.attributes else None
         self.current_desc_type = desctype
-        if desctype in ['class', 'method', 'property']:
+        if desctype in ['class', 'method', 'property', 'attribute']:
             self.add('<div className="' + desctype + '">\n')
         else:
             self.add('<div>\n')
@@ -673,17 +673,17 @@ class DocusaurusTranslator(Translator):
         self.in_signature = True
         # TBD: increase heading levels if description is nested in another one (e.g. in modelhub.ModelHub.aggregate)
         desc_depth = self.depth.get('desc')
-        if self.current_desc_type in ['method', 'property']:
+        if self.current_desc_type in ['method', 'property', 'attribute']:
             self.add("\n### ")
         else:
             self.add("\n## ")
 
 
     def depart_desc_signature(self, node):
-        """The main signature (i.e. its name + parameters) of a class/method/property."""
+        """The main signature (i.e. its name + parameters) of a class/method/property/attribute."""
         self.in_signature = False
-        # only close the signature if it's not a property (which has no params)
-        if (self.current_desc_type != 'property'):
+        # only close the signature if it's not a property or attribute (which have no params)
+        if self.current_desc_type not in ['property', 'attribute']:
             self.add(')')
         self.add('\n\n')
 
@@ -699,8 +699,8 @@ class DocusaurusTranslator(Translator):
 
     def depart_desc_annotation(self, node):
         """Type annotation of the description, e.g 'method', 'class'."""
-        # if this is not a property (i.e. a class/method), remove the last element (=")"
-        if not self.current_desc_type == 'property':
+        # if this is not a property or attribute (i.e. a class/method), remove the last element (=")"
+        if self.current_desc_type not in ['property', 'attribute']:
             self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
         if self.parsed_desc_name:
             # already parsed desc name; add newlines so references within the annotation render properly in MD
@@ -710,8 +710,8 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_desc_addname(self, node):
-        """Module preroll for class/method/property, e.g. 'classdomain' in 'classdomain.classname'."""
-        if self.current_desc_type in ['method', 'property']:
+        """Module preroll for class/method/property/attribute, e.g. 'domain' in 'domain.classname'."""
+        if self.current_desc_type in ['method', 'property', 'attribute']:
             # no need to repeat the classdomain
             raise nodes.SkipNode
         else:
@@ -719,8 +719,8 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_desc_addname(self, node):
-        """Module preroll for class/method/property, e.g. 'classdomain' in 'classdomain.classname'."""
-        if self.current_desc_type in ['method', 'property']:
+        """Module preroll for class/method/property/attribute, e.g. 'domain' in 'domain.classname'."""
+        if self.current_desc_type in ['method', 'property', 'attribute']:
             # no need to repeat the classdomain
             raise nodes.SkipNode
         else:
@@ -728,7 +728,7 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_desc_name(self, node):
-        """Name of the class/method/property."""
+        """Name of the class/method/property/attribute."""
         self.add('<span className="name">')
         # Escape any "__", which is a formatting string for markdown
         if node.rawsource.startswith("__"):
@@ -736,7 +736,7 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_desc_name(self, node):
-        """Name of the class/method/property."""
+        """Name of the class/method/property/attribute."""
         self.add('</span>\n\n')
         # set that we've processed the desc name, so annotations can start using newlines
         self.parsed_desc_name = True
@@ -768,14 +768,14 @@ class DocusaurusTranslator(Translator):
             
 
     def visit_desc_content(self, node):
-        """Description of the class/method/property."""
+        """Description of the class/method/property/attribute."""
         self.add('\n<div className="content">\n\n')
         # leave current_desc_type, so there's no custom signature parsing (e.g. newlines for references)
         self.in_signature = False
 
 
     def depart_desc_content(self, node):
-        """Description of the class/method/property."""
+        """Description of the class/method/property/attribute."""
         self.add('\n</div>\n\n')
 
 
