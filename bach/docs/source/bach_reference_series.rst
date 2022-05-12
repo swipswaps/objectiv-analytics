@@ -10,10 +10,18 @@ Reference
     :toctree: Series
 
     Series
-    SeriesBoolean
-    SeriesAbstractNumeric
     SeriesAbstractDateTime
-    SeriesString
-    SeriesJsonb
+    SeriesAbstractMultiLevel
+    SeriesAbstractNumeric
+    SeriesBoolean
+    SeriesDate
+    SeriesDict
     SeriesJson
+    SeriesJsonb
+    SeriesList
+    SeriesNumericInterval
+    SeriesString
+    SeriesTime
+    SeriesTimedelta
+    SeriesTimestamp
     SeriesUuid

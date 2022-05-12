@@ -322,7 +322,11 @@ class Series(ABC):
 
     @property
     def instance_dtype(self) -> StructuredDtype:
-        """ Get the instance_dtype """
+        """
+        Get the instance_dtype. For basic scalar types this should be the same value as self.dtype. For
+        structured types (e.g. SeriesDict) this should indicate what the structure of the data is. See the
+        class docstring of structured types for more information on the structure.
+        """
         return deepcopy(self._instance_dtype)
 
     @classmethod

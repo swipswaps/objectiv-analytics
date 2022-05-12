@@ -21,6 +21,16 @@ class SeriesList(Series):
     A Series that represents a list/array-like type and its specific operations.
     On BigQuery this is backed by the ARRAY data type. On other databases this type is not yet supported.
 
+
+    **instance_dtype:**
+    An instance of this class expects an ``instance_dtype`` that's a list with a single item in it, the item
+    itself being an instance dtype. All values represented by such a Series must have the dtype of the item
+    in the list.
+
+    | Example instance_dtype for a list consisting of floats
+    | BigQuery db_dtype: ``'ARRAY[FLOAT64]'``
+    | instance_dtype: ``['float64']``
+
     .. note::
         SeriesList is only supported on BigQuery.
         On Postgres use SeriesJson for similar functionality.
