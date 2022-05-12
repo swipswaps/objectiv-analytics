@@ -983,8 +983,6 @@ class DataFrame:
         make sense for very large expressions, or for non-deterministic expressions (e.g. see
         :py:meth:`SeriesUuid.sql_gen_random_uuid`).
 
-        TODO: a known problem is that DataFrames with 'json' columns cannot be fully materialized.
-
         :param node_name: The name of the node that's going to be created
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param limit: The limit (slice, int) to apply.

@@ -8,7 +8,8 @@ import pytest
 from bach import SeriesUuid
 from sql_models.graph_operations import get_graph_nodes_info
 from sql_models.util import is_bigquery, is_postgres
-from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_df_with_test_data, \
+    get_df_with_json_data
 
 
 @pytest.mark.parametrize("inplace", [False, True])
@@ -164,3 +165,20 @@ def test_is_materialized(engine):
     assert df.is_materialized
     del df['municipality']
     assert not df.is_materialized
+
+
+def test_is_materialized_json(pg_engine):
+    # In the past, having a json column in a DataFrame meant it would always give False on is_mateialized
+    # This test is to prevent regressions
+    engine = pg_engine  # TODO: BigQuery
+
+    df = get_df_with_json_data(engine=pg_engine, dtype='json')
+    assert df.is_materialized
+
+    if is_postgres(engine):
+        # for Postgres we have an additional test, as there is also the 'jsonb' type
+        df = get_df_with_json_data(engine=pg_engine, dtype='jsonb')
+        assert df.is_materialized
+
+
+# TODO: we should probably have a test here for each dtype

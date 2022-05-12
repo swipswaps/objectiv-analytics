@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 import json
-from typing import Optional, Dict, Union, TYPE_CHECKING, List, Tuple
+from typing import Optional, Dict, Union, TYPE_CHECKING, List, Tuple, cast
 
 from sqlalchemy.engine import Dialect
 
@@ -10,7 +10,7 @@ from bach.series import Series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from bach.sql_model import BachSqlModel
-from bach.types import DtypeOrAlias, StructuredDtype
+from bach.types import DtypeOrAlias, StructuredDtype, AllSupportedLiteralTypes
 from sql_models.constants import DBDialect
 from sql_models.util import quote_string, is_postgres, DatabaseNotSupportedException
 
@@ -141,16 +141,15 @@ class SeriesJsonb(Series):
             :special-members: __getitem__
 
         """
-        return Json(self)
+        return JsonBPostgresAccessor(self)
 
     @property
     def elements(self):
-        return Json(self)
+        return JsonBPostgresAccessor(self)
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        if not is_postgres(dialect):
-            raise DatabaseNotSupportedException(dialect)
+        cls.assert_engine_dialect_supported(dialect)
         return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
@@ -160,23 +159,26 @@ class SeriesJsonb(Series):
             value: Union[dict, list],
             dtype: StructuredDtype
     ) -> Expression:
+        cls.assert_engine_dialect_supported(dialect)
         json_value = json.dumps(value)
         return Expression.string_value(json_value)
 
     @classmethod
     def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
-        if source_dtype in ['jsonb', 'json']:
+        cls.assert_engine_dialect_supported(dialect)
+        if source_dtype == 'jsonb':
             return expression
-        if source_dtype != 'string':
-            raise ValueError(f'cannot convert {source_dtype} to jsonb')
-        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
+        if source_dtype in ['string', 'json']:
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
+        raise ValueError(f'cannot convert {source_dtype} to jsonb')
 
-    def _comparator_operation(self, other, comparator, other_dtypes=('json', 'jsonb')):
-        return self._binary_operation(
+    def _comparator_operation(self, other, comparator, other_dtypes=('json', 'jsonb')) -> 'SeriesBoolean':
+        result = self._binary_operation(
             other, operation=f"comparator '{comparator}'",
             fmt_str=f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
             other_dtypes=other_dtypes, dtype='bool'
         )
+        return cast('SeriesBoolean', result)  # we told _binary_operation to return dtype='bool'
 
     def __le__(self, other) -> 'SeriesBoolean':
         return self._comparator_operation(other, "<@")
@@ -193,7 +195,7 @@ class SeriesJsonb(Series):
         raise NotImplementedError()
 
 
-class SeriesJson(SeriesJsonb):
+class SeriesJson(Series):
     """
     A Series that represents the json type.
 
@@ -209,29 +211,79 @@ class SeriesJson(SeriesJsonb):
     }
     return_dtype = 'jsonb'
 
-    def __init__(self,
-                 engine,
-                 base_node: BachSqlModel,
-                 index: Dict[str, 'Series'],
-                 name: str,
-                 expression: Expression,
-                 group_by: 'GroupBy',
-                 sorted_ascending: Optional[bool],
-                 index_sorting: List[bool],
-                 instance_dtype: StructuredDtype):
+    @property
+    def json(self):
+        """
+        .. _json_accessor:
 
-        super().__init__(engine=engine,
-                         base_node=base_node,
-                         index=index,
-                         name=name,
-                         expression=Expression.construct(f'cast({{}} as jsonb)', expression),
-                         group_by=group_by,
-                         sorted_ascending=sorted_ascending,
-                         index_sorting=index_sorting,
-                         instance_dtype=instance_dtype)
+        Get access to json operations via the class that's return through this accessor.
+        Use as `my_series.json.get_value()` or `my_series.json[:2]`
+
+        .. autoclass:: bach.SeriesJsonb.Json
+            :members:
+            :special-members: __getitem__
+
+        """
+        return JsonBPostgresAccessor(self.astype('jsonb'))
+
+    @property
+    def elements(self):
+        return JsonBPostgresAccessor(self.astype('jsonb'))
+
+    @classmethod
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        cls.assert_engine_dialect_supported(dialect)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
+
+    @classmethod
+    def supported_value_to_literal(
+            cls,
+            dialect: Dialect,
+            value: Union[dict, list],
+            dtype: StructuredDtype
+    ) -> Expression:
+        cls.assert_engine_dialect_supported(dialect)
+        json_value = json.dumps(value)
+        return Expression.string_value(json_value)
+
+    @classmethod
+    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
+        cls.assert_engine_dialect_supported(dialect)
+        if source_dtype == 'json':
+            return expression
+        if source_dtype in ['jsonb', 'string']:
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
+        raise ValueError(f'cannot convert {source_dtype} to json')
+
+    def _comparator_operation(
+        self,
+        other: Union['Series', AllSupportedLiteralTypes],
+        comparator: str,
+        other_dtypes=('json', 'jsonb')
+    ) -> 'SeriesBoolean':
+        result = self._binary_operation(
+            other, operation=f"comparator '{comparator}'",
+            fmt_str=f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
+            other_dtypes=other_dtypes, dtype='bool'
+        )
+        return cast('SeriesBoolean', result)  # we told _binary_operation to return dtype='bool'
+
+    def __le__(self, other: Union['Series', AllSupportedLiteralTypes]) -> 'SeriesBoolean':
+        return self._comparator_operation(other, "<@")
+
+    def __ge__(self, other: Union['Series', AllSupportedLiteralTypes]) -> 'SeriesBoolean':
+        return self._comparator_operation(other, "@>")
+
+    def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        """ INTERNAL: Only here to not trigger errors from describe """
+        raise NotImplementedError()
+
+    def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        """ INTERNAL: Only here to not trigger errors from describe """
+        raise NotImplementedError()
 
 
-class Json:
+class JsonBPostgresAccessor:
     """
     class with accessor methods to json(b) type data columns.
     """
@@ -380,13 +432,13 @@ class Json:
             raise TypeError(f'key should be int or slice, actual type: {type(key)}')
 
     def get_value(self, key: str, as_str: bool = False):
-        '''
+        """
         Select values from objects by key. Same as using `.json[key]` on the json column.
 
         :param key: the key to return the values for.
         :param as_str: if True, it returns a string Series, jsonb otherwise.
         :returns: series with the selected object value.
-        '''
+        """
         return_as_string_operator = ''
         return_dtype = self._series_object.return_dtype
         if as_str:
