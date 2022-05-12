@@ -5,7 +5,11 @@ on:
     types: [opened,closed,synchronize]
 
 permissions:
+  # to post and edit PR comments
   pull-requests: write
+  # to rerun checks and read committer's details
+  actions: write
+  contents: write
 
 jobs:
   CLAssistant:
