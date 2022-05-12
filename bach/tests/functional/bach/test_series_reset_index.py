@@ -20,14 +20,12 @@ def test_reset_index_to_empty(engine):
 
     # drop
     dbt = sbt.reset_index(drop=True)
+    assert isinstance(dbt, Series)
     assert list(dbt.index.keys()) == []
-    assert '_index_skating_order' not in dbt.data
 
-    for r in [bt, rbt, dbt]:
+    for r in [sbt, rbt, dbt]:
         for s in r.index.values():
             assert(s.index == {})
-        for s in r.data.values():
-            assert(s.index == r.index)
         r.head()
 
     bt_cp = bt.copy()
@@ -42,7 +40,7 @@ def test_reset_index_to_empty(engine):
 
     # level + drop
     lbt = bt_cp.reset_index(level='city', drop=True)
-    assert 'city' not in lbt.data
+    assert isinstance(lbt, Series)
     assert list(lbt.index.keys()) == final_index
 
     # dropping invalid level

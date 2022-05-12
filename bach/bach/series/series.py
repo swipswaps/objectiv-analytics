@@ -677,7 +677,7 @@ class Series(ABC):
         self,
         level: Optional[Union[str, Sequence[str]]] = None,
         drop: bool = False,
-    ) -> DataFrame:
+    ) -> DataFrameOrSeries:
         """
         Drops the current index.
 
@@ -688,8 +688,12 @@ class Series(ABC):
         """
         series = self.copy()
 
-        df = series.to_frame().reset_index(level, drop)
-        return df
+        result = series.to_frame().reset_index(level, drop)
+
+        if drop:
+            result = result.all_series[self.name]
+
+        return result
 
     def sort_values(self, *, ascending=True):
         """
