@@ -683,8 +683,6 @@ class DocusaurusTranslator(Translator):
         """The main signature (i.e. its name + parameters) of a class/method/property/attribute."""
         self.in_signature = False
         # only close the signature if it's not a property or attribute (which have no params)
-        if self.current_desc_type not in ['property', 'attribute']:
-            self.add(')')
         self.add('\n\n')
 
 
@@ -744,14 +742,14 @@ class DocusaurusTranslator(Translator):
 
     def visit_desc_parameterlist(self, node):
         """Method/class parameter list."""
-        self.add('<small className="parameter-list">')
-        if (self.current_desc_type != 'property'):
-            self.add('(')
+        if self.current_desc_type not in ['property', 'attribute']:
+            self.add('<small className="parameter-list">(')
 
 
     def depart_desc_parameterlist(self, node):
         """Method/class parameter list."""
-        self.add('</small>')
+        if self.current_desc_type not in ['property', 'attribute']:
+            self.add(')</small>')
 
 
     def visit_desc_parameter(self, node):
