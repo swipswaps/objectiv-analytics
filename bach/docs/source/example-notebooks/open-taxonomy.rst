@@ -119,7 +119,7 @@ global_contexts
 ~~~~~~~~~~~~~~~
 The `global_contexts` column in the DataFrame contain all information that is relevant to the logged event. As it is set as an `objectiv_global_context` type, specific methods can be used to access the data from the `global_contexts`. These methods can be used using the `.gc` accessor on the column. The methods are:
 
-* :ref:`.gc.get_from_context_with_type_series(type, key) <get_from_context_with_type_series>`.
+* :doc:`.gc.get_from_context_with_type_series(type, key) <../open-model-hub/api-reference/SeriesGlobalContexts/modelhub.SeriesGlobalContexts.objectiv>`.
 * The property accessors:
     * :ref:`.gc.cookie_id <gc_cookie_id>`
     * :ref:`.gc.user_agent <gc_user_agent>`
