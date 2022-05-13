@@ -690,7 +690,7 @@ class Series(ABC):
         result = self.to_frame().reset_index(level, drop)
 
         if drop:
-            result = result.all_series[self.name]
+            return result.all_series[self.name]
 
         return result
 
