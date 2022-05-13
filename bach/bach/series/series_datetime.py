@@ -488,9 +488,6 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     }
     supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
 
-    timedelta_format = {
-        DBDialect.BIGQUERY: '0-0 {days} {hours}:{minutes}:{seconds}',
-    }
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
@@ -518,7 +515,12 @@ class SeriesTimedelta(SeriesAbstractDateTime):
         if value is None:
             return None
 
-        return pandas.Timedelta(days=value.days, nanoseconds=value.nanoseconds)
+        # BigQuery returns a MonthDayNano object
+        # we need to normalize months to days (1 month == 30 day period)
+        return pandas.Timedelta(
+            days=value.days + value.months * 30,
+            nanoseconds=value.nanoseconds,
+        )
 
     @classmethod
     def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
