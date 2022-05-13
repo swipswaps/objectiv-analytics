@@ -85,8 +85,10 @@ to hold the JSON structure of the event.
 If BQ is only used for Objectiv, there are obviously a lot of unused columns, often not even populated. This can be 
 solved in a few steps (as it's not possible to simply drop columns from BQ):
 1. Stop the Snowplow bigquery streamloader, to make sure we don't lose any data during the migration
-2. [optional] Create a backup of the events table (using GCS / copy table, etc)
-3. Query desired columns:
+2. [optional] Create a backup of the events table
+3. Create a copy of the events table called `events_copy`
+4. Drop the `events` table
+5. Query desired columns:
 ```sql
 SELECT app_id, platform, etl_tstamp, collector_tstamp, event, event_id, 
   v_tracker, v_collector, v_etl, user_ipaddress, network_userid, 
@@ -95,11 +97,9 @@ SELECT app_id, platform, etl_tstamp, collector_tstamp, event, event_id,
   derived_tstamp, event_vendor, event_name, event_format, event_version, event_fingerprint,
   load_tstamp, 
   contexts_io_objectiv_taxonomy_1_0_0
-FROM `project.dataset.events`;
+FROM `project.dataset.events_copy`;
 ```
-4. Now select `Save results as BigQuery table`, and save the data as a new table in the current dataset.
-5. Remove the `events` table (BE CAREFUL HERE)
-6. Copy the newly created table from step 4 to a table named `events`
-7. Remove the table created in step 4
-8. Restart the Snowplow bigquery streamloader
-9. Verify new events end up in the `events` table
+6. Now select `Save results as BigQuery table`, and save the data as a new table in the current dataset called `events`. 
+7. Restart the Snowplow bigquery streamloader
+8. Verify new events end up in the `events` table
+9. Remove `events_copy`
