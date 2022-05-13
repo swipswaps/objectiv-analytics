@@ -1,5 +1,5 @@
 """
-Copyright 2021 Objectiv B.V.
+Copyright 2022 Objectiv B.V.
 """
 import pytest
 
@@ -26,7 +26,6 @@ def test_reset_index_to_empty(engine):
     for r in [sbt, rbt, dbt]:
         for s in r.index.values():
             assert(s.index == {})
-        r.head()
 
     bt_cp = bt.copy()
     bt_cp = bt_cp.set_index(['skating_order', 'city'], append=True)

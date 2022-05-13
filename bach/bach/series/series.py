@@ -684,11 +684,10 @@ class Series(ABC):
         :param level: Removes given levels from index. Removes all levels by default
         :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
             is removed.
-        :returns: DataFrame with the index dropped.
+        :returns: Series or DataFrame with the index dropped.
         """
-        series = self.copy()
 
-        result = series.to_frame().reset_index(level, drop)
+        result = self.to_frame().reset_index(level, drop)
 
         if drop:
             result = result.all_series[self.name]
