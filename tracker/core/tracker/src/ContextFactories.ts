@@ -138,9 +138,9 @@ export const makeLinkContext = (props: { id: string; href: string }): LinkContex
  * @param {string} props.campaign - Individual campaign name, slogan, promo code, etc
  * @param {string | null} props.term - [Optional] Search keywords
  * @param {string | null} props.content - [Optional] Used to differentiate similar content, or links within the same ad
- * @param {string | null} props.source_platform - [Optional] Identifies the platform where the marketing activity was undertaken
- * @param {string | null} props.creative_format - [Optional] Identifies the creative used (e.g., skyscraper, banner, etc)
- * @param {string | null} props.marketing_tactic - [Optional] Identifies the marketing tactic used (e.g., onboarding, retention, acquisition etc)
+ * @param {string | null} props.source_platform - [Optional] To differentiate similar content, or links within the same ad.
+ * @param {string | null} props.creative_format - [Optional] Identifies the creative used (e.g., skyscraper, banner, etc).
+ * @param {string | null} props.marketing_tactic - [Optional] Identifies the marketing tactic used (e.g., onboarding, retention, acquisition etc).
  * @returns {MarketingContext} - MarketingContext: a context that captures marketing channel info, so users can do attribution, campaign
  * 	effectiveness and other models
  */
