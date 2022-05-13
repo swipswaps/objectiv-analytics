@@ -18,7 +18,7 @@ to run on your own data or use our
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
 At first we have to install the open model hub and instantiate the Objectiv DataFrame object. See
-:ref:`get_started_with_objectiv` for more info on this.
+:ref:`getting_started_with_objectiv` for more info on this.
 
 The data
 --------
@@ -75,7 +75,7 @@ The location stack and global contexts are stored as json type data. Within the 
 **Slicing the json data**
 With the `.json[]` syntax you can slice the array using integers. Instead of integers, dictionaries can also be passed to 'query' the json array. If the passed dictionary matches a context object in the stack, all objects of the stack starting (or ending, depending on the slice) at that object will be returned.
 
-In case a json array does not contain the object, `None` is returned. More info at the :ref:`API reference <json_accessor>`.
+In case a json array does not contain the object, `None` is returned. More info at the :doc:`API reference <../bach/api-reference/Series/Jsonb/index>`.
 
 .. _location_stack:
 
@@ -119,7 +119,7 @@ global_contexts
 ~~~~~~~~~~~~~~~
 The `global_contexts` column in the DataFrame contain all information that is relevant to the logged event. As it is set as an `objectiv_global_context` type, specific methods can be used to access the data from the `global_contexts`. These methods can be used using the `.gc` accessor on the column. The methods are:
 
-* :ref:`.gc.get_from_context_with_type_series(type, key) <get_from_context_with_type_series>`.
+* :doc:`.gc.get_from_context_with_type_series(type, key) <../open-model-hub/api-reference/SeriesGlobalContexts/modelhub.SeriesGlobalContexts.objectiv>`.
 * The property accessors:
     * :ref:`.gc.cookie_id <gc_cookie_id>`
     * :ref:`.gc.user_agent <gc_user_agent>`
@@ -179,7 +179,7 @@ This concludes this demo.
 
 We’ve demonstrated a handful of the operations that Bach supports and hope you’ve gotten a taste of what Bach can do for your modeling workflow.
 
-The full Objectiv Bach API reference is available :ref:`here <bach_api_reference>`.
+The full Objectiv Bach API reference is available :doc:`here <../bach/api-reference/index>`.
 
-There is another example that focuses on using the :ref:`open model hub <example_modelhub_basics>`, 
+There is another example that focuses on using the :doc:`open model hub <modelhub-basics>`, 
 demonstrating how you can use the model hub and Bach to quickly answer common product analytics questions.

@@ -17,7 +17,7 @@ to run on your own data or use our
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
 At first we have to install the open model hub and instantiate the Objectiv DataFrame object. See
-:ref:`get_started_with_objectiv` for more info on this. The data used in this example is
+:ref:`getting_started_with_objectiv` for more info on this. The data used in this example is
 based on the data set that comes with our quickstart docker demo.
 
 First we look at the data.
@@ -28,9 +28,8 @@ First we look at the data.
 
 The columns 'global_contexts' and the 'location_stack' contain most of the event specific data. These columns
 are json type columns and we can extract data from it based on the keys of the json objects using
-:ref:`get_from_context_with_type_series <get_from_context_with_type_series>`. Or use methods
-specific to the :ref:`location_stack` or :ref:`global_contexts` to
-extract the data.
+:doc:`get_from_context_with_type_series <../open-model-hub/api-reference/SeriesGlobalContexts/modelhub.SeriesGlobalContexts.objectiv>`. 
+Or use methods specific to the :ref:`location_stack` or :ref:`global_contexts` to extract the data.
 
 
 .. code-block:: python

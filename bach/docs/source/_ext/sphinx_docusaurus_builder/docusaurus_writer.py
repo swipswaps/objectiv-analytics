@@ -20,7 +20,7 @@ class DocusaurusTranslator(Translator):
     section_depth = 0
     title = None # document title
     visited_title = False # whether title was parsed yet
-    current_desc_type = None # the current class or method or property being parsed (if any)
+    current_desc_type = None # the current class/method/property/attribute being parsed (if any)
     parsed_desc_name = False  # whether already parsed a desc name (e.g. to not insert newlines for params)
     autosummary_shown = [] # holds for which class/method an autosummary has already been shown (if any)
     in_signature = False # whether currently processing a signature (e.g. to not insert newlines)
@@ -98,6 +98,31 @@ class DocusaurusTranslator(Translator):
         return slug
 
 
+    def get_title(self, docname, doc_frontmatter):
+        """Parse the title used in frontmatter, based on the config.
+
+        :param docname: the current document name/path.
+        :param doc_frontmatter: contents set via the frontmatter directive
+        
+        :returns: a formatted title.
+
+        """
+        
+        # any title set via the frontmatter directive takes preference
+        if doc_frontmatter and 'title' in doc_frontmatter:
+            return doc_frontmatter['title']
+
+        title = self.title
+        for api_pattern, config in self.builder.api_frontmatter.items():
+            if self.builder.current_docname.startswith(api_pattern):
+                if 'title_tree_levels' in config:
+                    levels = config['title_tree_levels']
+                    parts = self.title.split('.')
+                    title = '.'.join(parts[-levels:])
+        
+        return title
+
+
     ################################################################################
     # Parse the doctree: https://docutils.sourceforge.io/docs/ref/doctree.html
     #
@@ -144,7 +169,7 @@ class DocusaurusTranslator(Translator):
         doc_frontmatter = self.frontmatter[current_doc] if current_doc in self.frontmatter else None
         variables = munchify({
             'id': _.snake_case(current_doc).replace('_', '-'),
-            'title': title,
+            'title': self.get_title(current_doc, doc_frontmatter),
             'slug': self.get_slug(current_doc, doc_frontmatter),
         })
         if doc_frontmatter and 'position' in doc_frontmatter:
@@ -198,6 +223,17 @@ class DocusaurusTranslator(Translator):
         """Main unit of hierarchy: https://docutils.sourceforge.io/docs/ref/doctree.html#section"""
         self.section_depth -= 1
 
+    
+    def visit_target(self, node):
+        if self.visited_title:
+            if node.get('refid'):
+                target_id = str(node.get('refid'))
+                self.add('<div id="' + target_id + '" className="hidden-anchor"></div>\n\n')
+
+
+    def depart_target(self, node):
+        pass
+
 
     def visit_rubric(self, node):
         """An informal heading that doesn't correspond to the document's structure.
@@ -249,16 +285,14 @@ class DocusaurusTranslator(Translator):
             self.add('\n')
 
 
-    def visit_compact_paragraph(self, node):
-        """A paragraph that could be formatted more compactly; further formatting ignored here.
-        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
-        pass
+    # A paragraph that could be formatted more compactly; further formatting ignored here.
+    # https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph
+    visit_compact_paragraph = visit_paragraph
 
 
-    def depart_compact_paragraph(self, node):
-        """A paragraph that could be formatted more compactly; further formatting ignored here.
-        https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph"""
-        pass
+    # A paragraph that could be formatted more compactly; further formatting ignored here.
+    # https://docutils.sourceforge.io/docs/ref/doctree.html#paragraph
+    depart_compact_paragraph = depart_paragraph
 
 
     def visit_reference(self, node):
@@ -267,8 +301,6 @@ class DocusaurusTranslator(Translator):
         # Docusaurus doesn't support MDXv2 yet: https://github.com/facebook/docusaurus/issues/4029
         # so we cannot add an MD-formatted link in a <span> element, as it won't get parsed.
         # therefore, for now, we add these on a newline.
-        # if(self.in_signature):
-        #     self.add('\n\n ')
 
         # do the same for 'any view source' links
         if 'viewcode-link' in node.attributes['classes']:
@@ -278,13 +310,11 @@ class DocusaurusTranslator(Translator):
         url = self._refuri2http(node)
         if url is None:
             return
+
         self.add('[')
         for child in node.children:
             child.walkabout(self)
         self.add(']({})'.format(url))
-
-        # if(self.in_signature):
-        #     self.add('\n\n')
 
         if('viewcode-link' in node.attributes['classes']):
             self.add("</span>\n")
@@ -433,9 +463,9 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_field_body(self, node):
-      """Container for the body of a field: 
-      https://docutils.sourceforge.io/docs/ref/doctree.html#field-body"""
-      pass
+        """Container for the body of a field: 
+        https://docutils.sourceforge.io/docs/ref/doctree.html#field-body"""
+        pass
 
 
     def depart_field_body(self, node):
@@ -448,7 +478,7 @@ class DocusaurusTranslator(Translator):
         """Analogous to a database field's name, e.g 'returns', 'parameters':
         https://docutils.sourceforge.io/docs/ref/doctree.html#field-name
         """
-        self.add('### ')
+        self.add('#### ')
 
 
     def depart_field_name(self, node):
@@ -617,7 +647,7 @@ class DocusaurusTranslator(Translator):
 
 
     ################################################################################
-    # Classes/methods/properties and autosummaries
+    # Classes/methods/properties/attributes and autosummaries
     # https://www.sphinx-doc.org/en/master/extdev/nodes.html
 
     def visit_desc(self, node):
@@ -625,7 +655,7 @@ class DocusaurusTranslator(Translator):
         self.depth.ascend('desc')
         desctype = node.attributes["desctype"] if "desctype" in node.attributes else None
         self.current_desc_type = desctype
-        if desctype in ['class', 'method', 'property']:
+        if desctype in ['class', 'method', 'property', 'attribute']:
             self.add('<div className="' + desctype + '">\n')
         else:
             self.add('<div>\n')
@@ -643,15 +673,16 @@ class DocusaurusTranslator(Translator):
         self.in_signature = True
         # TBD: increase heading levels if description is nested in another one (e.g. in modelhub.ModelHub.aggregate)
         desc_depth = self.depth.get('desc')
-        self.add("\n## ")
+        if self.current_desc_type in ['method', 'property', 'attribute']:
+            self.add("\n### ")
+        else:
+            self.add("\n## ")
 
 
     def depart_desc_signature(self, node):
-        """The main signature (i.e. its name + parameters) of a class/method/property."""
+        """The main signature (i.e. its name + parameters) of a class/method/property/attribute."""
         self.in_signature = False
-        # only close the signature if it's not a property (which has no params)
-        if (self.current_desc_type != 'property'):
-            self.add(')')
+        # only close the signature if it's not a property or attribute (which have no params)
         self.add('\n\n')
 
 
@@ -666,8 +697,8 @@ class DocusaurusTranslator(Translator):
 
     def depart_desc_annotation(self, node):
         """Type annotation of the description, e.g 'method', 'class'."""
-        # if this is not a property (i.e. a class/method), remove the last element (=")"
-        if not self.current_desc_type == 'property':
+        # if this is not a property or attribute (i.e. a class/method), remove the last element (=")"
+        if self.current_desc_type not in ['property', 'attribute']:
             self.get_current_output('body')[-1] = self.get_current_output('body')[-1][:-1]
         if self.parsed_desc_name:
             # already parsed desc name; add newlines so references within the annotation render properly in MD
@@ -677,17 +708,25 @@ class DocusaurusTranslator(Translator):
 
 
     def visit_desc_addname(self, node):
-        """Module preroll for class/method/property, e.g. 'classdomain' in 'classdomain.classname'."""
-        self.add('<span className="additional-name">')
+        """Module preroll for class/method/property/attribute, e.g. 'domain' in 'domain.classname'."""
+        if self.current_desc_type in ['method', 'property', 'attribute']:
+            # no need to repeat the classdomain
+            raise nodes.SkipNode
+        else:
+            self.add('<span className="additional-name">')
 
 
     def depart_desc_addname(self, node):
-        """Module preroll for class/method/property, e.g. 'classdomain' in 'classdomain.classname'."""
-        self.add('</span>')
+        """Module preroll for class/method/property/attribute, e.g. 'domain' in 'domain.classname'."""
+        if self.current_desc_type in ['method', 'property', 'attribute']:
+            # no need to repeat the classdomain
+            raise nodes.SkipNode
+        else:
+            self.add('</span>')
 
 
     def visit_desc_name(self, node):
-        """Name of the class/method/property."""
+        """Name of the class/method/property/attribute."""
         self.add('<span className="name">')
         # Escape any "__", which is a formatting string for markdown
         if node.rawsource.startswith("__"):
@@ -695,7 +734,7 @@ class DocusaurusTranslator(Translator):
 
 
     def depart_desc_name(self, node):
-        """Name of the class/method/property."""
+        """Name of the class/method/property/attribute."""
         self.add('</span>\n\n')
         # set that we've processed the desc name, so annotations can start using newlines
         self.parsed_desc_name = True
@@ -703,14 +742,14 @@ class DocusaurusTranslator(Translator):
 
     def visit_desc_parameterlist(self, node):
         """Method/class parameter list."""
-        self.add('<small className="parameter-list">')
-        if (self.current_desc_type != 'property'):
-            self.add('(')
+        if self.current_desc_type not in ['property', 'attribute']:
+            self.add('<small className="parameter-list">(')
 
 
     def depart_desc_parameterlist(self, node):
         """Method/class parameter list."""
-        self.add('</small>')
+        if self.current_desc_type not in ['property', 'attribute']:
+            self.add(')</small>')
 
 
     def visit_desc_parameter(self, node):
@@ -727,14 +766,14 @@ class DocusaurusTranslator(Translator):
             
 
     def visit_desc_content(self, node):
-        """Description of the class/method/property."""
+        """Description of the class/method/property/attribute."""
         self.add('\n<div className="content">\n\n')
         # leave current_desc_type, so there's no custom signature parsing (e.g. newlines for references)
         self.in_signature = False
 
 
     def depart_desc_content(self, node):
-        """Description of the class/method/property."""
+        """Description of the class/method/property/attribute."""
         self.add('\n</div>\n\n')
 
 
@@ -950,6 +989,24 @@ class FrontMatterPositionDirective(SphinxDirective):
         return [empty_node]
 
 
+class FrontMatterSidebarTitleDirective(SphinxDirective):
+    """Directive to set a specific title in the sidebar for the document in its frontmatter"""
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = True
+    option_spec = {}
+    has_content = False
+
+
+    def run(self):
+        docname = self.env.docname
+        title = directives.uri(self.arguments[0])
+        frontmatter.setdefault(docname, dict())
+        frontmatter[docname]['title'] = title
+        empty_node = nodes.raw()
+        return [empty_node]
+
+
 class FrontMatterSlugDirective(SphinxDirective):
     """Directive to set a specific slug for the document in its frontmatter"""
     required_arguments = 1
@@ -975,5 +1032,6 @@ class DocusaurusWriter(Writer):
 
     """
     directives.register_directive('frontmatterposition', FrontMatterPositionDirective)
+    directives.register_directive('frontmattersidebartitle', FrontMatterSidebarTitleDirective)
     directives.register_directive('frontmatterslug', FrontMatterSlugDirective)
     translator_class = DocusaurusTranslator

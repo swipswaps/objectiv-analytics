@@ -1,13 +1,14 @@
 .. _modeling:
 
 .. frontmatterposition:: 1
+.. frontmattersidebartitle:: Introduction
 
-============
-Introduction
-============
+======================
+Modeling with Objectiv
+======================
 
-Objectiv's modeling toolkit enables you to quickly build advanced data models and run in-depth analyses with 
-very little grunt work. This is the combined result of three components:
+Objectiv's modeling toolkit enables you to quickly build advanced data models and run in-depth analyses. 
+This is the combined result of three components:
 
 1. The open analytics taxonomy.
 1. The open model hub.

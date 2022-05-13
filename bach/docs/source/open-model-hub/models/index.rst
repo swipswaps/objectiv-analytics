@@ -25,7 +25,7 @@ Map
 .. currentmodule:: modelhub.Map
 
 .. autosummary::
-    :toctree: Mapping
+    :toctree: Map
 
     is_first_session
     is_new_user
@@ -38,7 +38,7 @@ Map
 .. toctree::
     :hidden:
 
-    Mapping/index
+    Map/index
 
 
 .. currentmodule:: modelhub.Aggregate
@@ -47,7 +47,7 @@ Aggregate
 ---------
 
 .. autosummary::
-    :toctree: Aggregation
+    :toctree: Aggregate
 
     unique_users
     unique_sessions
@@ -58,4 +58,4 @@ Aggregate
 .. toctree::
     :hidden:
 
-    Aggregation/index
+    Aggregate/index

@@ -20,7 +20,7 @@ Bach :class:`DataFrames <bach.DataFrame>`, see the :ref:`Bach <bach>` docs or so
 started :ref:`here <bach_examples>`.
 
 
-.. _get_started_with_objectiv:
+.. _getting_started_with_objectiv:
 
 Getting started with Objectiv
 -----------------------------

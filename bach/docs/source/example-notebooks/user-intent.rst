@@ -17,7 +17,7 @@ to run on your own data or use our
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
 At first we have to install the open model hub and instantiate the Objectiv DataFrame object. See
-:ref:`get_started_with_objectiv` for more info on this. The data used in this example is
+:ref:`getting_started_with_objectiv` for more info on this. The data used in this example is
 based on the data set that comes with our quickstart docker demo.
 
 Besides the open model hub, we have to import the following packages for this example:
@@ -31,9 +31,8 @@ Besides the open model hub, we have to import the following packages for this ex
 
 The columns 'global_contexts' and the 'location_stack' contain most of the event specific data. These columns
 are json type columns and we can extract data from it based on the keys of the json objects using
-:ref:`get_from_context_with_type_series <get_from_context_with_type_series>`. Or use methods
-specific to the :ref:`location_stack` or :ref:`global_contexts` to
-extract the data.
+:doc:`get_from_context_with_type_series <../open-model-hub/api-reference/SeriesGlobalContexts/modelhub.SeriesGlobalContexts.objectiv>`. 
+Or use methods specific to the :ref:`location_stack` or :ref:`global_contexts` to extract the data.
 
 .. code-block:: python
 
@@ -50,7 +49,7 @@ The root_location context in the location_stack uniquely represents the top-leve
 
 Exploring session duration
 --------------------------
-The average `session_duration` model from the `open model hub </docs/modeling/>`_ is another good pointer to explore first for user intent.
+The average `session_duration` model from the `open model hub </docs/modeling/open-model-hub/>`_ is another good pointer to explore first for user intent.
 
 .. code-block:: python
 
@@ -145,7 +144,7 @@ The are many next possible analysis steps, for example:
 - What kind of intent users come from different marketing campaigns?
 - How can we drive more users to the 'Implement' stage? Look at different product features that users with the 'Implement' intent use, compared to 'Explore'.
 
-A good starting point for these analyses on top of the user intent buckets is the basic product analytics example in the :ref:`example notebooks <example_notebooks>`.
+A good starting point for these analyses on top of the user intent buckets is the basic product analytics example in the :doc:`example notebooks <index>`.
 
 
 Get the SQL for this user intent analysis
