@@ -4,3 +4,5 @@ objectiv-bach
 # metabase
 requests
 
+asyncio
+aiohttp
