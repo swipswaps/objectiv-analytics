@@ -145,7 +145,7 @@ The are many next possible analysis steps, for example:
 - What kind of intent users come from different marketing campaigns?
 - How can we drive more users to the 'Implement' stage? Look at different product features that users with the 'Implement' intent use, compared to 'Explore'.
 
-A good starting point for these analyses on top of the user intent buckets is the basic product analytics example in the :ref:`example notebooks <example_notebooks>`.
+A good starting point for these analyses on top of the user intent buckets is the basic product analytics example in the :doc:`example notebooks <index>`.
 
 
 Get the SQL for this user intent analysis

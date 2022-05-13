@@ -12,7 +12,7 @@ This example shows how Bach can be used for feature engineering. We'll go throug
 outliers, transforming data and grouping and aggregating data so that a useful feature set is created that
 can be used for machine learning. We have a separate example available that goes into the details of how a
 data set prepared in Bach can be used for machine learning with sklearn 
-:ref:`here <example_machine_learning>`.
+:doc:`here <machine-learning>`.
 
 This example is also available in a `notebook
 <https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/feature-engineering.ipynb>`_
