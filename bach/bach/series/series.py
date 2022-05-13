@@ -698,7 +698,7 @@ class Series(ABC):
         """
         Sort this Series by its values.
         Returns a new instance and does not actually modify the instance it is called on.
-        
+
         :param ascending: Whether to sort ascending (True) or descending (False)
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
