@@ -66,10 +66,10 @@ introduction examples are :ref:`here <bach_examples>`.
 .. toctree::
     :maxdepth: 1
 
-    modelhub-basics
+    machine-learning
     product-analytics
     user-intent
-    open-taxonomy
     feature-engineering
-    machine-learning
+    modelhub-basics
+    open-taxonomy
 
