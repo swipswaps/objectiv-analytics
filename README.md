@@ -50,7 +50,7 @@ Supports front-end engineers to [implement tracking instrumentation](https://www
  
 ### Open model hub
 
-A [growing collection of pre-built models](https://www.objectiv.io/docs/modeling/example-notebooks/) that you run, combine or customize to quickly build in-depth analyses.
+A [growing collection of pre-built models](https://objectiv.io/docs/modeling/) that you run, combine or customize to quickly build in-depth analyses.
 
 * All models work with any dataset that embraces the open analytics taxonomy
 * Currently covers common product analytics operations
