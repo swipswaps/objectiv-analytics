@@ -82,7 +82,6 @@ def test_json_compare(engine, dtype):
 def test_json_getitem(engine, dtype):
     bt = get_df_with_json_data(engine=engine, dtype=dtype)
     bts = bt.mixed_column.json[0]
-    print(bts.view_sql())
     assert_equals_data(
         bts,
         use_to_pandas=True,

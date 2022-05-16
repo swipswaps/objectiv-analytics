@@ -324,6 +324,8 @@ class JsonBigQueryAccessor:
             return self.get_value(key)
 
         elif isinstance(key, slice):
+            if key.step:
+                raise NotImplementedError('slice steps not supported')
             raise NotImplementedError()  # TODO
 
         raise TypeError('Key should either be a string, integer, or slice.')
