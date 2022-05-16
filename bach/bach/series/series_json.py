@@ -142,6 +142,8 @@ class SeriesJson(Series):
     }
     supported_value_types = (dict, list)
 
+    return_dtype = 'json'
+
     @property
     def json(self):
         """
@@ -156,9 +158,9 @@ class SeriesJson(Series):
 
         """
         if is_postgres(self.engine):
-            return JsonPostgresAccessor(series_object=self, return_dtype='json')
+            return JsonPostgresAccessor(series_object=self)
         if is_bigquery(self.engine):
-            return JsonBigQueryAccessor(self)
+            return JsonBigQueryAccessor(series_object=self)
         raise DatabaseNotSupportedException(self.engine)
 
     @property
@@ -272,6 +274,7 @@ class SeriesJsonPG(SeriesJson):
     supported_db_dtype = {
         DBDialect.POSTGRES: 'json',
     }
+    return_dtype = 'json'
 
     def __init__(self,
                  engine,
@@ -356,9 +359,9 @@ class JsonPostgresAccessor:
     """
     class with accessor methods to SeriesJson data on Postgres.
     """
-    def __init__(self, series_object: 'SeriesJson', return_dtype: Dtype):
+    def __init__(self, series_object: 'SeriesJson'):
         self._series_object = series_object
-        self._return_dtype = return_dtype
+        self._return_dtype: Dtype = series_object.return_dtype
 
     def __getitem__(self, key: Union[str, int, slice]):
         """
