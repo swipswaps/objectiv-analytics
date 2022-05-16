@@ -149,7 +149,7 @@ class SeriesJson(Series):
         Get access to json operations via the class that's return through this accessor.
         Use as `my_series.json.get_value()` or `my_series.json[:2]`
 
-        .. autoclass:: bach.SeriesJson.Json
+        .. autoclass:: JsonPostgresAccessor
             :members:
             :special-members: __getitem__
 
@@ -203,6 +203,8 @@ class SeriesJson(Series):
         if is_postgres(self.engine):
             return ToPandasInfo('object', None)
         if is_bigquery(self.engine):
+            # All data is stored as string, so if we actually want the objects, we need to load the string
+            # as json.
             return ToPandasInfo('object', lambda x: json.loads(x) if x is not None else None)
         return None
 
@@ -280,17 +282,6 @@ class SeriesJsonPG(Series):
 
     @property
     def json(self):
-        """
-        .. _json_accessor:
-
-        Get access to json operations via the class that's return through this accessor.
-        Use as `my_series.json.get_value()` or `my_series.json[:2]`
-
-        .. autoclass:: bach.SeriesJson.Json
-            :members:
-            :special-members: __getitem__
-
-        """
         json_series = cast('SeriesJson', self.astype('json'))
         return JsonPostgresAccessor(json_series)
 
@@ -352,7 +343,7 @@ class JsonBigQueryAccessor:
 
     def __getitem__(self, key: Union[str, int, slice]):
         """
-        TODO
+        Slice the JSON data in pythonic ways
         """
         # TODO: leverage instance_dtype information here, if we have that
         if isinstance(key, int):
@@ -405,7 +396,7 @@ class JsonPostgresAccessor:
 
     def __getitem__(self, key: Union[str, int, slice]):
         """
-        Slice this jsonb database object in pythonic ways:
+        Slice the JSON data in pythonic ways
         """
         if isinstance(key, int):
             return self._series_object\
