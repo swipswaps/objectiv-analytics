@@ -386,7 +386,8 @@ class SeriesJson(SeriesJsonb):
                  group_by: 'GroupBy',
                  sorted_ascending: Optional[bool],
                  index_sorting: List[bool],
-                 instance_dtype: StructuredDtype):
+                 instance_dtype: StructuredDtype,
+                 **kwargs):
 
         super().__init__(engine=engine,
                          base_node=base_node,
@@ -396,4 +397,5 @@ class SeriesJson(SeriesJsonb):
                          group_by=group_by,
                          sorted_ascending=sorted_ascending,
                          index_sorting=index_sorting,
-                         instance_dtype=instance_dtype)
+                         instance_dtype=instance_dtype,
+                         **kwargs)
