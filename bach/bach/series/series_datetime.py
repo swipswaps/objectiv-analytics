@@ -13,7 +13,7 @@ from bach import DataFrame
 from bach.series import Series, SeriesString, SeriesBoolean, SeriesFloat64, SeriesInt64
 from bach.expression import Expression
 from bach.series.series import WrappedPartition, ToPandasInfo
-from bach.types import DtypeOrAlias
+from bach.types import DtypeOrAlias, StructuredDtype
 from sql_models.constants import DBDialect
 from sql_models.util import DatabaseNotSupportedException, is_postgres, is_bigquery
 
@@ -188,9 +188,10 @@ class SeriesTimestamp(SeriesAbstractDateTime):
 
     @classmethod
     def supported_value_to_literal(
-            cls,
-            dialect: Dialect,
-            value: Union[datetime.datetime, numpy.datetime64, datetime.date, str, None]
+        cls,
+        dialect: Dialect,
+        value: Union[datetime.datetime, numpy.datetime64, datetime.date, str, None],
+        dtype: StructuredDtype
     ) -> Expression:
         if value is None:
             return Expression.raw('NULL')
@@ -273,7 +274,12 @@ class SeriesDate(SeriesAbstractDateTime):
         return Expression.construct(f'cast({{}} as date)', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.date]) -> Expression:
+    def supported_value_to_literal(
+        cls,
+        dialect: Dialect,
+        value: Union[str, datetime.date],
+        dtype: StructuredDtype
+    ) -> Expression:
         if isinstance(value, datetime.date):
             value = str(value)
         # TODO: check here already that the string has the correct format
@@ -336,7 +342,12 @@ class SeriesTime(SeriesAbstractDateTime):
         return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.time]) -> Expression:
+    def supported_value_to_literal(
+        cls,
+        dialect: Dialect,
+        value: Union[str, datetime.time],
+        dtype: StructuredDtype
+    ) -> Expression:
         value = str(value)
         # TODO: check here already that the string has the correct format
         return Expression.string_value(value)
@@ -373,9 +384,10 @@ class SeriesTimedelta(SeriesAbstractDateTime):
 
     @classmethod
     def supported_value_to_literal(
-            cls,
-            dialect: Dialect,
-            value: Union[str, numpy.timedelta64, datetime.timedelta]
+        cls,
+        dialect: Dialect,
+        value: Union[str, numpy.timedelta64, datetime.timedelta],
+        dtype: StructuredDtype
     ) -> Expression:
         value = str(value)
         # TODO: check here already that the string has the correct format
