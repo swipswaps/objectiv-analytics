@@ -21,6 +21,17 @@ class SeriesDict(Series):
     A Series that represents a dictionary-like type and its specific operations.
     On BigQuery this is backed by the STRUCT data type. On other databases this type is not supported.
 
+
+    **instance_dtype:**
+    An instance of this class expects an ``instance_dtype`` that's a dictionary. With each key being the
+    name of a field, and the value being an instance-dtype describing that field. The values represented by
+    such a Series must then be dictionaries with the exact same field names as the instance-dtype, and the
+    specified data types for the fields.
+
+    | Example instance_dtype
+    | BigQuery db_dtype: ``'STRUCT<a INT64, b ARRAY[FLOAT64], c <STRUCT x BOOL, y: INT64>>'``
+    | instance_dtype: ``{'a': 'int64', b: ['float64'], 'c': {'x': 'bool', 'y': 'int64'}``
+
     .. note::
         SeriesDict is only supported on BigQuery.
         On Postgres use SeriesJson for similar functionality.

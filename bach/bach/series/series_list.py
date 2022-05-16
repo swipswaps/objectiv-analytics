@@ -1,7 +1,7 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import Any, Tuple, List, Union, TYPE_CHECKING, Optional, Mapping
+from typing import Any, Tuple, List, Union, TYPE_CHECKING, Optional, Mapping, Sequence
 
 from sqlalchemy.engine import Dialect
 
@@ -20,6 +20,16 @@ class SeriesList(Series):
     """
     A Series that represents a list/array-like type and its specific operations.
     On BigQuery this is backed by the ARRAY data type. On other databases this type is not yet supported.
+
+
+    **instance_dtype:**
+    An instance of this class expects an ``instance_dtype`` that's a list with a single item in it, the item
+    itself being an instance dtype. All values represented by such a Series must have the dtype of the item
+    in the list.
+
+    | Example instance_dtype for a list consisting of floats
+    | BigQuery db_dtype: ``'ARRAY[FLOAT64]'``
+    | instance_dtype: ``['float64']``
 
     .. note::
         SeriesList is only supported on BigQuery.
@@ -136,7 +146,7 @@ class SeriesList(Series):
     def _sub_expressions_to_expression(
         dialect: Dialect,
         sub_dtype: StructuredDtype,
-        sub_expressions: List[Expression]
+        sub_expressions: Sequence[Expression]
     ) -> Expression:
         """ Internal function: create an array expression from a list of expressions """
         series_type = get_series_type_from_dtype(sub_dtype)
@@ -192,8 +202,7 @@ class ListAccessor:
                     .copy_override(expression=expression)
             elif isinstance(sub_dtype, list):
                 return self._series \
-                    .copy_override(instance_dtype=sub_dtype) \
-                    .copy_override(expression=expression)
+                    .copy_override(instance_dtype=sub_dtype, expression=expression)
             elif isinstance(sub_dtype, dict):
                 from bach import SeriesDict
                 return self._series \

@@ -874,7 +874,7 @@ class DataFrame:
             new_series: Dict[str, Series] = {}
             for name, dtype in series_dtypes.items():
                 series_type = get_series_type_from_dtype(dtype)
-                extra_params = copy(args)
+                extra_params = {}
 
                 if issubclass(series_type, SeriesAbstractMultiLevel):
                     if name not in self._data:
@@ -892,14 +892,18 @@ class DataFrame:
                     )
 
                 new_series[name] = series_type.get_class_instance(
+                    engine=args['engine'],
+                    base_node=args['base_node'],
+                    index=args['index'],  # Empty index for index series
                     name=name,
                     expression=expression_class.column_reference(name),
+                    group_by=args['group_by'],
                     sorted_ascending=None,
                     index_sorting=[],
                     instance_dtype=dtype,
                     **extra_params
                 )
-                args['series'] = new_series
+            args['series'] = new_series
 
         return self.__class__(**args, **kwargs)
 

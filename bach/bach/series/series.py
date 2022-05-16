@@ -322,7 +322,11 @@ class Series(ABC):
 
     @property
     def instance_dtype(self) -> StructuredDtype:
-        """ Get the instance_dtype """
+        """
+        Get the instance_dtype. For basic scalar types this should be the same value as self.dtype. For
+        structured types (e.g. SeriesDict) this should indicate what the structure of the data is. See the
+        class docstring of structured types for more information on the structure.
+        """
         return deepcopy(self._instance_dtype)
 
     @classmethod
@@ -404,7 +408,7 @@ class Series(ABC):
             dialect: Dialect,
             value: Optional[Any],
             dtype: StructuredDtype
-    ) -> Expression:
+    ) -> ConstValueExpression:
         """
         INTERNAL: Give the expression for the given value.
 
@@ -768,10 +772,32 @@ class Series(ABC):
         """
         return self.to_pandas().to_numpy()
 
+    def reset_index(
+        self,
+        level: Optional[Union[str, Sequence[str]]] = None,
+        drop: bool = False,
+    ) -> DataFrameOrSeries:
+        """
+        Drops the current index.
+
+        :param level: Removes given levels from index. Removes all levels by default
+        :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
+            is removed.
+        :returns: Series or DataFrame with the index dropped.
+        """
+
+        result = self.to_frame().reset_index(level, drop)
+
+        if drop:
+            return result.all_series[self.name]
+
+        return result
+
     def sort_values(self, *, ascending=True):
         """
         Sort this Series by its values.
         Returns a new instance and does not actually modify the instance it is called on.
+
         :param ascending: Whether to sort ascending (True) or descending (False)
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
@@ -1444,11 +1470,11 @@ class Series(ABC):
         :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
         :returns: a new Series with the aggregation applied
 
-        ..warning::
+        .. warning::
             The result of this function might be non-deterministic if there are multiple values with
             the same frequency.
 
-        ..note::
+        .. note::
             BigQuery has no support for aggregation function ``MODE``, therefore ``APPROX_TOP_COUNT``
             approximate aggregate function is used instead. Which means that an approximate result will
             be produced instead of exact results.
