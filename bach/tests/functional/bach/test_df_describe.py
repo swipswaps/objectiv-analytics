@@ -234,7 +234,6 @@ def test_describe_json(pg_engine) -> None:
         ],
         columns=['__stat', 'column'],
     )
-    print(result.view_sql())
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
 
 
