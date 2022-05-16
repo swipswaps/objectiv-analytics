@@ -32,8 +32,11 @@ class SeriesAbstractNumeric(Series, ABC):
 
     And the aggregations/statistical functions:
 
-    - :py:meth:`sum`, :py:meth:`mean`
-    - :py:meth:`sem`, :py:meth:`std`, :py:meth:`var`
+    - :py:meth:`sum`
+    - :py:meth:`mean`
+    - :py:meth:`sem`
+    - :py:meth:`std`
+    - :py:meth:`var`
 
     Integer types also support lshift (<<) and rshift(>>)
     """

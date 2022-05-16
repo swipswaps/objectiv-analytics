@@ -772,6 +772,27 @@ class Series(ABC):
         """
         return self.to_pandas().to_numpy()
 
+    def reset_index(
+        self,
+        level: Optional[Union[str, Sequence[str]]] = None,
+        drop: bool = False,
+    ) -> DataFrameOrSeries:
+        """
+        Drops the current index.
+
+        :param level: Removes given levels from index. Removes all levels by default
+        :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
+            is removed.
+        :returns: Series or DataFrame with the index dropped.
+        """
+
+        result = self.to_frame().reset_index(level, drop)
+
+        if drop:
+            return result.all_series[self.name]
+
+        return result
+
     def sort_values(self, *, ascending=True):
         """
         Sort this Series by its values.
