@@ -797,6 +797,7 @@ class Series(ABC):
         """
         Sort this Series by its values.
         Returns a new instance and does not actually modify the instance it is called on.
+
         :param ascending: Whether to sort ascending (True) or descending (False)
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
@@ -1465,11 +1466,11 @@ class Series(ABC):
         :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
         :returns: a new Series with the aggregation applied
 
-        ..warning::
+        .. warning::
             The result of this function might be non-deterministic if there are multiple values with
             the same frequency.
 
-        ..note::
+        .. note::
             BigQuery has no support for aggregation function ``MODE``, therefore ``APPROX_TOP_COUNT``
             approximate aggregate function is used instead. Which means that an approximate result will
             be produced instead of exact results.
