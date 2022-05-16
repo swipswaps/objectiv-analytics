@@ -6,7 +6,7 @@
 Jsonb
 =====
 
-.. autoclass:: SeriesJsonb
+.. autoclass:: SeriesJsonPG
     :noindex:
 
 
@@ -17,4 +17,3 @@ Methods
 .. autosummary::
     :toctree: 
 
-    SeriesJsonb.json

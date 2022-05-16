@@ -21,7 +21,8 @@ clean:
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/AbstractNumeric/bach.SeriesAbstractNumeric* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/Boolean/bach.SeriesBoolean* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/Json/bach.SeriesJson* # not the index
-	rm -rf $(SOURCEDIR)/bach/api-reference/Series/Jsonb/bach.SeriesJsonb* # not the index
+	rm -rf $(SOURCEDIR)/bach/api-reference/Series/Jsonb/bach.SeriesJsonb* # not the index  # TODO: remove in the future
+	rm -rf $(SOURCEDIR)/bach/api-reference/Series/JsonPG/bach.SeriesJsonb* # not the index
 	rm -rf $(SOURCEDIR)/bach/api-reference/Series/String/bach.SeriesString* # not the index
 	rm -rf $(SOURCEDIR)/open-model-hub/models/**/modelhub.* # not the index
 	rm -rf $(SOURCEDIR)/open-model-hub/api-reference/**/modelhub.* # not the index

@@ -168,17 +168,12 @@ def test_is_materialized(engine):
 
 
 def test_is_materialized_json(pg_engine):
-    # In the past, having a json column in a DataFrame meant it would always give False on is_mateialized
-    # This test is to prevent regressions
+    # Note that we only test the 'json' type here, not the Postgres specific json_pg, as there is a known
+    # problem that is_materialized is always False if such a column is present.
     engine = pg_engine  # TODO: BigQuery
 
     df = get_df_with_json_data(engine=pg_engine, dtype='json')
     assert df.is_materialized
-
-    if is_postgres(engine):
-        # for Postgres we have an additional test, as there is also the 'jsonb' type
-        df = get_df_with_json_data(engine=pg_engine, dtype='jsonb')
-        assert df.is_materialized
 
 
 # TODO: we should probably have a test here for each dtype
