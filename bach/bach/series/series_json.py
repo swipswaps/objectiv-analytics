@@ -2,19 +2,21 @@
 Copyright 2021 Objectiv B.V.
 """
 import json
-from typing import Dict, Union, TYPE_CHECKING, Tuple, cast, Optional
+from typing import Dict, Union, TYPE_CHECKING, Tuple, cast, Optional, List
 
 from sqlalchemy.engine import Dialect
 
 from bach.series import Series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition, ToPandasInfo
-from bach.types import DtypeOrAlias, StructuredDtype, AllSupportedLiteralTypes
+from bach.sql_model import BachSqlModel
+from bach.types import DtypeOrAlias, StructuredDtype, AllSupportedLiteralTypes, Dtype
 from sql_models.constants import DBDialect
 from sql_models.util import quote_string, is_postgres, DatabaseNotSupportedException, is_bigquery
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean, SeriesString
+    from bach.partitioning import GroupBy
 
 
 class SeriesJson(Series):
@@ -139,7 +141,6 @@ class SeriesJson(Series):
         DBDialect.BIGQUERY: None
     }
     supported_value_types = (dict, list)
-    return_dtype = dtype
 
     @property
     def json(self):
@@ -155,7 +156,7 @@ class SeriesJson(Series):
 
         """
         if is_postgres(self.engine):
-            return JsonPostgresAccessor(self)
+            return JsonPostgresAccessor(series_object=self, return_dtype='json')
         if is_bigquery(self.engine):
             return JsonBigQueryAccessor(self)
         raise DatabaseNotSupportedException(self.engine)
@@ -251,7 +252,7 @@ class SeriesJson(Series):
         raise NotImplementedError()
 
 
-class SeriesJsonPG(Series):
+class SeriesJsonPG(SeriesJson):
     """
     A special Series that represents the 'json' database type on Postgres.
 
@@ -271,67 +272,29 @@ class SeriesJsonPG(Series):
     supported_db_dtype = {
         DBDialect.POSTGRES: 'json',
     }
-    supported_value_types = (dict, list)
 
-    @property
-    def expression(self) -> Expression:
-        """ INTERNAL: Get the expression"""
-        if is_postgres(self.engine):
-            return Expression.construct('cast({} as jsonb)', self._expression)
-        return self._expression
+    def __init__(self,
+                 engine,
+                 base_node: BachSqlModel,
+                 index: Dict[str, 'Series'],
+                 name: str,
+                 expression: Expression,
+                 group_by: 'GroupBy',
+                 sorted_ascending: Optional[bool],
+                 index_sorting: List[bool],
+                 instance_dtype: StructuredDtype,
+                 **kwargs):
 
-    @property
-    def json(self):
-        json_series = cast('SeriesJson', self.astype('json'))
-        return JsonPostgresAccessor(json_series)
-
-    @property
-    def elements(self):
-        return self.json
-
-    @classmethod
-    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        cls.assert_engine_dialect_supported(dialect)
-        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
-
-    @classmethod
-    def supported_value_to_literal(
-            cls,
-            dialect: Dialect,
-            value: Union[dict, list],
-            dtype: StructuredDtype
-    ) -> Expression:
-        cls.assert_engine_dialect_supported(dialect)
-        json_value = json.dumps(value)
-        return Expression.string_value(json_value)
-
-    @classmethod
-    def dtype_to_expression(cls, dialect: Dialect, source_dtype: str, expression: Expression) -> Expression:
-        cls.assert_engine_dialect_supported(dialect)
-        if source_dtype == 'json_pg':
-            return expression
-        if source_dtype in ('json', 'string'):
-            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
-        raise ValueError(f'cannot convert {source_dtype} to json')
-
-    def _comparator_operation(
-            self, other, comparator, other_dtypes=tuple(['json', 'json_pg'])
-    ) -> 'SeriesBoolean':
-        return super()._comparator_operation(other, comparator, other_dtypes)
-
-    def __le__(self, other: Union['Series', AllSupportedLiteralTypes]) -> 'SeriesBoolean':
-        return self._comparator_operation(other, "<@")
-
-    def __ge__(self, other: Union['Series', AllSupportedLiteralTypes]) -> 'SeriesBoolean':
-        return self._comparator_operation(other, "@>")
-
-    def min(self, partition: WrappedPartition = None, skipna: bool = True):
-        """ INTERNAL: Only here to not trigger errors from describe """
-        raise NotImplementedError()
-
-    def max(self, partition: WrappedPartition = None, skipna: bool = True):
-        """ INTERNAL: Only here to not trigger errors from describe """
-        raise NotImplementedError()
+        super().__init__(engine=engine,
+                         base_node=base_node,
+                         index=index,
+                         name=name,
+                         expression=Expression.construct(f'cast({{}} as jsonb)', expression),
+                         group_by=group_by,
+                         sorted_ascending=sorted_ascending,
+                         index_sorting=index_sorting,
+                         instance_dtype=instance_dtype,
+                         **kwargs)
 
 
 class JsonBigQueryAccessor:
@@ -391,8 +354,9 @@ class JsonPostgresAccessor:
     """
     class with accessor methods to SeriesJson data on Postgres.
     """
-    def __init__(self, series_object: 'SeriesJson'):
+    def __init__(self, series_object: 'SeriesJson', return_dtype: Dtype):
         self._series_object = series_object
+        self._return_dtype = return_dtype
 
     def __getitem__(self, key: Union[str, int, slice]):
         """
@@ -400,7 +364,7 @@ class JsonPostgresAccessor:
         """
         if isinstance(key, int):
             return self._series_object\
-                .copy_override_dtype(dtype=self._series_object.return_dtype)\
+                .copy_override_dtype(dtype=self._return_dtype)\
                 .copy_override(expression=Expression.construct(f'{{}}->{key}', self._series_object))
         elif isinstance(key, str):
             return self.get_value(key)
@@ -443,7 +407,7 @@ class JsonPostgresAccessor:
             where ordinality - 1 {where})"""
             expression_references += 1
             return self._series_object\
-                .copy_override_dtype(dtype=self._series_object.return_dtype)\
+                .copy_override_dtype(dtype=self._return_dtype)\
                 .copy_override(
                     expression=Expression.construct(
                         combined_expression,
@@ -471,7 +435,7 @@ class JsonPostgresAccessor:
         :returns: series with the selected object value.
         """
         return_as_string_operator = ''
-        return_dtype = self._series_object.return_dtype
+        return_dtype = self._return_dtype
         if as_str:
             return_as_string_operator = '>'
             return_dtype = 'string'
