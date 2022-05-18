@@ -22,7 +22,7 @@ class SeriesAbstractNumeric(Series, ABC):
     """
     A Series that represents the base numeric types and its specific operations
 
-    ** Operations **
+    **Operations**
 
     All common arithmetic operations are supported, as well as the most common aggregation operations:
 
