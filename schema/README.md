@@ -10,7 +10,7 @@ Objectiv uses the Open Taxonomy to:
 * Enable realtime validation of instrumentation and provide debugging feedback.
 * Structure and validate data collection at the first step of the pipeline.
 * Enable effective feature creation when building models.
-* Enable models and datasets to be reused with minimal effort.
+* Enable models and data sets to be reused with minimal effort.
 
 The open analytics taxonomy is captured in a schema that is loosely based on JSON-schema and uses JSON5 encoding to allow for multiline strings. 
 
