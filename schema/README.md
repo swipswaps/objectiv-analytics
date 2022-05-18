@@ -12,7 +12,7 @@ Objectiv uses the Open Taxonomy to:
 * Enable effective feature creation when building models.
 * Enable models and datasets to be reused with minimal effort.
 
-The Open Taxonomy for Analytics is captured in a schema that is loosely based on JSON-schema and uses JSON5 encoding to allow for multiline strings. 
+The open analytics taxonomy is captured in a schema that is loosely based on JSON-schema and uses JSON5 encoding to allow for multiline strings. 
 
 ## Using the Open Taxonomy
 Objectiv is built around the Open Taxonomy and the Tracker, Collector and Bach use it out of the box.
