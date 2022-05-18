@@ -213,3 +213,10 @@ class Map:
         data['pre_conversion_hit_number'] = pre_conversion_hits['pre_conversion_hit_number']
 
         return data.pre_conversion_hit_number
+
+    def sum_feature_rows(self, data):
+        """
+        returns the sum of each feature by row.
+        """
+        stacked_data = data.stack().to_frame().reset_index().groupby('user_id')
+        return stacked_data['__stacked'].sum()

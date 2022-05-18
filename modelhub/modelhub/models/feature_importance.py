@@ -5,7 +5,6 @@ import bach
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_curve, auc  # type: ignore
-from modelhub.metrics import Metrics
 from modelhub.models import LogisticRegression
 
 
@@ -86,52 +85,39 @@ class FeatureImportance:
         self._results_dict = {}
 
         coef = pd.DataFrame(columns=X.data_columns)
-        i = 1
-
-        for X_train, X_test, y_train, y_test in self._get_stratified_folds(X, y, folds=folds,
-                                                                           seed=seed):
-            report = f"fold {i}\n"
-            report += "==============================\n"
+        for i, (X_train, X_test, y_train, y_test) in enumerate(self._get_stratified_folds(X,
+                                                                                          y,
+                                                                                          folds=folds,
+                                                                                          seed=seed)):
 
             lr = LogisticRegression(**kwargs)
             lr.fit(X_train, y_train)
 
-            report += f"score: {lr.score(X_test, y_test)}\n"
-
-            cr = Metrics.get_classification_report(y_test,
-                                                   lr.predict(X_test),
-                                                   output_dict=True)
-
-            x_results = X_test.copy()
-            x_results['is_converted'] = y_test
-            x_results['yhat'] = lr.predict(X_test)
-
             proba = lr.predict_proba(X_test).to_pandas()
             fpr, tpr, thresholds = roc_curve(y_test.to_pandas(), proba)
 
-            report += f"\npredicted converted correct:" \
-                      f"{x_results[(x_results['yhat']) & (x_results['is_converted'])].yhat.count().value}\n"""
-            report += f"recall: {cr['True']['recall']}\n"
-            report += f"precision: {cr['True']['precision']}\n"
-            report += f"roc auc: {auc(fpr, tpr)}\n"
+            report = f"fold {i}\n"\
+                     f"==============================\n"\
+                     f"score: {lr.score(X_test, y_test)}\n"\
+                     f"roc auc: {auc(fpr, tpr)}\n"\
+                     "==============================\n\n"
 
+            # todo create dataframe based on columns used by the model
             coef_fold = pd.DataFrame(lr.coef_, columns=X.data_columns)
-
             coef = pd.concat([coef, coef_fold])
 
-            self._result_dict[f'fold {i}'] = {'classification_report': cr,
-                                              'auc': auc(fpr, tpr),
-                                              'coef': coef_fold,
+            self._result_dict[f'fold {i}'] = {'auc': auc(fpr, tpr),
+                                              'coefficients': coef_fold,
                                               'fitted_model': lr}
-
-            i += 1
-            report += "==============================\n\n"
             if print_report:
                 print(report)
-        self._result_dict['coef'] = coef
 
-        feature = pd.DataFrame([coef.mean(), coef.std()], index=['mean', 'std']).T.sort_values(
-            'mean')
+        self._result_dict['coefficients'] = coef
+
+        feature = pd.DataFrame([coef.mean(),
+                                coef.std()],
+                               index=['coefficients_mean',
+                                      'coefficients_std']).T.sort_values('coefficients_mean')
 
         self._results_dict['seed'] = seed
         self._result_dict['feature_importance'] = feature
@@ -143,5 +129,5 @@ class FeatureImportance:
 
     def results(self, full=False):
         if full:
-            return self._result_dict['coef']
+            return self._result_dict['coefficients']
         return self._result_dict['feature_importance']
