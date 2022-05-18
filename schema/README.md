@@ -1,8 +1,10 @@
-# The Open Taxonomy for Analytics
+# The Open Analytics Taxonomy
 
-The Open Taxonomy for Analytics is Objectiv’s proposal for a common way to collect, structure and validate data. It defines classes for each common event type and the contexts in which they can happen. It describes their properties, requirements and their relationships with other classes. 
+The open analytics taxonomy is a generic classifification of common event types and the contexts in which they can happen. It is a proposal for a common way to collect & structure analytics data in an effort to enable models to be universally shared and reused between projects, teams and companies.
 
-The current version of the taxonomy is built for product analytics. We have plans to support other fields as well.
+Visit [Objectiv Docs](https://objectiv.io/docs/taxonomy/) to learn more.
+
+## Purpose
 
 Objectiv uses the Open Taxonomy to:
 * Enable realtime validation of instrumentation and provide debugging feedback.
