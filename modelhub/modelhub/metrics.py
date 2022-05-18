@@ -6,10 +6,14 @@ Copyright 2021 Objectiv B.V.
 
 class Metrics:
     @staticmethod
-    def get_confusion_matrix(y, y_pred):
+    def _cm_prepare(y, y_pred):
         df = y.copy_override(name='y').to_frame()
         df['y_pred'] = y_pred
-        confusion_matrix = df.value_counts()
+        return df.value_counts()
+
+    @classmethod
+    def get_confusion_matrix(cls, y, y_pred):
+        confusion_matrix = cls._cm_prepare(y, y_pred)
         return confusion_matrix.to_pandas().unstack()
 
     @classmethod
@@ -52,8 +56,8 @@ class Metrics:
         Assumes classes are True and False
 
         """
-        cm = cls.get_confusion_matrix(y, y_pred)
-        return (cm.loc[True, True] + cm.loc[False, False]) / cm.sum().sum()
+        cm = cls._cm_prepare(y, y_pred).to_frame().reset_index()
+        return (cm[cm.y==cm.y_pred]['value_counts'].sum() / cm['value_counts'].sum()).value
 
     @classmethod
     def get_classification_report(cls, y, y_pred, output_dict: bool = False):

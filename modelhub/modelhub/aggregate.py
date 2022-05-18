@@ -175,16 +175,21 @@ class Aggregate:
                                       feature_column: str,
                                       partition: str = 'user_id'):
 
-        features = data.groupby(partition)[feature_column].value_counts()
-        features_unstacked = features.unstack(fill_value=0)
 
-        # y
         df_copy = data.copy()
-        df_copy['is_converted'] = self._mh.map.conversions_counter(data=df_copy,
-                                                                   name=name,
-                                                                   partition=partition) > 0
+        # y
+        df_copy['is_converted'] = self._mh.map.conversions_counter(df_copy, name=name,
+                                                                 partition=partition) >= 1
 
         user_conversion = df_copy[['is_converted', partition]].drop_duplicates().set_index('user_id')
+
+        # X
+        # label hits where at that point in time, there are 0 conversions in the session
+        df_copy['zero_conversions_at_moment'] = self._mh.map.conversions_in_time(df_copy, name,
+                                                                            partition=partition) == 0
+
+        features = df_copy[df_copy.zero_conversions_at_moment].groupby(partition)[feature_column].value_counts()
+        features_unstacked = features.unstack(fill_value=0)
 
         # combine
         features_set = features_unstacked.merge(user_conversion, left_index=True, right_index=True)
