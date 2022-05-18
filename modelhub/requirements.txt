@@ -5,3 +5,5 @@ objectiv-bach
 requests
 
 sklearn
+asyncio
+aiohttp
